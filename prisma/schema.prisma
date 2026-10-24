@@ -1,0 +1,20 @@
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model QuickBooksConnection {
+  id                     String   @id @default(cuid())
+  realmId                String   @unique
+  accessTokenEncrypted   String   @db.Text
+  refreshTokenEncrypted  String   @db.Text
+  accessTokenExpiresAt   DateTime
+  refreshTokenExpiresAt  DateTime?
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+}
