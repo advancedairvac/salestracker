@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import ResourceDataTab from "./resource-data-tab";
 
@@ -107,6 +107,7 @@ function InfoField({ label, value }) {
       <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
         {label}
       </p>
+
       <p className="mt-2 break-words text-sm font-medium text-[#0d0d0d]">
         {displayValue}
       </p>
@@ -119,7 +120,11 @@ function CompanyInfoTab() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [disconnecting, setDisconnecting] = useState(false);
+
   const searchParams = useSearchParams();
+
+  const status = searchParams.get("qb_status");
+  const statusInfo = statusMessages[status];
 
   const loadCompany = useCallback(async () => {
     setLoading(true);
@@ -138,7 +143,7 @@ function CompanyInfoTab() {
           return;
         }
 
-        throw new Error(data.message || "Unable to load company info.");
+        throw new Error(data.message || "Unable to load company information.");
       }
 
       setCompany(data);
@@ -154,9 +159,6 @@ function CompanyInfoTab() {
     loadCompany();
   }, [loadCompany]);
 
-  const status = searchParams.get("qb_status");
-  const statusInfo = statusMessages[status];
-
   async function disconnectCompany() {
     if (!company?.realmId) {
       setError("Refresh the company profile before disconnecting.");
@@ -164,7 +166,7 @@ function CompanyInfoTab() {
     }
 
     const confirmed = window.confirm(
-      "Remove this QuickBooks connection from the local application? This action does not yet revoke authorization at Intuit.",
+      "Remove this QuickBooks connection from the local application? This action may not revoke authorization at Intuit.",
     );
 
     if (!confirmed) return;
@@ -192,6 +194,7 @@ function CompanyInfoTab() {
 
       const nextUrl = new URL(window.location.href);
       nextUrl.searchParams.set("qb_status", "disconnected");
+
       window.history.replaceState({}, "", nextUrl);
     } catch (err) {
       setError(err.message || "Disconnect failed.");
@@ -201,6 +204,7 @@ function CompanyInfoTab() {
   }
 
   const profile = company?.company;
+
   const connected =
     company?.connected === true && company?.apiVerified === true;
 
@@ -221,6 +225,7 @@ function CompanyInfoTab() {
           <h2 className="text-xl font-semibold text-[#0d0d0d]">
             QuickBooks Company Profile
           </h2>
+
           <p className="mt-1 text-sm text-gray-500">
             Connect a company, verify its profile, and inspect its API data.
           </p>
@@ -247,7 +252,7 @@ function CompanyInfoTab() {
             <button
               type="button"
               onClick={disconnectCompany}
-              disabled={disconnecting}
+              disabled={disconnecting || loading}
               className="rounded-lg border border-red-200 bg-white px-4 py-2.5 text-sm font-medium text-red-700 disabled:opacity-50"
             >
               {disconnecting ? "Disconnecting..." : "Disconnect"}
@@ -257,7 +262,10 @@ function CompanyInfoTab() {
       </div>
 
       {error && (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+        <div
+          role="alert"
+          className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700"
+        >
           <p className="font-semibold">QuickBooks request failed</p>
           <p className="mt-1">{error}</p>
         </div>
@@ -270,6 +278,7 @@ function CompanyInfoTab() {
               <h3 className="text-lg font-semibold text-[#0d0d0d]">
                 {profile.companyName || "Unnamed QuickBooks Company"}
               </h3>
+
               <p className="mt-1 text-sm text-gray-500">
                 {profile.legalName || "Legal name not provided"}
               </p>
@@ -293,35 +302,44 @@ function CompanyInfoTab() {
             <InfoField label="Email" value={profile.email} />
             <InfoField label="Phone" value={profile.phone} />
             <InfoField label="Website" value={profile.website} />
+
             <InfoField
               label="Company Address"
               value={formatAddress(profile.companyAddress)}
             />
+
             <InfoField
               label="Legal Address"
               value={formatAddress(profile.legalAddress)}
             />
+
             <InfoField
               label="Fiscal Year Starts"
               value={profile.fiscalYearStartMonth}
             />
+
             <InfoField
               label="Company Start Date"
               value={profile.companyStartDate}
             />
+
             <InfoField
               label="Supported Languages"
               value={profile.supportedLanguages}
             />
+
             <InfoField label="Time Zone" value={profile.timeZone} />
+
             <InfoField
               label="Connection Created"
               value={formatDate(company.connectedAt)}
             />
+
             <InfoField
               label="Last Connection Update"
               value={formatDate(company.lastUpdatedAt)}
             />
+
             <InfoField
               label="API Verification"
               value={company.apiVerified ? "Successful" : "Not verified"}
@@ -330,14 +348,15 @@ function CompanyInfoTab() {
 
           <p className="mt-4 text-xs leading-5 text-gray-500">
             Verify the company name and Realm ID with the client before
-            inspecting business records. Disconnect currently removes the local
-            connection only; Intuit authorization revocation is a separate step.
+            inspecting business records. Disconnect behavior depends on the
+            server route and whether Intuit authorization is revoked.
           </p>
 
           <details className="mt-5 border-t border-black/10 pt-4">
             <summary className="cursor-pointer text-sm font-medium">
               View API Response JSON
             </summary>
+
             <pre className="mt-3 max-h-[500px] overflow-auto rounded-lg bg-gray-950 p-4 text-xs leading-5 text-green-300">
               {JSON.stringify(company, null, 2)}
             </pre>
@@ -346,8 +365,11 @@ function CompanyInfoTab() {
       ) : (
         <div className="rounded-xl border border-dashed border-black/20 bg-white p-8 text-center">
           <h3 className="font-semibold text-[#0d0d0d]">
-            No verified QuickBooks company loaded
+            {loading
+              ? "Checking QuickBooks connection..."
+              : "No verified QuickBooks company loaded"}
           </h3>
+
           <p className="mt-2 text-sm text-gray-500">
             Connect QuickBooks or refresh the profile to check the current
             connection.
@@ -358,7 +380,7 @@ function CompanyInfoTab() {
   );
 }
 
-export default function QuickBooksTabs() {
+function QuickBooksTabsContent() {
   const [activeTab, setActiveTab] = useState("company");
 
   const currentTab = tabs.find((tab) => tab.id === activeTab);
@@ -394,5 +416,19 @@ export default function QuickBooksTabs() {
         />
       ) : null}
     </div>
+  );
+}
+
+export default function QuickBooksTabs() {
+  return (
+    <Suspense
+      fallback={
+        <div className="rounded-xl border border-black/10 bg-white p-6 text-sm text-gray-500">
+          Loading QuickBooks integration...
+        </div>
+      }
+    >
+      <QuickBooksTabsContent />
+    </Suspense>
   );
 }
