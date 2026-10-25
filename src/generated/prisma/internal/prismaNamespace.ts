@@ -533,6 +533,7 @@ export type TransactionIsolationLevel = (typeof TransactionIsolationLevel)[keyof
 export const QuickBooksConnectionScalarFieldEnum = {
   id: 'id',
   realmId: 'realmId',
+  environment: 'environment',
   accessTokenEncrypted: 'accessTokenEncrypted',
   refreshTokenEncrypted: 'refreshTokenEncrypted',
   accessTokenExpiresAt: 'accessTokenExpiresAt',

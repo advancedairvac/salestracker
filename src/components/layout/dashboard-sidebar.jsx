@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link";
@@ -12,6 +11,10 @@ const menus = {
     { label: "Finance", href: "/admin/finance" },
     { label: "Reports", href: "/admin/reports" },
     { label: "Settings", href: "/admin/settings" },
+    {
+      label: "QuickBooks API Testing",
+      href: "/admin/quickbooks",
+    },
   ],
   salesperson: [
     { label: "Overview", href: "/salesperson" },
@@ -47,9 +50,7 @@ export default function DashboardSidebar({ role = "admin" }) {
         <span className="text-xl font-bold tracking-tight">
           Advanced<span className="text-[#0690c8]">.</span>
         </span>
-        <span className="mt-1 block text-xs text-white/50">
-          SALES TRACKER
-        </span>
+        <span className="mt-1 block text-xs text-white/50">SALES TRACKER</span>
       </Link>
 
       <div className="mb-3 px-3 text-xs font-semibold uppercase tracking-wider text-white/40">
@@ -60,8 +61,7 @@ export default function DashboardSidebar({ role = "admin" }) {
         {items.map((item) => {
           const active =
             pathname === item.href ||
-            (item.href !== `/${role}` &&
-              pathname.startsWith(`${item.href}/`));
+            (item.href !== `/${role}` && pathname.startsWith(`${item.href}/`));
 
           return (
             <Link

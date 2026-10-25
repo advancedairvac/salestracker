@@ -5,6 +5,24 @@ import { encryptToken } from "@/lib/quickbooks-crypto";
 import { prisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+function redirectToTesting(request, status, extra = {}) {
+  const destination = new URL("/admin/quickbooks", request.url);
+
+  destination.searchParams.set("qb_status", status);
+
+  for (const [key, value] of Object.entries(extra)) {
+    if (value !== null && value !== undefined) {
+      destination.searchParams.set(key, String(value));
+    }
+  }
+
+  const response = NextResponse.redirect(destination);
+  response.cookies.delete("qb_oauth_state");
+
+  return response;
+}
 
 export async function GET(request) {
   const url = new URL(request.url);
@@ -16,27 +34,25 @@ export async function GET(request) {
   const code = url.searchParams.get("code");
   const oauthError = url.searchParams.get("error");
 
-  const fail = (message, status = 400) => {
-    const response = NextResponse.json({ success: false, message }, { status });
-    response.cookies.delete("qb_oauth_state");
-    return response;
-  };
-
   if (oauthError) {
-    return fail("QuickBooks authorization was denied or cancelled.");
+    return redirectToTesting(request, "authorization-denied");
   }
 
   if (!expectedState || !receivedState || expectedState !== receivedState) {
-    return fail("Invalid OAuth state. Please connect again.");
+    return redirectToTesting(request, "invalid-state");
   }
 
   if (!code || !realmId) {
-    return fail(
-      "QuickBooks did not return the required authorization details.",
-    );
+    return redirectToTesting(request, "missing-authorization-details");
   }
 
   try {
+    const environment = process.env.QB_ENVIRONMENT || "sandbox";
+
+    if (!["sandbox", "production"].includes(environment)) {
+      throw new Error("Invalid QuickBooks environment configuration.");
+    }
+
     const client = getQuickBooksClient();
     const authResponse = await client.createToken(request.url);
     const token = authResponse.getToken();
@@ -50,16 +66,24 @@ export async function GET(request) {
       throw new Error("Required token fields are missing.");
     }
 
-    const accessTokenExpiresAt = new Date(Date.now() + token.expires_in * 1000);
+    const accessTokenExpiresAt = new Date(
+      Date.now() + Number(token.expires_in) * 1000,
+    );
 
     const refreshTokenExpiresAt = new Date(
-      Date.now() + token.x_refresh_token_expires_in * 1000,
+      Date.now() + Number(token.x_refresh_token_expires_in) * 1000,
     );
 
     await prisma.quickBooksConnection.upsert({
-      where: { realmId },
+      where: {
+        realmId_environment: {
+          realmId,
+          environment,
+        },
+      },
       create: {
         realmId,
+        environment,
         accessTokenEncrypted: encryptToken(token.access_token),
         refreshTokenEncrypted: encryptToken(token.refresh_token),
         accessTokenExpiresAt,
@@ -73,53 +97,50 @@ export async function GET(request) {
       },
     });
 
-    // Verify access by requesting the Sandbox company information.
-    const companyResponse = await fetch(
-      `https://sandbox-quickbooks.api.intuit.com/v3/company/${encodeURIComponent(
-        realmId,
-      )}/companyinfo/${encodeURIComponent(realmId)}`,
-      {
-        headers: {
-          Authorization: `Bearer ${token.access_token}`,
-          Accept: "application/json",
-        },
-        cache: "no-store",
-      },
+    const apiBaseUrl =
+      environment === "production"
+        ? "https://quickbooks.api.intuit.com"
+        : "https://sandbox-quickbooks.api.intuit.com";
+
+    const companyUrl = new URL(
+      `/v3/company/${encodeURIComponent(realmId)}/companyinfo/${encodeURIComponent(realmId)}`,
+      apiBaseUrl,
     );
 
-    if (!companyResponse.ok) {
-      const response = NextResponse.json({
-        success: true,
-        tokenStored: true,
-        apiVerified: false,
-        message:
-          "Authorization succeeded and tokens were stored securely, but the company API check failed.",
-      });
+    companyUrl.searchParams.set("minorversion", "75");
 
-      response.cookies.delete("qb_oauth_state");
-      return response;
+    const companyResponse = await fetch(companyUrl, {
+      headers: {
+        Authorization: `Bearer ${token.access_token}`,
+        Accept: "application/json",
+      },
+      cache: "no-store",
+    });
+
+    if (!companyResponse.ok) {
+      return redirectToTesting(request, "connected-unverified", {
+        environment,
+      });
     }
 
     const companyData = await companyResponse.json();
     const companyInfo = companyData?.CompanyInfo;
 
-    const response = NextResponse.json({
-      success: true,
-      tokenStored: true,
-      apiVerified: Boolean(companyInfo),
-      companyName: companyInfo?.CompanyName ?? null,
-      message: companyInfo
-        ? "QuickBooks Sandbox API verification successful."
-        : "Token stored, but company information was not returned.",
-    });
+    if (!companyInfo) {
+      return redirectToTesting(request, "connected-unverified", {
+        environment,
+      });
+    }
 
-    response.cookies.delete("qb_oauth_state");
-    return response;
-  } catch {
-    // Do not log or return tokens or sensitive OAuth callback details.
-    return fail(
-      "QuickBooks processing failed. Check server configuration and try reconnecting.",
-      500,
+    return redirectToTesting(request, "connected", {
+      environment,
+    });
+  } catch (error) {
+    console.error(
+      "[QuickBooks] OAuth callback failed:",
+      error?.message || "Unknown error",
     );
+
+    return redirectToTesting(request, "connection-failed");
   }
 }

@@ -27,6 +27,7 @@ export type AggregateQuickBooksConnection = {
 export type QuickBooksConnectionMinAggregateOutputType = {
   id: string | null
   realmId: string | null
+  environment: string | null
   accessTokenEncrypted: string | null
   refreshTokenEncrypted: string | null
   accessTokenExpiresAt: Date | null
@@ -38,6 +39,7 @@ export type QuickBooksConnectionMinAggregateOutputType = {
 export type QuickBooksConnectionMaxAggregateOutputType = {
   id: string | null
   realmId: string | null
+  environment: string | null
   accessTokenEncrypted: string | null
   refreshTokenEncrypted: string | null
   accessTokenExpiresAt: Date | null
@@ -49,6 +51,7 @@ export type QuickBooksConnectionMaxAggregateOutputType = {
 export type QuickBooksConnectionCountAggregateOutputType = {
   id: number
   realmId: number
+  environment: number
   accessTokenEncrypted: number
   refreshTokenEncrypted: number
   accessTokenExpiresAt: number
@@ -62,6 +65,7 @@ export type QuickBooksConnectionCountAggregateOutputType = {
 export type QuickBooksConnectionMinAggregateInputType = {
   id?: true
   realmId?: true
+  environment?: true
   accessTokenEncrypted?: true
   refreshTokenEncrypted?: true
   accessTokenExpiresAt?: true
@@ -73,6 +77,7 @@ export type QuickBooksConnectionMinAggregateInputType = {
 export type QuickBooksConnectionMaxAggregateInputType = {
   id?: true
   realmId?: true
+  environment?: true
   accessTokenEncrypted?: true
   refreshTokenEncrypted?: true
   accessTokenExpiresAt?: true
@@ -84,6 +89,7 @@ export type QuickBooksConnectionMaxAggregateInputType = {
 export type QuickBooksConnectionCountAggregateInputType = {
   id?: true
   realmId?: true
+  environment?: true
   accessTokenEncrypted?: true
   refreshTokenEncrypted?: true
   accessTokenExpiresAt?: true
@@ -168,6 +174,7 @@ export type QuickBooksConnectionGroupByArgs<ExtArgs extends runtime.Types.Extens
 export type QuickBooksConnectionGroupByOutputType = {
   id: string
   realmId: string
+  environment: string
   accessTokenEncrypted: string
   refreshTokenEncrypted: string
   accessTokenExpiresAt: Date
@@ -200,6 +207,7 @@ export type QuickBooksConnectionWhereInput = {
   NOT?: Prisma.QuickBooksConnectionWhereInput | Prisma.QuickBooksConnectionWhereInput[]
   id?: Prisma.StringFilter<"QuickBooksConnection"> | string
   realmId?: Prisma.StringFilter<"QuickBooksConnection"> | string
+  environment?: Prisma.StringFilter<"QuickBooksConnection"> | string
   accessTokenEncrypted?: Prisma.StringFilter<"QuickBooksConnection"> | string
   refreshTokenEncrypted?: Prisma.StringFilter<"QuickBooksConnection"> | string
   accessTokenExpiresAt?: Prisma.DateTimeFilter<"QuickBooksConnection"> | Date | string
@@ -211,6 +219,7 @@ export type QuickBooksConnectionWhereInput = {
 export type QuickBooksConnectionOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   realmId?: Prisma.SortOrder
+  environment?: Prisma.SortOrder
   accessTokenEncrypted?: Prisma.SortOrder
   refreshTokenEncrypted?: Prisma.SortOrder
   accessTokenExpiresAt?: Prisma.SortOrder
@@ -221,21 +230,24 @@ export type QuickBooksConnectionOrderByWithRelationInput = {
 
 export type QuickBooksConnectionWhereUniqueInput = Prisma.AtLeast<{
   id?: string
-  realmId?: string
+  realmId_environment?: Prisma.QuickBooksConnectionRealmIdEnvironmentCompoundUniqueInput
   AND?: Prisma.QuickBooksConnectionWhereInput | Prisma.QuickBooksConnectionWhereInput[]
   OR?: Prisma.QuickBooksConnectionWhereInput[]
   NOT?: Prisma.QuickBooksConnectionWhereInput | Prisma.QuickBooksConnectionWhereInput[]
+  realmId?: Prisma.StringFilter<"QuickBooksConnection"> | string
+  environment?: Prisma.StringFilter<"QuickBooksConnection"> | string
   accessTokenEncrypted?: Prisma.StringFilter<"QuickBooksConnection"> | string
   refreshTokenEncrypted?: Prisma.StringFilter<"QuickBooksConnection"> | string
   accessTokenExpiresAt?: Prisma.DateTimeFilter<"QuickBooksConnection"> | Date | string
   refreshTokenExpiresAt?: Prisma.DateTimeNullableFilter<"QuickBooksConnection"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"QuickBooksConnection"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"QuickBooksConnection"> | Date | string
-}, "id" | "realmId">
+}, "id" | "realmId_environment">
 
 export type QuickBooksConnectionOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   realmId?: Prisma.SortOrder
+  environment?: Prisma.SortOrder
   accessTokenEncrypted?: Prisma.SortOrder
   refreshTokenEncrypted?: Prisma.SortOrder
   accessTokenExpiresAt?: Prisma.SortOrder
@@ -253,6 +265,7 @@ export type QuickBooksConnectionScalarWhereWithAggregatesInput = {
   NOT?: Prisma.QuickBooksConnectionScalarWhereWithAggregatesInput | Prisma.QuickBooksConnectionScalarWhereWithAggregatesInput[]
   id?: Prisma.StringWithAggregatesFilter<"QuickBooksConnection"> | string
   realmId?: Prisma.StringWithAggregatesFilter<"QuickBooksConnection"> | string
+  environment?: Prisma.StringWithAggregatesFilter<"QuickBooksConnection"> | string
   accessTokenEncrypted?: Prisma.StringWithAggregatesFilter<"QuickBooksConnection"> | string
   refreshTokenEncrypted?: Prisma.StringWithAggregatesFilter<"QuickBooksConnection"> | string
   accessTokenExpiresAt?: Prisma.DateTimeWithAggregatesFilter<"QuickBooksConnection"> | Date | string
@@ -264,6 +277,7 @@ export type QuickBooksConnectionScalarWhereWithAggregatesInput = {
 export type QuickBooksConnectionCreateInput = {
   id?: string
   realmId: string
+  environment?: string
   accessTokenEncrypted: string
   refreshTokenEncrypted: string
   accessTokenExpiresAt: Date | string
@@ -275,6 +289,7 @@ export type QuickBooksConnectionCreateInput = {
 export type QuickBooksConnectionUncheckedCreateInput = {
   id?: string
   realmId: string
+  environment?: string
   accessTokenEncrypted: string
   refreshTokenEncrypted: string
   accessTokenExpiresAt: Date | string
@@ -286,6 +301,7 @@ export type QuickBooksConnectionUncheckedCreateInput = {
 export type QuickBooksConnectionUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   realmId?: Prisma.StringFieldUpdateOperationsInput | string
+  environment?: Prisma.StringFieldUpdateOperationsInput | string
   accessTokenEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
   refreshTokenEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
   accessTokenExpiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -297,6 +313,7 @@ export type QuickBooksConnectionUpdateInput = {
 export type QuickBooksConnectionUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   realmId?: Prisma.StringFieldUpdateOperationsInput | string
+  environment?: Prisma.StringFieldUpdateOperationsInput | string
   accessTokenEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
   refreshTokenEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
   accessTokenExpiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -308,6 +325,7 @@ export type QuickBooksConnectionUncheckedUpdateInput = {
 export type QuickBooksConnectionCreateManyInput = {
   id?: string
   realmId: string
+  environment?: string
   accessTokenEncrypted: string
   refreshTokenEncrypted: string
   accessTokenExpiresAt: Date | string
@@ -319,6 +337,7 @@ export type QuickBooksConnectionCreateManyInput = {
 export type QuickBooksConnectionUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   realmId?: Prisma.StringFieldUpdateOperationsInput | string
+  environment?: Prisma.StringFieldUpdateOperationsInput | string
   accessTokenEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
   refreshTokenEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
   accessTokenExpiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -330,6 +349,7 @@ export type QuickBooksConnectionUpdateManyMutationInput = {
 export type QuickBooksConnectionUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   realmId?: Prisma.StringFieldUpdateOperationsInput | string
+  environment?: Prisma.StringFieldUpdateOperationsInput | string
   accessTokenEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
   refreshTokenEncrypted?: Prisma.StringFieldUpdateOperationsInput | string
   accessTokenExpiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -338,9 +358,15 @@ export type QuickBooksConnectionUncheckedUpdateManyInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
+export type QuickBooksConnectionRealmIdEnvironmentCompoundUniqueInput = {
+  realmId: string
+  environment: string
+}
+
 export type QuickBooksConnectionCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   realmId?: Prisma.SortOrder
+  environment?: Prisma.SortOrder
   accessTokenEncrypted?: Prisma.SortOrder
   refreshTokenEncrypted?: Prisma.SortOrder
   accessTokenExpiresAt?: Prisma.SortOrder
@@ -352,6 +378,7 @@ export type QuickBooksConnectionCountOrderByAggregateInput = {
 export type QuickBooksConnectionMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   realmId?: Prisma.SortOrder
+  environment?: Prisma.SortOrder
   accessTokenEncrypted?: Prisma.SortOrder
   refreshTokenEncrypted?: Prisma.SortOrder
   accessTokenExpiresAt?: Prisma.SortOrder
@@ -363,6 +390,7 @@ export type QuickBooksConnectionMaxOrderByAggregateInput = {
 export type QuickBooksConnectionMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   realmId?: Prisma.SortOrder
+  environment?: Prisma.SortOrder
   accessTokenEncrypted?: Prisma.SortOrder
   refreshTokenEncrypted?: Prisma.SortOrder
   accessTokenExpiresAt?: Prisma.SortOrder
@@ -388,6 +416,7 @@ export type NullableDateTimeFieldUpdateOperationsInput = {
 export type QuickBooksConnectionSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   realmId?: boolean
+  environment?: boolean
   accessTokenEncrypted?: boolean
   refreshTokenEncrypted?: boolean
   accessTokenExpiresAt?: boolean
@@ -399,6 +428,7 @@ export type QuickBooksConnectionSelect<ExtArgs extends runtime.Types.Extensions.
 export type QuickBooksConnectionSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   realmId?: boolean
+  environment?: boolean
   accessTokenEncrypted?: boolean
   refreshTokenEncrypted?: boolean
   accessTokenExpiresAt?: boolean
@@ -410,6 +440,7 @@ export type QuickBooksConnectionSelectCreateManyAndReturn<ExtArgs extends runtim
 export type QuickBooksConnectionSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   realmId?: boolean
+  environment?: boolean
   accessTokenEncrypted?: boolean
   refreshTokenEncrypted?: boolean
   accessTokenExpiresAt?: boolean
@@ -421,6 +452,7 @@ export type QuickBooksConnectionSelectUpdateManyAndReturn<ExtArgs extends runtim
 export type QuickBooksConnectionSelectScalar = {
   id?: boolean
   realmId?: boolean
+  environment?: boolean
   accessTokenEncrypted?: boolean
   refreshTokenEncrypted?: boolean
   accessTokenExpiresAt?: boolean
@@ -429,7 +461,7 @@ export type QuickBooksConnectionSelectScalar = {
   updatedAt?: boolean
 }
 
-export type QuickBooksConnectionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "realmId" | "accessTokenEncrypted" | "refreshTokenEncrypted" | "accessTokenExpiresAt" | "refreshTokenExpiresAt" | "createdAt" | "updatedAt", ExtArgs["result"]["quickBooksConnection"]>
+export type QuickBooksConnectionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "realmId" | "environment" | "accessTokenEncrypted" | "refreshTokenEncrypted" | "accessTokenExpiresAt" | "refreshTokenExpiresAt" | "createdAt" | "updatedAt", ExtArgs["result"]["quickBooksConnection"]>
 
 export type $QuickBooksConnectionPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "QuickBooksConnection"
@@ -437,6 +469,7 @@ export type $QuickBooksConnectionPayload<ExtArgs extends runtime.Types.Extension
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     realmId: string
+    environment: string
     accessTokenEncrypted: string
     refreshTokenEncrypted: string
     accessTokenExpiresAt: Date
@@ -868,6 +901,7 @@ export interface Prisma__QuickBooksConnectionClient<T, Null = never, ExtArgs ext
 export interface QuickBooksConnectionFieldRefs {
   readonly id: Prisma.FieldRef<"QuickBooksConnection", 'String'>
   readonly realmId: Prisma.FieldRef<"QuickBooksConnection", 'String'>
+  readonly environment: Prisma.FieldRef<"QuickBooksConnection", 'String'>
   readonly accessTokenEncrypted: Prisma.FieldRef<"QuickBooksConnection", 'String'>
   readonly refreshTokenEncrypted: Prisma.FieldRef<"QuickBooksConnection", 'String'>
   readonly accessTokenExpiresAt: Prisma.FieldRef<"QuickBooksConnection", 'DateTime'>
