@@ -1,10 +1,22 @@
 
-import DashboardShell from "@/components/layout/dashboard-shell";
+import { redirect } from "next/navigation";
+import AppShell from "@/components/layout/app-shell";
+import { getAuthenticatedUser } from "@/lib/auth";
 
-export default function AdminLayout({ children }) {
+export default async function AdminLayout({ children }) {
+  const user = await getAuthenticatedUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  if (user.role !== "ADMIN") {
+    redirect("/salesperson");
+  }
+
   return (
-    <DashboardShell role="admin" title="Admin Dashboard">
+    <AppShell role="admin" isAuthenticated={true}>
       {children}
-    </DashboardShell>
+    </AppShell>
   );
 }

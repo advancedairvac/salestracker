@@ -1,0 +1,5 @@
+-- AlterTable
+ALTER TABLE "User" ADD COLUMN     "annualGoal" DECIMAL(12,2) NOT NULL DEFAULT 0,
+ADD COLUMN     "monthlyGoal" DECIMAL(12,2) NOT NULL DEFAULT 0,
+ADD COLUMN     "quarterlyGoal" DECIMAL(12,2) NOT NULL DEFAULT 0,
+ADD COLUMN     "title" TEXT;

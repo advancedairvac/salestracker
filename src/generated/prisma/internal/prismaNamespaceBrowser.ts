@@ -51,7 +51,13 @@ export const AnyNull = runtime.AnyNull
 
 
 export const ModelName = {
-  QuickBooksConnection: 'QuickBooksConnection'
+  User: 'User',
+  QuickBooksConnection: 'QuickBooksConnection',
+  Customer: 'Customer',
+  Opportunity: 'Opportunity',
+  FollowUp: 'FollowUp',
+  Activity: 'Activity',
+  Sale: 'Sale'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -70,6 +76,25 @@ export const TransactionIsolationLevel = runtime.makeStrictEnum({
 export type TransactionIsolationLevel = (typeof TransactionIsolationLevel)[keyof typeof TransactionIsolationLevel]
 
 
+export const UserScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  username: 'username',
+  email: 'email',
+  passwordHash: 'passwordHash',
+  title: 'title',
+  monthlyGoal: 'monthlyGoal',
+  quarterlyGoal: 'quarterlyGoal',
+  annualGoal: 'annualGoal',
+  role: 'role',
+  isActive: 'isActive',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
+
+
 export const QuickBooksConnectionScalarFieldEnum = {
   id: 'id',
   realmId: 'realmId',
@@ -83,6 +108,87 @@ export const QuickBooksConnectionScalarFieldEnum = {
 } as const
 
 export type QuickBooksConnectionScalarFieldEnum = (typeof QuickBooksConnectionScalarFieldEnum)[keyof typeof QuickBooksConnectionScalarFieldEnum]
+
+
+export const CustomerScalarFieldEnum = {
+  id: 'id',
+  stCustomerId: 'stCustomerId',
+  qbCustomerId: 'qbCustomerId',
+  pocName: 'pocName',
+  businessName: 'businessName',
+  phone: 'phone',
+  email: 'email',
+  location: 'location',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type CustomerScalarFieldEnum = (typeof CustomerScalarFieldEnum)[keyof typeof CustomerScalarFieldEnum]
+
+
+export const OpportunityScalarFieldEnum = {
+  id: 'id',
+  title: 'title',
+  customerId: 'customerId',
+  opportunityDate: 'opportunityDate',
+  jobType: 'jobType',
+  textMessage: 'textMessage',
+  value: 'value',
+  source: 'source',
+  status: 'status',
+  assignedToId: 'assignedToId',
+  createdById: 'createdById',
+  closedById: 'closedById',
+  notes: 'notes',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  closedAt: 'closedAt'
+} as const
+
+export type OpportunityScalarFieldEnum = (typeof OpportunityScalarFieldEnum)[keyof typeof OpportunityScalarFieldEnum]
+
+
+export const FollowUpScalarFieldEnum = {
+  id: 'id',
+  opportunityId: 'opportunityId',
+  assignedToId: 'assignedToId',
+  dueAt: 'dueAt',
+  status: 'status',
+  notes: 'notes',
+  completedAt: 'completedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type FollowUpScalarFieldEnum = (typeof FollowUpScalarFieldEnum)[keyof typeof FollowUpScalarFieldEnum]
+
+
+export const ActivityScalarFieldEnum = {
+  id: 'id',
+  opportunityId: 'opportunityId',
+  userId: 'userId',
+  type: 'type',
+  description: 'description',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ActivityScalarFieldEnum = (typeof ActivityScalarFieldEnum)[keyof typeof ActivityScalarFieldEnum]
+
+
+export const SaleScalarFieldEnum = {
+  id: 'id',
+  opportunityId: 'opportunityId',
+  closedById: 'closedById',
+  saleValue: 'saleValue',
+  source: 'source',
+  closedAt: 'closedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  serviceTitanJobId: 'serviceTitanJobId'
+} as const
+
+export type SaleScalarFieldEnum = (typeof SaleScalarFieldEnum)[keyof typeof SaleScalarFieldEnum]
 
 
 export const SortOrder = {

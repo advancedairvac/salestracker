@@ -18,7 +18,37 @@ export { Prisma }
 export * as $Enums from './enums.ts'
 export * from './enums.ts';
 /**
+ * Model User
+ * 
+ */
+export type User = Prisma.UserModel
+/**
  * Model QuickBooksConnection
  * 
  */
 export type QuickBooksConnection = Prisma.QuickBooksConnectionModel
+/**
+ * Model Customer
+ * 
+ */
+export type Customer = Prisma.CustomerModel
+/**
+ * Model Opportunity
+ * 
+ */
+export type Opportunity = Prisma.OpportunityModel
+/**
+ * Model FollowUp
+ * 
+ */
+export type FollowUp = Prisma.FollowUpModel
+/**
+ * Model Activity
+ * 
+ */
+export type Activity = Prisma.ActivityModel
+/**
+ * Model Sale
+ * 
+ */
+export type Sale = Prisma.SaleModel

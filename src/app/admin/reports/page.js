@@ -1,59 +1,31 @@
 
+import QuickBooksTabs from "@/components/quickbooks-testing/quickbooks-tabs";
+
 export const metadata = {
-  title: "Reports",
+  title: "QuickBooks API Testing | Advanced Sales Tracker",
+  description: "Test QuickBooks Online Accounting API resources.",
 };
 
-export default function ReportsPage() {
+export default function QuickBooksTestingPage() {
   return (
     <div className="space-y-6">
       <section>
-        <h2 className="text-2xl font-semibold text-[#0d0d0d]">Reports</h2>
-        <p className="mt-2 text-sm text-gray-500">
-          Review sales performance for a selected period.
+        <p className="text-sm font-medium uppercase tracking-wide text-[#0690c8]">
+          INTEGRATION TESTING
+        </p>
+
+        <h2 className="mt-2 text-2xl font-semibold text-[#0d0d0d]">
+          QuickBooks API Testing
+        </h2>
+
+        <p className="mt-2 max-w-3xl text-sm leading-6 text-gray-500">
+          Inspect company information and test read-only QuickBooks Online
+          Accounting API resources. Use the tabs below to review returned
+          records and raw JSON responses.
         </p>
       </section>
 
-      <section className="rounded-xl border border-black/10 bg-white p-5">
-        <h3 className="font-semibold">Report Filters</h3>
-
-        <div className="mt-4 grid gap-4 sm:grid-cols-3">
-          <label className="text-sm">
-            Report Type
-            <select className="mt-2 w-full rounded-lg border border-gray-200 p-3">
-              <option>Sales Report</option>
-              <option>Lead Report</option>
-              <option>Team Performance</option>
-              <option>Revenue Report</option>
-            </select>
-          </label>
-
-          <label className="text-sm">
-            Start Date
-            <input type="date" className="mt-2 w-full rounded-lg border border-gray-200 p-3" />
-          </label>
-
-          <label className="text-sm">
-            End Date
-            <input type="date" className="mt-2 w-full rounded-lg border border-gray-200 p-3" />
-          </label>
-        </div>
-
-        <button
-          type="button"
-          disabled
-          className="mt-4 rounded-lg bg-[#0d0d0d] px-4 py-2.5 text-sm text-white opacity-50"
-        >
-          Generate Report (Not Connected)
-        </button>
-      </section>
-
-      <section className="rounded-xl border border-black/10 bg-white p-5">
-        <h3 className="font-semibold">Report Results</h3>
-        <p className="mt-2 text-sm text-gray-500">
-          Select report criteria and connect the reporting logic to display
-          weekly, monthly, quarterly, year-to-date, or custom-range results.
-        </p>
-      </section>
+      <QuickBooksTabs />
     </div>
   );
 }
