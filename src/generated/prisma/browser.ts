@@ -18,6 +18,11 @@ export { Prisma }
 export * as $Enums from './enums.ts'
 export * from './enums.ts';
 /**
+ * Model IdCounter
+ * 
+ */
+export type IdCounter = Prisma.IdCounterModel
+/**
  * Model User
  * 
  */
@@ -37,6 +42,11 @@ export type Customer = Prisma.CustomerModel
  * 
  */
 export type Opportunity = Prisma.OpportunityModel
+/**
+ * Model FollowUpSchedule
+ * 
+ */
+export type FollowUpSchedule = Prisma.FollowUpScheduleModel
 /**
  * Model FollowUp
  * 

@@ -397,10 +397,12 @@ type FieldRefInputType<Model, FieldType> = Model extends never ? never : FieldRe
 
 
 export const ModelName = {
+  IdCounter: 'IdCounter',
   User: 'User',
   QuickBooksConnection: 'QuickBooksConnection',
   Customer: 'Customer',
   Opportunity: 'Opportunity',
+  FollowUpSchedule: 'FollowUpSchedule',
   FollowUp: 'FollowUp',
   Activity: 'Activity',
   Sale: 'Sale'
@@ -419,10 +421,84 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "quickBooksConnection" | "customer" | "opportunity" | "followUp" | "activity" | "sale"
+    modelProps: "idCounter" | "user" | "quickBooksConnection" | "customer" | "opportunity" | "followUpSchedule" | "followUp" | "activity" | "sale"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
+    IdCounter: {
+      payload: Prisma.$IdCounterPayload<ExtArgs>
+      fields: Prisma.IdCounterFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.IdCounterFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdCounterPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.IdCounterFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdCounterPayload>
+        }
+        findFirst: {
+          args: Prisma.IdCounterFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdCounterPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.IdCounterFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdCounterPayload>
+        }
+        findMany: {
+          args: Prisma.IdCounterFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdCounterPayload>[]
+        }
+        create: {
+          args: Prisma.IdCounterCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdCounterPayload>
+        }
+        createMany: {
+          args: Prisma.IdCounterCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.IdCounterCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdCounterPayload>[]
+        }
+        delete: {
+          args: Prisma.IdCounterDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdCounterPayload>
+        }
+        update: {
+          args: Prisma.IdCounterUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdCounterPayload>
+        }
+        deleteMany: {
+          args: Prisma.IdCounterDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.IdCounterUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.IdCounterUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdCounterPayload>[]
+        }
+        upsert: {
+          args: Prisma.IdCounterUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdCounterPayload>
+        }
+        aggregate: {
+          args: Prisma.IdCounterAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateIdCounter>
+        }
+        groupBy: {
+          args: Prisma.IdCounterGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.IdCounterGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.IdCounterCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.IdCounterCountAggregateOutputType> | number
+        }
+      }
+    }
     User: {
       payload: Prisma.$UserPayload<ExtArgs>
       fields: Prisma.UserFieldRefs
@@ -719,6 +795,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    FollowUpSchedule: {
+      payload: Prisma.$FollowUpSchedulePayload<ExtArgs>
+      fields: Prisma.FollowUpScheduleFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.FollowUpScheduleFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FollowUpSchedulePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.FollowUpScheduleFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FollowUpSchedulePayload>
+        }
+        findFirst: {
+          args: Prisma.FollowUpScheduleFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FollowUpSchedulePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.FollowUpScheduleFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FollowUpSchedulePayload>
+        }
+        findMany: {
+          args: Prisma.FollowUpScheduleFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FollowUpSchedulePayload>[]
+        }
+        create: {
+          args: Prisma.FollowUpScheduleCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FollowUpSchedulePayload>
+        }
+        createMany: {
+          args: Prisma.FollowUpScheduleCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.FollowUpScheduleCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FollowUpSchedulePayload>[]
+        }
+        delete: {
+          args: Prisma.FollowUpScheduleDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FollowUpSchedulePayload>
+        }
+        update: {
+          args: Prisma.FollowUpScheduleUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FollowUpSchedulePayload>
+        }
+        deleteMany: {
+          args: Prisma.FollowUpScheduleDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.FollowUpScheduleUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.FollowUpScheduleUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FollowUpSchedulePayload>[]
+        }
+        upsert: {
+          args: Prisma.FollowUpScheduleUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FollowUpSchedulePayload>
+        }
+        aggregate: {
+          args: Prisma.FollowUpScheduleAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateFollowUpSchedule>
+        }
+        groupBy: {
+          args: Prisma.FollowUpScheduleGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.FollowUpScheduleGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.FollowUpScheduleCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.FollowUpScheduleCountAggregateOutputType> | number
+        }
+      }
+    }
     FollowUp: {
       payload: Prisma.$FollowUpPayload<ExtArgs>
       fields: Prisma.FollowUpFieldRefs
@@ -980,8 +1130,18 @@ export const TransactionIsolationLevel = runtime.makeStrictEnum({
 export type TransactionIsolationLevel = (typeof TransactionIsolationLevel)[keyof typeof TransactionIsolationLevel]
 
 
+export const IdCounterScalarFieldEnum = {
+  prefix: 'prefix',
+  nextValue: 'nextValue',
+  updatedAt: 'updatedAt'
+} as const
+
+export type IdCounterScalarFieldEnum = (typeof IdCounterScalarFieldEnum)[keyof typeof IdCounterScalarFieldEnum]
+
+
 export const UserScalarFieldEnum = {
   id: 'id',
+  displayId: 'displayId',
   name: 'name',
   username: 'username',
   email: 'email',
@@ -1016,6 +1176,7 @@ export type QuickBooksConnectionScalarFieldEnum = (typeof QuickBooksConnectionSc
 
 export const CustomerScalarFieldEnum = {
   id: 'id',
+  displayId: 'displayId',
   stCustomerId: 'stCustomerId',
   qbCustomerId: 'qbCustomerId',
   pocName: 'pocName',
@@ -1032,8 +1193,10 @@ export type CustomerScalarFieldEnum = (typeof CustomerScalarFieldEnum)[keyof typ
 
 export const OpportunityScalarFieldEnum = {
   id: 'id',
-  title: 'title',
+  displayId: 'displayId',
+  serviceTitanEstimateId: 'serviceTitanEstimateId',
   customerId: 'customerId',
+  title: 'title',
   opportunityDate: 'opportunityDate',
   jobType: 'jobType',
   textMessage: 'textMessage',
@@ -1044,22 +1207,45 @@ export const OpportunityScalarFieldEnum = {
   createdById: 'createdById',
   closedById: 'closedById',
   notes: 'notes',
+  closedAt: 'closedAt',
+  reopenAt: 'reopenAt',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt',
-  closedAt: 'closedAt'
+  updatedAt: 'updatedAt'
 } as const
 
 export type OpportunityScalarFieldEnum = (typeof OpportunityScalarFieldEnum)[keyof typeof OpportunityScalarFieldEnum]
 
 
-export const FollowUpScalarFieldEnum = {
+export const FollowUpScheduleScalarFieldEnum = {
   id: 'id',
   opportunityId: 'opportunityId',
+  mode: 'mode',
+  isActive: 'isActive',
+  presentationAt: 'presentationAt',
+  startedAt: 'startedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type FollowUpScheduleScalarFieldEnum = (typeof FollowUpScheduleScalarFieldEnum)[keyof typeof FollowUpScheduleScalarFieldEnum]
+
+
+export const FollowUpScalarFieldEnum = {
+  id: 'id',
+  displayId: 'displayId',
+  opportunityId: 'opportunityId',
+  scheduleId: 'scheduleId',
   assignedToId: 'assignedToId',
   dueAt: 'dueAt',
   status: 'status',
+  type: 'type',
+  scheduleType: 'scheduleType',
+  sequence: 'sequence',
+  isActive: 'isActive',
   notes: 'notes',
   completedAt: 'completedAt',
+  notificationSentAt: 'notificationSentAt',
+  notificationAttempts: 'notificationAttempts',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -1082,14 +1268,16 @@ export type ActivityScalarFieldEnum = (typeof ActivityScalarFieldEnum)[keyof typ
 
 export const SaleScalarFieldEnum = {
   id: 'id',
+  displayId: 'displayId',
   opportunityId: 'opportunityId',
   closedById: 'closedById',
   saleValue: 'saleValue',
   source: 'source',
+  serviceTitanJobId: 'serviceTitanJobId',
+  notes: 'notes',
   closedAt: 'closedAt',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt',
-  serviceTitanJobId: 'serviceTitanJobId'
+  updatedAt: 'updatedAt'
 } as const
 
 export type SaleScalarFieldEnum = (typeof SaleScalarFieldEnum)[keyof typeof SaleScalarFieldEnum]
@@ -1140,6 +1328,34 @@ export type ListStringFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaMod
 
 
 /**
+ * Reference to a field of type 'Int'
+ */
+export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
+    
+
+
+/**
+ * Reference to a field of type 'Int[]'
+ */
+export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
+    
+
+
+/**
+ * Reference to a field of type 'DateTime'
+ */
+export type DateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime'>
+    
+
+
+/**
+ * Reference to a field of type 'DateTime[]'
+ */
+export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime[]'>
+    
+
+
+/**
  * Reference to a field of type 'Decimal'
  */
 export type DecimalFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Decimal'>
@@ -1175,20 +1391,6 @@ export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel,
 
 
 /**
- * Reference to a field of type 'DateTime'
- */
-export type DateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime'>
-    
-
-
-/**
- * Reference to a field of type 'DateTime[]'
- */
-export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime[]'>
-    
-
-
-/**
  * Reference to a field of type 'LeadSource'
  */
 export type EnumLeadSourceFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'LeadSource'>
@@ -1217,6 +1419,20 @@ export type ListEnumOpportunityStatusFieldRefInput<$PrismaModel> = FieldRefInput
 
 
 /**
+ * Reference to a field of type 'FollowUpScheduleType'
+ */
+export type EnumFollowUpScheduleTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'FollowUpScheduleType'>
+    
+
+
+/**
+ * Reference to a field of type 'FollowUpScheduleType[]'
+ */
+export type ListEnumFollowUpScheduleTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'FollowUpScheduleType[]'>
+    
+
+
+/**
  * Reference to a field of type 'FollowUpStatus'
  */
 export type EnumFollowUpStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'FollowUpStatus'>
@@ -1227,6 +1443,20 @@ export type EnumFollowUpStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$P
  * Reference to a field of type 'FollowUpStatus[]'
  */
 export type ListEnumFollowUpStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'FollowUpStatus[]'>
+    
+
+
+/**
+ * Reference to a field of type 'FollowUpType'
+ */
+export type EnumFollowUpTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'FollowUpType'>
+    
+
+
+/**
+ * Reference to a field of type 'FollowUpType[]'
+ */
+export type ListEnumFollowUpTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'FollowUpType[]'>
     
 
 
@@ -1245,16 +1475,16 @@ export type ListEnumActivityTypeFieldRefInput<$PrismaModel> = FieldRefInputType<
 
 
 /**
- * Reference to a field of type 'Int'
+ * Reference to a field of type 'Float'
  */
-export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
+export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
     
 
 
 /**
- * Reference to a field of type 'Int[]'
+ * Reference to a field of type 'Float[]'
  */
-export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
+export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float[]'>
     
 
 /**
@@ -1408,10 +1638,12 @@ export interface PrismaClientOptionsWithAdapter extends PrismaClientBaseOptions 
  */
 export type PrismaClientOptions = PrismaClientOptionsWithAccelerateUrl | PrismaClientOptionsWithAdapter
 export type GlobalOmitConfig = {
+  idCounter?: Prisma.IdCounterOmit
   user?: Prisma.UserOmit
   quickBooksConnection?: Prisma.QuickBooksConnectionOmit
   customer?: Prisma.CustomerOmit
   opportunity?: Prisma.OpportunityOmit
+  followUpSchedule?: Prisma.FollowUpScheduleOmit
   followUp?: Prisma.FollowUpOmit
   activity?: Prisma.ActivityOmit
   sale?: Prisma.SaleOmit

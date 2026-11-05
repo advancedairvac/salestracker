@@ -33,14 +33,6 @@ function getDateRanges() {
 }
 
 // ============================================
-// HELPERS
-// ============================================
-
-function calculateRevenue(sales = []) {
-  return sales.reduce((total, sale) => total + Number(sale.saleValue || 0), 0);
-}
-
-// ============================================
 // ADMIN DASHBOARD
 // ============================================
 
@@ -51,41 +43,65 @@ export default async function AdminDashboardPage() {
   // DATABASE QUERIES
   // ============================================
 
-  const [sales, openOpportunities, teamMembers] = await Promise.all([
-    // --------------------------------------------
-    // Sales Revenue
-    // --------------------------------------------
+  const [
+    todaySales,
+    monthSales,
+    yearSales,
+    pipeline,
+    teamMembers,
+    monthlySalesByMember,
+    opportunitiesByMember,
+  ] = await Promise.all([
+    // Today's Revenue
+    prisma.sale.aggregate({
+      where: {
+        closedAt: {
+          gte: today,
+        },
+      },
+      _sum: {
+        saleValue: true,
+      },
+    }),
 
-    prisma.sale.findMany({
+    // Monthly Revenue
+    prisma.sale.aggregate({
+      where: {
+        closedAt: {
+          gte: monthStart,
+        },
+      },
+      _sum: {
+        saleValue: true,
+      },
+    }),
+
+    // Yearly Revenue
+    prisma.sale.aggregate({
       where: {
         closedAt: {
           gte: yearStart,
         },
       },
-      select: {
+      _sum: {
         saleValue: true,
-        closedAt: true,
-        closedById: true,
       },
     }),
 
-    // --------------------------------------------
-    // Open Pipeline Opportunities
-    // --------------------------------------------
-
-    prisma.opportunity.findMany({
+    // Open Pipeline
+    prisma.opportunity.aggregate({
       where: {
         status: "OPEN",
       },
-      select: {
+      _count: {
+        _all: true,
+      },
+      _sum: {
         value: true,
       },
     }),
 
-    // --------------------------------------------
-    // Active Admin and Salespeople
-    // --------------------------------------------
-
+    // Active Team Members
     prisma.user.findMany({
       where: {
         role: {
@@ -93,31 +109,36 @@ export default async function AdminDashboardPage() {
         },
         isActive: true,
       },
-
+      select: {
+        id: true,
+        name: true,
+        title: true,
+        role: true,
+        monthlyGoal: true,
+      },
       orderBy: {
         name: "asc",
       },
+    }),
 
-      include: {
-        // Sales closed during the current month
-        closedSales: {
-          where: {
-            closedAt: {
-              gte: monthStart,
-            },
-          },
-          select: {
-            saleValue: true,
-            closedAt: true,
-          },
+    // Monthly Revenue Grouped by Salesperson
+    prisma.sale.groupBy({
+      by: ["closedById"],
+      where: {
+        closedAt: {
+          gte: monthStart,
         },
+      },
+      _sum: {
+        saleValue: true,
+      },
+    }),
 
-        // All assigned opportunities
-        assignedOpportunities: {
-          select: {
-            status: true,
-          },
-        },
+    // Opportunities Grouped by Assigned User and Status
+    prisma.opportunity.groupBy({
+      by: ["assignedToId", "status"],
+      _count: {
+        _all: true,
       },
     }),
   ]);
@@ -126,29 +147,64 @@ export default async function AdminDashboardPage() {
   // REVENUE CALCULATIONS
   // ============================================
 
-  const todayRevenue = calculateRevenue(
-    sales.filter((sale) => sale.closedAt >= today),
-  );
+  const todayRevenue = Number(todaySales._sum.saleValue || 0);
 
-  const monthRevenue = calculateRevenue(
-    sales.filter((sale) => sale.closedAt >= monthStart),
-  );
+  const monthRevenue = Number(monthSales._sum.saleValue || 0);
 
-  const yearRevenue = calculateRevenue(sales);
+  const yearRevenue = Number(yearSales._sum.saleValue || 0);
 
   // ============================================
   // PIPELINE CALCULATIONS
   // ============================================
 
-  const totalOpportunities = openOpportunities.length;
+  const totalOpportunities = pipeline._count._all;
 
-  const pipelineValue = openOpportunities.reduce((total, opportunity) => {
-    return total + Number(opportunity.value || 0);
-  }, 0);
+  const pipelineValue = Number(pipeline._sum.value || 0);
 
   // Estimates are not separately represented
   // in the current database schema.
   const totalEstimates = 0;
+
+  // ============================================
+  // TEAM REVENUE LOOKUP
+  // ============================================
+
+  const revenueByMember = new Map(
+    monthlySalesByMember.map((item) => [
+      item.closedById,
+      Number(item._sum.saleValue || 0),
+    ]),
+  );
+
+  // ============================================
+  // TEAM OPPORTUNITY LOOKUP
+  // ============================================
+
+  const opportunityStatsByMember = new Map();
+
+  for (const item of opportunitiesByMember) {
+    const memberId = item.assignedToId;
+
+    if (!opportunityStatsByMember.has(memberId)) {
+      opportunityStatsByMember.set(memberId, {
+        total: 0,
+        won: 0,
+        lost: 0,
+      });
+    }
+
+    const stats = opportunityStatsByMember.get(memberId);
+
+    stats.total += item._count._all;
+
+    if (item.status === "WON") {
+      stats.won += item._count._all;
+    }
+
+    if (item.status === "LOST") {
+      stats.lost += item._count._all;
+    }
+  }
 
   // ============================================
   // ADMIN FIRST, THEN SALESPERSONS
@@ -171,23 +227,16 @@ export default async function AdminDashboardPage() {
   // ============================================
 
   const teamData = sortedTeamMembers.map((member) => {
-    const opportunities = member.assignedOpportunities;
+    const stats = opportunityStatsByMember.get(member.id) || {
+      total: 0,
+      won: 0,
+      lost: 0,
+    };
 
-    const wonCount = opportunities.filter(
-      (opportunity) => opportunity.status === "WON",
-    ).length;
-
-    const lostCount = opportunities.filter(
-      (opportunity) => opportunity.status === "LOST",
-    ).length;
-
-    const decidedCount = wonCount + lostCount;
+    const decidedCount = stats.won + stats.lost;
 
     const closeRate =
-      decidedCount > 0 ? Math.round((wonCount / decidedCount) * 100) : 0;
-
-    // Current month's revenue
-    const monthlyRevenue = calculateRevenue(member.closedSales);
+      decidedCount > 0 ? Math.round((stats.won / decidedCount) * 100) : 0;
 
     return {
       id: member.id,
@@ -197,12 +246,12 @@ export default async function AdminDashboardPage() {
 
       monthlyGoal: Number(member.monthlyGoal || 0),
 
-      revenue: monthlyRevenue,
+      revenue: revenueByMember.get(member.id) || 0,
 
       // Commission will be implemented later
       commission: 0,
 
-      opportunities: opportunities.length,
+      opportunities: stats.total,
 
       closeRate,
     };
@@ -242,7 +291,7 @@ export default async function AdminDashboardPage() {
       </section>
 
       {/* Sales Team Performance */}
-      <section className="space-y-3">
+      <section className="mt-12 space-y-3">
         <div className="flex items-center justify-between gap-3">
           <h2 className="text-sm font-bold uppercase tracking-wide text-[#555]">
             Sales Team Performance

@@ -28,7 +28,10 @@ export type LeadSource = (typeof LeadSource)[keyof typeof LeadSource]
 export const OpportunityStatus = {
   OPEN: 'OPEN',
   WON: 'WON',
-  LOST: 'LOST'
+  LOST: 'LOST',
+  PERMANENTLY_CLOSED: 'PERMANENTLY_CLOSED',
+  TEMPORARILY_CLOSED: 'TEMPORARILY_CLOSED',
+  SCHEDULED_TO_REOPEN: 'SCHEDULED_TO_REOPEN'
 } as const
 
 export type OpportunityStatus = (typeof OpportunityStatus)[keyof typeof OpportunityStatus]
@@ -41,6 +44,25 @@ export const FollowUpStatus = {
 } as const
 
 export type FollowUpStatus = (typeof FollowUpStatus)[keyof typeof FollowUpStatus]
+
+
+export const FollowUpType = {
+  CALL: 'CALL',
+  EMAIL: 'EMAIL',
+  TEXT: 'TEXT',
+  MEETING: 'MEETING',
+  OTHER: 'OTHER'
+} as const
+
+export type FollowUpType = (typeof FollowUpType)[keyof typeof FollowUpType]
+
+
+export const FollowUpScheduleType = {
+  STANDARD: 'STANDARD',
+  MANUAL: 'MANUAL'
+} as const
+
+export type FollowUpScheduleType = (typeof FollowUpScheduleType)[keyof typeof FollowUpScheduleType]
 
 
 export const ActivityType = {

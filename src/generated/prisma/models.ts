@@ -8,10 +8,12 @@
  *
  * 🟢 You can import this file directly.
  */
+export type * from './models/IdCounter.ts'
 export type * from './models/User.ts'
 export type * from './models/QuickBooksConnection.ts'
 export type * from './models/Customer.ts'
 export type * from './models/Opportunity.ts'
+export type * from './models/FollowUpSchedule.ts'
 export type * from './models/FollowUp.ts'
 export type * from './models/Activity.ts'
 export type * from './models/Sale.ts'

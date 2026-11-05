@@ -36,38 +36,44 @@ export type SaleSumAggregateOutputType = {
 
 export type SaleMinAggregateOutputType = {
   id: string | null
+  displayId: string | null
   opportunityId: string | null
   closedById: string | null
   saleValue: runtime.Decimal | null
   source: $Enums.LeadSource | null
+  serviceTitanJobId: string | null
+  notes: string | null
   closedAt: Date | null
   createdAt: Date | null
   updatedAt: Date | null
-  serviceTitanJobId: string | null
 }
 
 export type SaleMaxAggregateOutputType = {
   id: string | null
+  displayId: string | null
   opportunityId: string | null
   closedById: string | null
   saleValue: runtime.Decimal | null
   source: $Enums.LeadSource | null
+  serviceTitanJobId: string | null
+  notes: string | null
   closedAt: Date | null
   createdAt: Date | null
   updatedAt: Date | null
-  serviceTitanJobId: string | null
 }
 
 export type SaleCountAggregateOutputType = {
   id: number
+  displayId: number
   opportunityId: number
   closedById: number
   saleValue: number
   source: number
+  serviceTitanJobId: number
+  notes: number
   closedAt: number
   createdAt: number
   updatedAt: number
-  serviceTitanJobId: number
   _all: number
 }
 
@@ -82,38 +88,44 @@ export type SaleSumAggregateInputType = {
 
 export type SaleMinAggregateInputType = {
   id?: true
+  displayId?: true
   opportunityId?: true
   closedById?: true
   saleValue?: true
   source?: true
+  serviceTitanJobId?: true
+  notes?: true
   closedAt?: true
   createdAt?: true
   updatedAt?: true
-  serviceTitanJobId?: true
 }
 
 export type SaleMaxAggregateInputType = {
   id?: true
+  displayId?: true
   opportunityId?: true
   closedById?: true
   saleValue?: true
   source?: true
+  serviceTitanJobId?: true
+  notes?: true
   closedAt?: true
   createdAt?: true
   updatedAt?: true
-  serviceTitanJobId?: true
 }
 
 export type SaleCountAggregateInputType = {
   id?: true
+  displayId?: true
   opportunityId?: true
   closedById?: true
   saleValue?: true
   source?: true
+  serviceTitanJobId?: true
+  notes?: true
   closedAt?: true
   createdAt?: true
   updatedAt?: true
-  serviceTitanJobId?: true
   _all?: true
 }
 
@@ -205,14 +217,16 @@ export type SaleGroupByArgs<ExtArgs extends runtime.Types.Extensions.InternalArg
 
 export type SaleGroupByOutputType = {
   id: string
+  displayId: string | null
   opportunityId: string
   closedById: string
   saleValue: runtime.Decimal
   source: $Enums.LeadSource
+  serviceTitanJobId: string | null
+  notes: string | null
   closedAt: Date
   createdAt: Date
   updatedAt: Date
-  serviceTitanJobId: string | null
   _count: SaleCountAggregateOutputType | null
   _avg: SaleAvgAggregateOutputType | null
   _sum: SaleSumAggregateOutputType | null
@@ -240,59 +254,67 @@ export type SaleWhereInput = {
   OR?: Prisma.SaleWhereInput[]
   NOT?: Prisma.SaleWhereInput | Prisma.SaleWhereInput[]
   id?: Prisma.StringFilter<"Sale"> | string
+  displayId?: Prisma.StringNullableFilter<"Sale"> | string | null
   opportunityId?: Prisma.StringFilter<"Sale"> | string
   closedById?: Prisma.StringFilter<"Sale"> | string
   saleValue?: Prisma.DecimalFilter<"Sale"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   source?: Prisma.EnumLeadSourceFilter<"Sale"> | $Enums.LeadSource
+  serviceTitanJobId?: Prisma.StringNullableFilter<"Sale"> | string | null
+  notes?: Prisma.StringNullableFilter<"Sale"> | string | null
   closedAt?: Prisma.DateTimeFilter<"Sale"> | Date | string
   createdAt?: Prisma.DateTimeFilter<"Sale"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Sale"> | Date | string
-  serviceTitanJobId?: Prisma.StringNullableFilter<"Sale"> | string | null
   opportunity?: Prisma.XOR<Prisma.OpportunityScalarRelationFilter, Prisma.OpportunityWhereInput>
   closedBy?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
 }
 
 export type SaleOrderByWithRelationInput = {
   id?: Prisma.SortOrder
+  displayId?: Prisma.SortOrderInput | Prisma.SortOrder
   opportunityId?: Prisma.SortOrder
   closedById?: Prisma.SortOrder
   saleValue?: Prisma.SortOrder
   source?: Prisma.SortOrder
+  serviceTitanJobId?: Prisma.SortOrderInput | Prisma.SortOrder
+  notes?: Prisma.SortOrderInput | Prisma.SortOrder
   closedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
-  serviceTitanJobId?: Prisma.SortOrderInput | Prisma.SortOrder
   opportunity?: Prisma.OpportunityOrderByWithRelationInput
   closedBy?: Prisma.UserOrderByWithRelationInput
 }
 
 export type SaleWhereUniqueInput = Prisma.AtLeast<{
   id?: string
+  displayId?: string
+  opportunityId?: string
   serviceTitanJobId?: string
   AND?: Prisma.SaleWhereInput | Prisma.SaleWhereInput[]
   OR?: Prisma.SaleWhereInput[]
   NOT?: Prisma.SaleWhereInput | Prisma.SaleWhereInput[]
-  opportunityId?: Prisma.StringFilter<"Sale"> | string
   closedById?: Prisma.StringFilter<"Sale"> | string
   saleValue?: Prisma.DecimalFilter<"Sale"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   source?: Prisma.EnumLeadSourceFilter<"Sale"> | $Enums.LeadSource
+  notes?: Prisma.StringNullableFilter<"Sale"> | string | null
   closedAt?: Prisma.DateTimeFilter<"Sale"> | Date | string
   createdAt?: Prisma.DateTimeFilter<"Sale"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Sale"> | Date | string
   opportunity?: Prisma.XOR<Prisma.OpportunityScalarRelationFilter, Prisma.OpportunityWhereInput>
   closedBy?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
-}, "id" | "serviceTitanJobId">
+}, "id" | "displayId" | "opportunityId" | "serviceTitanJobId">
 
 export type SaleOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
+  displayId?: Prisma.SortOrderInput | Prisma.SortOrder
   opportunityId?: Prisma.SortOrder
   closedById?: Prisma.SortOrder
   saleValue?: Prisma.SortOrder
   source?: Prisma.SortOrder
+  serviceTitanJobId?: Prisma.SortOrderInput | Prisma.SortOrder
+  notes?: Prisma.SortOrderInput | Prisma.SortOrder
   closedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
-  serviceTitanJobId?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.SaleCountOrderByAggregateInput
   _avg?: Prisma.SaleAvgOrderByAggregateInput
   _max?: Prisma.SaleMaxOrderByAggregateInput
@@ -305,96 +327,112 @@ export type SaleScalarWhereWithAggregatesInput = {
   OR?: Prisma.SaleScalarWhereWithAggregatesInput[]
   NOT?: Prisma.SaleScalarWhereWithAggregatesInput | Prisma.SaleScalarWhereWithAggregatesInput[]
   id?: Prisma.StringWithAggregatesFilter<"Sale"> | string
+  displayId?: Prisma.StringNullableWithAggregatesFilter<"Sale"> | string | null
   opportunityId?: Prisma.StringWithAggregatesFilter<"Sale"> | string
   closedById?: Prisma.StringWithAggregatesFilter<"Sale"> | string
   saleValue?: Prisma.DecimalWithAggregatesFilter<"Sale"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   source?: Prisma.EnumLeadSourceWithAggregatesFilter<"Sale"> | $Enums.LeadSource
+  serviceTitanJobId?: Prisma.StringNullableWithAggregatesFilter<"Sale"> | string | null
+  notes?: Prisma.StringNullableWithAggregatesFilter<"Sale"> | string | null
   closedAt?: Prisma.DateTimeWithAggregatesFilter<"Sale"> | Date | string
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Sale"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Sale"> | Date | string
-  serviceTitanJobId?: Prisma.StringNullableWithAggregatesFilter<"Sale"> | string | null
 }
 
 export type SaleCreateInput = {
   id?: string
+  displayId?: string | null
   saleValue: runtime.Decimal | runtime.DecimalJsLike | number | string
   source: $Enums.LeadSource
+  serviceTitanJobId?: string | null
+  notes?: string | null
   closedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
-  serviceTitanJobId?: string | null
-  opportunity: Prisma.OpportunityCreateNestedOneWithoutSalesInput
+  opportunity: Prisma.OpportunityCreateNestedOneWithoutSaleInput
   closedBy: Prisma.UserCreateNestedOneWithoutClosedSalesInput
 }
 
 export type SaleUncheckedCreateInput = {
   id?: string
+  displayId?: string | null
   opportunityId: string
   closedById: string
   saleValue: runtime.Decimal | runtime.DecimalJsLike | number | string
   source: $Enums.LeadSource
+  serviceTitanJobId?: string | null
+  notes?: string | null
   closedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
-  serviceTitanJobId?: string | null
 }
 
 export type SaleUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  displayId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   saleValue?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   source?: Prisma.EnumLeadSourceFieldUpdateOperationsInput | $Enums.LeadSource
+  serviceTitanJobId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   closedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  serviceTitanJobId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  opportunity?: Prisma.OpportunityUpdateOneRequiredWithoutSalesNestedInput
+  opportunity?: Prisma.OpportunityUpdateOneRequiredWithoutSaleNestedInput
   closedBy?: Prisma.UserUpdateOneRequiredWithoutClosedSalesNestedInput
 }
 
 export type SaleUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  displayId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   opportunityId?: Prisma.StringFieldUpdateOperationsInput | string
   closedById?: Prisma.StringFieldUpdateOperationsInput | string
   saleValue?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   source?: Prisma.EnumLeadSourceFieldUpdateOperationsInput | $Enums.LeadSource
+  serviceTitanJobId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   closedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  serviceTitanJobId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type SaleCreateManyInput = {
   id?: string
+  displayId?: string | null
   opportunityId: string
   closedById: string
   saleValue: runtime.Decimal | runtime.DecimalJsLike | number | string
   source: $Enums.LeadSource
+  serviceTitanJobId?: string | null
+  notes?: string | null
   closedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
-  serviceTitanJobId?: string | null
 }
 
 export type SaleUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  displayId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   saleValue?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   source?: Prisma.EnumLeadSourceFieldUpdateOperationsInput | $Enums.LeadSource
+  serviceTitanJobId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   closedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  serviceTitanJobId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type SaleUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  displayId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   opportunityId?: Prisma.StringFieldUpdateOperationsInput | string
   closedById?: Prisma.StringFieldUpdateOperationsInput | string
   saleValue?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   source?: Prisma.EnumLeadSourceFieldUpdateOperationsInput | $Enums.LeadSource
+  serviceTitanJobId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   closedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  serviceTitanJobId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type SaleListRelationFilter = {
@@ -407,16 +445,23 @@ export type SaleOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
 }
 
+export type SaleNullableScalarRelationFilter = {
+  is?: Prisma.SaleWhereInput | null
+  isNot?: Prisma.SaleWhereInput | null
+}
+
 export type SaleCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  displayId?: Prisma.SortOrder
   opportunityId?: Prisma.SortOrder
   closedById?: Prisma.SortOrder
   saleValue?: Prisma.SortOrder
   source?: Prisma.SortOrder
+  serviceTitanJobId?: Prisma.SortOrder
+  notes?: Prisma.SortOrder
   closedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
-  serviceTitanJobId?: Prisma.SortOrder
 }
 
 export type SaleAvgOrderByAggregateInput = {
@@ -425,26 +470,30 @@ export type SaleAvgOrderByAggregateInput = {
 
 export type SaleMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  displayId?: Prisma.SortOrder
   opportunityId?: Prisma.SortOrder
   closedById?: Prisma.SortOrder
   saleValue?: Prisma.SortOrder
   source?: Prisma.SortOrder
+  serviceTitanJobId?: Prisma.SortOrder
+  notes?: Prisma.SortOrder
   closedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
-  serviceTitanJobId?: Prisma.SortOrder
 }
 
 export type SaleMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  displayId?: Prisma.SortOrder
   opportunityId?: Prisma.SortOrder
   closedById?: Prisma.SortOrder
   saleValue?: Prisma.SortOrder
   source?: Prisma.SortOrder
+  serviceTitanJobId?: Prisma.SortOrder
+  notes?: Prisma.SortOrder
   closedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
-  serviceTitanJobId?: Prisma.SortOrder
 }
 
 export type SaleSumOrderByAggregateInput = {
@@ -493,68 +542,62 @@ export type SaleUncheckedUpdateManyWithoutClosedByNestedInput = {
   deleteMany?: Prisma.SaleScalarWhereInput | Prisma.SaleScalarWhereInput[]
 }
 
-export type SaleCreateNestedManyWithoutOpportunityInput = {
-  create?: Prisma.XOR<Prisma.SaleCreateWithoutOpportunityInput, Prisma.SaleUncheckedCreateWithoutOpportunityInput> | Prisma.SaleCreateWithoutOpportunityInput[] | Prisma.SaleUncheckedCreateWithoutOpportunityInput[]
-  connectOrCreate?: Prisma.SaleCreateOrConnectWithoutOpportunityInput | Prisma.SaleCreateOrConnectWithoutOpportunityInput[]
-  createMany?: Prisma.SaleCreateManyOpportunityInputEnvelope
-  connect?: Prisma.SaleWhereUniqueInput | Prisma.SaleWhereUniqueInput[]
+export type SaleCreateNestedOneWithoutOpportunityInput = {
+  create?: Prisma.XOR<Prisma.SaleCreateWithoutOpportunityInput, Prisma.SaleUncheckedCreateWithoutOpportunityInput>
+  connectOrCreate?: Prisma.SaleCreateOrConnectWithoutOpportunityInput
+  connect?: Prisma.SaleWhereUniqueInput
 }
 
-export type SaleUncheckedCreateNestedManyWithoutOpportunityInput = {
-  create?: Prisma.XOR<Prisma.SaleCreateWithoutOpportunityInput, Prisma.SaleUncheckedCreateWithoutOpportunityInput> | Prisma.SaleCreateWithoutOpportunityInput[] | Prisma.SaleUncheckedCreateWithoutOpportunityInput[]
-  connectOrCreate?: Prisma.SaleCreateOrConnectWithoutOpportunityInput | Prisma.SaleCreateOrConnectWithoutOpportunityInput[]
-  createMany?: Prisma.SaleCreateManyOpportunityInputEnvelope
-  connect?: Prisma.SaleWhereUniqueInput | Prisma.SaleWhereUniqueInput[]
+export type SaleUncheckedCreateNestedOneWithoutOpportunityInput = {
+  create?: Prisma.XOR<Prisma.SaleCreateWithoutOpportunityInput, Prisma.SaleUncheckedCreateWithoutOpportunityInput>
+  connectOrCreate?: Prisma.SaleCreateOrConnectWithoutOpportunityInput
+  connect?: Prisma.SaleWhereUniqueInput
 }
 
-export type SaleUpdateManyWithoutOpportunityNestedInput = {
-  create?: Prisma.XOR<Prisma.SaleCreateWithoutOpportunityInput, Prisma.SaleUncheckedCreateWithoutOpportunityInput> | Prisma.SaleCreateWithoutOpportunityInput[] | Prisma.SaleUncheckedCreateWithoutOpportunityInput[]
-  connectOrCreate?: Prisma.SaleCreateOrConnectWithoutOpportunityInput | Prisma.SaleCreateOrConnectWithoutOpportunityInput[]
-  upsert?: Prisma.SaleUpsertWithWhereUniqueWithoutOpportunityInput | Prisma.SaleUpsertWithWhereUniqueWithoutOpportunityInput[]
-  createMany?: Prisma.SaleCreateManyOpportunityInputEnvelope
-  set?: Prisma.SaleWhereUniqueInput | Prisma.SaleWhereUniqueInput[]
-  disconnect?: Prisma.SaleWhereUniqueInput | Prisma.SaleWhereUniqueInput[]
-  delete?: Prisma.SaleWhereUniqueInput | Prisma.SaleWhereUniqueInput[]
-  connect?: Prisma.SaleWhereUniqueInput | Prisma.SaleWhereUniqueInput[]
-  update?: Prisma.SaleUpdateWithWhereUniqueWithoutOpportunityInput | Prisma.SaleUpdateWithWhereUniqueWithoutOpportunityInput[]
-  updateMany?: Prisma.SaleUpdateManyWithWhereWithoutOpportunityInput | Prisma.SaleUpdateManyWithWhereWithoutOpportunityInput[]
-  deleteMany?: Prisma.SaleScalarWhereInput | Prisma.SaleScalarWhereInput[]
+export type SaleUpdateOneWithoutOpportunityNestedInput = {
+  create?: Prisma.XOR<Prisma.SaleCreateWithoutOpportunityInput, Prisma.SaleUncheckedCreateWithoutOpportunityInput>
+  connectOrCreate?: Prisma.SaleCreateOrConnectWithoutOpportunityInput
+  upsert?: Prisma.SaleUpsertWithoutOpportunityInput
+  disconnect?: Prisma.SaleWhereInput | boolean
+  delete?: Prisma.SaleWhereInput | boolean
+  connect?: Prisma.SaleWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.SaleUpdateToOneWithWhereWithoutOpportunityInput, Prisma.SaleUpdateWithoutOpportunityInput>, Prisma.SaleUncheckedUpdateWithoutOpportunityInput>
 }
 
-export type SaleUncheckedUpdateManyWithoutOpportunityNestedInput = {
-  create?: Prisma.XOR<Prisma.SaleCreateWithoutOpportunityInput, Prisma.SaleUncheckedCreateWithoutOpportunityInput> | Prisma.SaleCreateWithoutOpportunityInput[] | Prisma.SaleUncheckedCreateWithoutOpportunityInput[]
-  connectOrCreate?: Prisma.SaleCreateOrConnectWithoutOpportunityInput | Prisma.SaleCreateOrConnectWithoutOpportunityInput[]
-  upsert?: Prisma.SaleUpsertWithWhereUniqueWithoutOpportunityInput | Prisma.SaleUpsertWithWhereUniqueWithoutOpportunityInput[]
-  createMany?: Prisma.SaleCreateManyOpportunityInputEnvelope
-  set?: Prisma.SaleWhereUniqueInput | Prisma.SaleWhereUniqueInput[]
-  disconnect?: Prisma.SaleWhereUniqueInput | Prisma.SaleWhereUniqueInput[]
-  delete?: Prisma.SaleWhereUniqueInput | Prisma.SaleWhereUniqueInput[]
-  connect?: Prisma.SaleWhereUniqueInput | Prisma.SaleWhereUniqueInput[]
-  update?: Prisma.SaleUpdateWithWhereUniqueWithoutOpportunityInput | Prisma.SaleUpdateWithWhereUniqueWithoutOpportunityInput[]
-  updateMany?: Prisma.SaleUpdateManyWithWhereWithoutOpportunityInput | Prisma.SaleUpdateManyWithWhereWithoutOpportunityInput[]
-  deleteMany?: Prisma.SaleScalarWhereInput | Prisma.SaleScalarWhereInput[]
+export type SaleUncheckedUpdateOneWithoutOpportunityNestedInput = {
+  create?: Prisma.XOR<Prisma.SaleCreateWithoutOpportunityInput, Prisma.SaleUncheckedCreateWithoutOpportunityInput>
+  connectOrCreate?: Prisma.SaleCreateOrConnectWithoutOpportunityInput
+  upsert?: Prisma.SaleUpsertWithoutOpportunityInput
+  disconnect?: Prisma.SaleWhereInput | boolean
+  delete?: Prisma.SaleWhereInput | boolean
+  connect?: Prisma.SaleWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.SaleUpdateToOneWithWhereWithoutOpportunityInput, Prisma.SaleUpdateWithoutOpportunityInput>, Prisma.SaleUncheckedUpdateWithoutOpportunityInput>
 }
 
 export type SaleCreateWithoutClosedByInput = {
   id?: string
+  displayId?: string | null
   saleValue: runtime.Decimal | runtime.DecimalJsLike | number | string
   source: $Enums.LeadSource
+  serviceTitanJobId?: string | null
+  notes?: string | null
   closedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
-  serviceTitanJobId?: string | null
-  opportunity: Prisma.OpportunityCreateNestedOneWithoutSalesInput
+  opportunity: Prisma.OpportunityCreateNestedOneWithoutSaleInput
 }
 
 export type SaleUncheckedCreateWithoutClosedByInput = {
   id?: string
+  displayId?: string | null
   opportunityId: string
   saleValue: runtime.Decimal | runtime.DecimalJsLike | number | string
   source: $Enums.LeadSource
+  serviceTitanJobId?: string | null
+  notes?: string | null
   closedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
-  serviceTitanJobId?: string | null
 }
 
 export type SaleCreateOrConnectWithoutClosedByInput = {
@@ -588,36 +631,42 @@ export type SaleScalarWhereInput = {
   OR?: Prisma.SaleScalarWhereInput[]
   NOT?: Prisma.SaleScalarWhereInput | Prisma.SaleScalarWhereInput[]
   id?: Prisma.StringFilter<"Sale"> | string
+  displayId?: Prisma.StringNullableFilter<"Sale"> | string | null
   opportunityId?: Prisma.StringFilter<"Sale"> | string
   closedById?: Prisma.StringFilter<"Sale"> | string
   saleValue?: Prisma.DecimalFilter<"Sale"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   source?: Prisma.EnumLeadSourceFilter<"Sale"> | $Enums.LeadSource
+  serviceTitanJobId?: Prisma.StringNullableFilter<"Sale"> | string | null
+  notes?: Prisma.StringNullableFilter<"Sale"> | string | null
   closedAt?: Prisma.DateTimeFilter<"Sale"> | Date | string
   createdAt?: Prisma.DateTimeFilter<"Sale"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Sale"> | Date | string
-  serviceTitanJobId?: Prisma.StringNullableFilter<"Sale"> | string | null
 }
 
 export type SaleCreateWithoutOpportunityInput = {
   id?: string
+  displayId?: string | null
   saleValue: runtime.Decimal | runtime.DecimalJsLike | number | string
   source: $Enums.LeadSource
+  serviceTitanJobId?: string | null
+  notes?: string | null
   closedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
-  serviceTitanJobId?: string | null
   closedBy: Prisma.UserCreateNestedOneWithoutClosedSalesInput
 }
 
 export type SaleUncheckedCreateWithoutOpportunityInput = {
   id?: string
+  displayId?: string | null
   closedById: string
   saleValue: runtime.Decimal | runtime.DecimalJsLike | number | string
   source: $Enums.LeadSource
+  serviceTitanJobId?: string | null
+  notes?: string | null
   closedAt?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
-  serviceTitanJobId?: string | null
 }
 
 export type SaleCreateOrConnectWithoutOpportunityInput = {
@@ -625,172 +674,160 @@ export type SaleCreateOrConnectWithoutOpportunityInput = {
   create: Prisma.XOR<Prisma.SaleCreateWithoutOpportunityInput, Prisma.SaleUncheckedCreateWithoutOpportunityInput>
 }
 
-export type SaleCreateManyOpportunityInputEnvelope = {
-  data: Prisma.SaleCreateManyOpportunityInput | Prisma.SaleCreateManyOpportunityInput[]
-  skipDuplicates?: boolean
-}
-
-export type SaleUpsertWithWhereUniqueWithoutOpportunityInput = {
-  where: Prisma.SaleWhereUniqueInput
+export type SaleUpsertWithoutOpportunityInput = {
   update: Prisma.XOR<Prisma.SaleUpdateWithoutOpportunityInput, Prisma.SaleUncheckedUpdateWithoutOpportunityInput>
   create: Prisma.XOR<Prisma.SaleCreateWithoutOpportunityInput, Prisma.SaleUncheckedCreateWithoutOpportunityInput>
+  where?: Prisma.SaleWhereInput
 }
 
-export type SaleUpdateWithWhereUniqueWithoutOpportunityInput = {
-  where: Prisma.SaleWhereUniqueInput
+export type SaleUpdateToOneWithWhereWithoutOpportunityInput = {
+  where?: Prisma.SaleWhereInput
   data: Prisma.XOR<Prisma.SaleUpdateWithoutOpportunityInput, Prisma.SaleUncheckedUpdateWithoutOpportunityInput>
-}
-
-export type SaleUpdateManyWithWhereWithoutOpportunityInput = {
-  where: Prisma.SaleScalarWhereInput
-  data: Prisma.XOR<Prisma.SaleUpdateManyMutationInput, Prisma.SaleUncheckedUpdateManyWithoutOpportunityInput>
-}
-
-export type SaleCreateManyClosedByInput = {
-  id?: string
-  opportunityId: string
-  saleValue: runtime.Decimal | runtime.DecimalJsLike | number | string
-  source: $Enums.LeadSource
-  closedAt?: Date | string
-  createdAt?: Date | string
-  updatedAt?: Date | string
-  serviceTitanJobId?: string | null
-}
-
-export type SaleUpdateWithoutClosedByInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string
-  saleValue?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  source?: Prisma.EnumLeadSourceFieldUpdateOperationsInput | $Enums.LeadSource
-  closedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  serviceTitanJobId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  opportunity?: Prisma.OpportunityUpdateOneRequiredWithoutSalesNestedInput
-}
-
-export type SaleUncheckedUpdateWithoutClosedByInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string
-  opportunityId?: Prisma.StringFieldUpdateOperationsInput | string
-  saleValue?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  source?: Prisma.EnumLeadSourceFieldUpdateOperationsInput | $Enums.LeadSource
-  closedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  serviceTitanJobId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-}
-
-export type SaleUncheckedUpdateManyWithoutClosedByInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string
-  opportunityId?: Prisma.StringFieldUpdateOperationsInput | string
-  saleValue?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  source?: Prisma.EnumLeadSourceFieldUpdateOperationsInput | $Enums.LeadSource
-  closedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  serviceTitanJobId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-}
-
-export type SaleCreateManyOpportunityInput = {
-  id?: string
-  closedById: string
-  saleValue: runtime.Decimal | runtime.DecimalJsLike | number | string
-  source: $Enums.LeadSource
-  closedAt?: Date | string
-  createdAt?: Date | string
-  updatedAt?: Date | string
-  serviceTitanJobId?: string | null
 }
 
 export type SaleUpdateWithoutOpportunityInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  displayId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   saleValue?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   source?: Prisma.EnumLeadSourceFieldUpdateOperationsInput | $Enums.LeadSource
+  serviceTitanJobId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   closedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  serviceTitanJobId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   closedBy?: Prisma.UserUpdateOneRequiredWithoutClosedSalesNestedInput
 }
 
 export type SaleUncheckedUpdateWithoutOpportunityInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  displayId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   closedById?: Prisma.StringFieldUpdateOperationsInput | string
   saleValue?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   source?: Prisma.EnumLeadSourceFieldUpdateOperationsInput | $Enums.LeadSource
+  serviceTitanJobId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   closedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  serviceTitanJobId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
-export type SaleUncheckedUpdateManyWithoutOpportunityInput = {
+export type SaleCreateManyClosedByInput = {
+  id?: string
+  displayId?: string | null
+  opportunityId: string
+  saleValue: runtime.Decimal | runtime.DecimalJsLike | number | string
+  source: $Enums.LeadSource
+  serviceTitanJobId?: string | null
+  notes?: string | null
+  closedAt?: Date | string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type SaleUpdateWithoutClosedByInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  closedById?: Prisma.StringFieldUpdateOperationsInput | string
+  displayId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   saleValue?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   source?: Prisma.EnumLeadSourceFieldUpdateOperationsInput | $Enums.LeadSource
+  serviceTitanJobId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   closedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  opportunity?: Prisma.OpportunityUpdateOneRequiredWithoutSaleNestedInput
+}
+
+export type SaleUncheckedUpdateWithoutClosedByInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  displayId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  opportunityId?: Prisma.StringFieldUpdateOperationsInput | string
+  saleValue?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  source?: Prisma.EnumLeadSourceFieldUpdateOperationsInput | $Enums.LeadSource
   serviceTitanJobId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  closedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type SaleUncheckedUpdateManyWithoutClosedByInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  displayId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  opportunityId?: Prisma.StringFieldUpdateOperationsInput | string
+  saleValue?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  source?: Prisma.EnumLeadSourceFieldUpdateOperationsInput | $Enums.LeadSource
+  serviceTitanJobId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  closedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 
 
 export type SaleSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  displayId?: boolean
   opportunityId?: boolean
   closedById?: boolean
   saleValue?: boolean
   source?: boolean
+  serviceTitanJobId?: boolean
+  notes?: boolean
   closedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  serviceTitanJobId?: boolean
   opportunity?: boolean | Prisma.OpportunityDefaultArgs<ExtArgs>
   closedBy?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["sale"]>
 
 export type SaleSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  displayId?: boolean
   opportunityId?: boolean
   closedById?: boolean
   saleValue?: boolean
   source?: boolean
+  serviceTitanJobId?: boolean
+  notes?: boolean
   closedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  serviceTitanJobId?: boolean
   opportunity?: boolean | Prisma.OpportunityDefaultArgs<ExtArgs>
   closedBy?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["sale"]>
 
 export type SaleSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  displayId?: boolean
   opportunityId?: boolean
   closedById?: boolean
   saleValue?: boolean
   source?: boolean
+  serviceTitanJobId?: boolean
+  notes?: boolean
   closedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  serviceTitanJobId?: boolean
   opportunity?: boolean | Prisma.OpportunityDefaultArgs<ExtArgs>
   closedBy?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["sale"]>
 
 export type SaleSelectScalar = {
   id?: boolean
+  displayId?: boolean
   opportunityId?: boolean
   closedById?: boolean
   saleValue?: boolean
   source?: boolean
+  serviceTitanJobId?: boolean
+  notes?: boolean
   closedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  serviceTitanJobId?: boolean
 }
 
-export type SaleOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "opportunityId" | "closedById" | "saleValue" | "source" | "closedAt" | "createdAt" | "updatedAt" | "serviceTitanJobId", ExtArgs["result"]["sale"]>
+export type SaleOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "displayId" | "opportunityId" | "closedById" | "saleValue" | "source" | "serviceTitanJobId" | "notes" | "closedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["sale"]>
 export type SaleInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   opportunity?: boolean | Prisma.OpportunityDefaultArgs<ExtArgs>
   closedBy?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -812,14 +849,16 @@ export type $SalePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
+    displayId: string | null
     opportunityId: string
     closedById: string
     saleValue: runtime.Decimal
     source: $Enums.LeadSource
+    serviceTitanJobId: string | null
+    notes: string | null
     closedAt: Date
     createdAt: Date
     updatedAt: Date
-    serviceTitanJobId: string | null
   }, ExtArgs["result"]["sale"]>
   composites: {}
 }
@@ -1246,14 +1285,16 @@ export interface Prisma__SaleClient<T, Null = never, ExtArgs extends runtime.Typ
  */
 export interface SaleFieldRefs {
   readonly id: Prisma.FieldRef<"Sale", 'String'>
+  readonly displayId: Prisma.FieldRef<"Sale", 'String'>
   readonly opportunityId: Prisma.FieldRef<"Sale", 'String'>
   readonly closedById: Prisma.FieldRef<"Sale", 'String'>
   readonly saleValue: Prisma.FieldRef<"Sale", 'Decimal'>
   readonly source: Prisma.FieldRef<"Sale", 'LeadSource'>
+  readonly serviceTitanJobId: Prisma.FieldRef<"Sale", 'String'>
+  readonly notes: Prisma.FieldRef<"Sale", 'String'>
   readonly closedAt: Prisma.FieldRef<"Sale", 'DateTime'>
   readonly createdAt: Prisma.FieldRef<"Sale", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Sale", 'DateTime'>
-  readonly serviceTitanJobId: Prisma.FieldRef<"Sale", 'String'>
 }
     
 
