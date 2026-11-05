@@ -1,9 +1,9 @@
-
 import { redirect } from "next/navigation";
 
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth";
 
+import Breadcrumbs from "@/components/ui/breadcrumbs";
 import OpportunityCard from "@/components/dashboard/opportunity-card";
 
 export const metadata = {
@@ -47,17 +47,12 @@ export default async function OpportunitiesPage() {
   return (
     <div className="space-y-6">
       {/* Breadcrumb */}
-      <div className="flex items-center gap-1.5 text-xs sm:text-sm">
-        <span className="font-semibold text-black">
-          Sales Tracker
-        </span>
-
-        <span className="text-[#777]">/</span>
-
-        <span className="text-[#666]">
-          Opportunities
-        </span>
-      </div>
+      <Breadcrumbs
+        items={[
+          { label: "Sales Tracker", href: "/admin" },
+        ]}
+        currentPage="Opportunities"
+      />
 
       {/* Page Heading */}
       <div className="flex flex-wrap items-end justify-between gap-3">

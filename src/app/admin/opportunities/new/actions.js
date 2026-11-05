@@ -62,7 +62,7 @@ function parseDate(value) {
   return date;
 }
 
-// Manual Follow-up default time: 09:00 AM.
+// Manual Follow-up default time: 07:30 AM.
 function parseManualFollowUpDate(value) {
   const date = parseDate(value);
 
@@ -70,7 +70,7 @@ function parseManualFollowUpDate(value) {
     return null;
   }
 
-  date.setHours(9, 0, 0, 0);
+  date.setHours(7, 30, 0, 0);
 
   return date;
 }

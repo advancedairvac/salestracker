@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/prisma";
 
 import PageTagline from "@/components/ui/page-tagline";
+import Breadcrumbs from "@/components/ui/breadcrumbs";
+
 import PipelineFilter from "@/components/dashboard/pipeline-filter";
 import FollowUpsTable from "@/components/dashboard/followUps-table";
 import EstimatesTable from "@/components/dashboard/estimates-table";
@@ -204,13 +206,10 @@ export default async function PipelinePage({ searchParams }) {
   return (
     <div className="w-full">
       {/* Breadcrumb */}
-      <div className="mb-7 text-[11px] text-[#555] sm:text-xs">
-        <span className="font-medium text-black">Sales Tracker</span>
-
-        <span className="mx-1">/</span>
-
-        <span>In The Pipeline</span>
-      </div>
+      <Breadcrumbs
+        items={[{ label: "Sales Tracker", href: "/admin" }]}
+        currentPage="In The Pipeline"
+      />
 
       {/* Pipeline Filter */}
       <PipelineFilter users={users} selectedFilter={selectedFilter} />

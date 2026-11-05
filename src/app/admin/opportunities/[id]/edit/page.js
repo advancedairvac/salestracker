@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth";
 
 import NewEditOpportunity from "@/components/dashboard/newEdit-opportunity";
+import Breadcrumbs from "@/components/ui/breadcrumbs";
 import PageTagline from "@/components/ui/page-tagline";
 
 export const metadata = {
@@ -70,17 +71,12 @@ export default async function EditOpportunityPage({ params }) {
   return (
     <div className="space-y-4 sm:space-y-5">
       {/* BREADCRUMB */}
-
-      <div className="flex items-center gap-1.5 text-xs sm:text-sm">
-        <span className="font-semibold text-black">Sales Tracker</span>
-        <span className="text-[#777]">/</span>
-        <span className="text-[#666]">Opportunities</span>
-        <span className="text-[#777]">/</span>
-        <span className="font-medium text-black">Edit Opportunity</span>
-      </div>
+      <Breadcrumbs
+        items={[{ label: "Sales Tracker", href: "/admin" }]}
+        currentPage="Edit Opportunity"
+      />
 
       {/* PAGE TITLE */}
-
       <div>
         <h1 className="text-xl font-semibold text-black">Edit Opportunity</h1>
 
@@ -90,7 +86,6 @@ export default async function EditOpportunityPage({ params }) {
       </div>
 
       {/* REUSABLE FORM */}
-
       <NewEditOpportunity
         user={user}
         users={[]}

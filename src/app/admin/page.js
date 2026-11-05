@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 
 import DateSelector from "@/components/ui/date-selector";
+import Breadcrumbs from "@/components/ui/breadcrumbs";
 import PageTagline from "@/components/ui/page-tagline";
 
 import RevenueCard from "@/components/dashboard/revenue-card";
@@ -243,16 +244,10 @@ export default async function AdminDashboardPage() {
       name: member.name,
       title: member.title || "",
       role: member.role,
-
       monthlyGoal: Number(member.monthlyGoal || 0),
-
       revenue: revenueByMember.get(member.id) || 0,
-
-      // Commission will be implemented later
       commission: 0,
-
       opportunities: stats.total,
-
       closeRate,
     };
   });
@@ -263,14 +258,11 @@ export default async function AdminDashboardPage() {
 
   return (
     <div className="space-y-4 sm:space-y-5">
-      {/* Breadcrumb */}
-      <div className="flex items-center gap-1.5 text-xs sm:text-sm">
-        <span className="font-semibold text-black">Sales Tracker</span>
-
-        <span className="text-[#777]">/</span>
-
-        <span className="text-[#666]">Dashboard</span>
-      </div>
+      {/* REUSABLE BREADCRUMB */}
+      <Breadcrumbs
+        items={[{ label: "Sales Tracker", href: "/admin" }]}
+        currentPage="Dashboard"
+      />
 
       {/* Date Selector */}
       <DateSelector />

@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth";
 
+import Breadcrumbs from "@/components/ui/breadcrumbs";
 import OpportunityDetails from "@/components/dashboard/opportunity-details";
 import PageTagline from "@/components/ui/page-tagline";
 
@@ -76,13 +77,13 @@ export default async function OpportunityDetailsPage({ params }) {
   return (
     <div className="space-y-4 sm:space-y-5">
       {/* Breadcrumb */}
-      <div className="flex items-center gap-1.5 text-xs sm:text-sm">
-        <span className="font-semibold text-black">Sales Tracker</span>
-
-        <span className="text-[#777]">/</span>
-
-        <span className="text-[#666]">Opportunity</span>
-      </div>
+      <Breadcrumbs
+        items={[
+          { label: "Sales Tracker", href: "/admin" },
+          { label: "Opportunities", href: "/admin/opportunities" },
+        ]}
+        currentPage="Opportunity Details"
+      />
 
       {/* Opportunity Details */}
       <OpportunityDetails

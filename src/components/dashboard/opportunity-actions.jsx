@@ -49,6 +49,30 @@ function getLocalDateTimeValue(date) {
   return `${year}-${month}-${day}T${hours}:${minutes}`;
 }
 
+// Format a date using the browser's local timezone.
+function getLocalDateValue(date = new Date()) {
+  const value = new Date(date);
+
+  if (Number.isNaN(value.getTime())) return "";
+
+  const year = value.getFullYear();
+  const month = String(value.getMonth() + 1).padStart(2, "0");
+  const day = String(value.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
+// Set reopening time to 7:30 AM in the browser's local timezone.
+function getReopenDateTime(date) {
+  if (!date) return null;
+
+  const value = new Date(`${date}T07:30:00`);
+
+  if (Number.isNaN(value.getTime())) return null;
+
+  return value;
+}
+
 function isOverdue(date) {
   return Boolean(date && new Date(date).getTime() < Date.now());
 }
@@ -172,7 +196,9 @@ export default function OpportunityActions({ opportunity, schedule }) {
   const [finalValue, setFinalValue] = useState(String(opportunity.value ?? 0));
 
   const [note, setNote] = useState("");
-  const [reopenAt, setReopenAt] = useState("");
+
+  // Reopen date only. Time is automatically set to 7:30 AM.
+  const [reopenDate, setReopenDate] = useState("");
 
   const [statusError, setStatusError] = useState("");
   const [statusSuccess, setStatusSuccess] = useState("");
@@ -323,6 +349,7 @@ export default function OpportunityActions({ opportunity, schedule }) {
     }
 
     setManualDateTime(getLocalDateTimeValue(savedManualDateTime));
+
     setShowEditor(false);
   }
 
@@ -338,7 +365,7 @@ export default function OpportunityActions({ opportunity, schedule }) {
     setFinalValue(action === "WON" ? String(opportunity.value ?? 0) : "");
 
     setNote("");
-    setReopenAt("");
+    setReopenDate("");
 
     setStatusError("");
     setStatusSuccess("");
@@ -356,7 +383,7 @@ export default function OpportunityActions({ opportunity, schedule }) {
 
     setFinalValue(String(opportunity.value ?? 0));
     setNote("");
-    setReopenAt("");
+    setReopenDate("");
 
     setStatusError("");
   }
@@ -379,6 +406,10 @@ export default function OpportunityActions({ opportunity, schedule }) {
 
     const action = selectedAction;
 
+    // ------------------------------------------
+    // WON VALIDATION
+    // ------------------------------------------
+
     if (selectedAction === "WON") {
       if (finalValue.trim() === "" || !Number.isFinite(Number(finalValue))) {
         setStatusError("Please enter a valid final sale value.");
@@ -393,6 +424,10 @@ export default function OpportunityActions({ opportunity, schedule }) {
       payload.finalValue = Number(finalValue);
     }
 
+    // ------------------------------------------
+    // CLOSE VALIDATION
+    // ------------------------------------------
+
     if (selectedAction === "CLOSE") {
       if (!closeType) {
         setStatusError("Please select a closing option.");
@@ -401,25 +436,35 @@ export default function OpportunityActions({ opportunity, schedule }) {
 
       payload.closeType = closeType;
 
+      // Schedule Reopen: Date only, automatically 7:30 AM.
       if (closeType === "SCHEDULE_REOPEN") {
-        if (!reopenAt) {
-          setStatusError("Please select a reopening date and time.");
+        if (!reopenDate) {
+          setStatusError("Please select a reopening date.");
           return;
         }
 
-        const selectedDate = new Date(reopenAt);
+        const selectedDate = getReopenDateTime(reopenDate);
 
-        if (
-          Number.isNaN(selectedDate.getTime()) ||
-          selectedDate <= new Date()
-        ) {
-          setStatusError("Please select a future reopening date and time.");
+        if (!selectedDate) {
+          setStatusError("Please select a valid reopening date.");
           return;
         }
 
+        if (selectedDate <= new Date()) {
+          setStatusError(
+            "Please select a future date. The opportunity will reopen at 7:30 AM.",
+          );
+          return;
+        }
+
+        // Convert the selected local date and 7:30 AM to UTC.
         payload.reopenAt = selectedDate.toISOString();
       }
     }
+
+    // ------------------------------------------
+    // SAVE STATUS
+    // ------------------------------------------
 
     startStatusTransition(async () => {
       const result = await updateOpportunityStatus(
@@ -436,9 +481,9 @@ export default function OpportunityActions({ opportunity, schedule }) {
       }
 
       const nextStatus =
-        selectedAction === "WON"
+        action === "WON"
           ? "WON"
-          : selectedAction === "LOST"
+          : action === "LOST"
             ? "LOST"
             : closeType === "TEMPORARY"
               ? "TEMPORARILY_CLOSED"
@@ -755,7 +800,10 @@ export default function OpportunityActions({ opportunity, schedule }) {
                         name="closeType"
                         value={option.value}
                         checked={closeType === option.value}
-                        onChange={() => setCloseType(option.value)}
+                        onChange={() => {
+                          setCloseType(option.value);
+                          setStatusError("");
+                        }}
                         disabled={statusPending}
                         className="mt-1 accent-black"
                       />
@@ -773,25 +821,34 @@ export default function OpportunityActions({ opportunity, schedule }) {
                   ))}
                 </div>
 
+                {/* SCHEDULE REOPEN: DATE ONLY */}
+
                 {closeType === "SCHEDULE_REOPEN" && (
                   <div>
                     <label
-                      htmlFor="reopenAt"
+                      htmlFor="reopenDate"
                       className="mb-1.5 block text-sm font-medium text-neutral-700"
                     >
-                      Reopen Date & Time <span className="text-red-600">*</span>
+                      Reopen Date <span className="text-red-600">*</span>
                     </label>
 
                     <input
-                      id="reopenAt"
-                      type="datetime-local"
+                      id="reopenDate"
+                      type="date"
                       required
-                      min={getLocalDateTimeValue(new Date())}
-                      value={reopenAt}
-                      onChange={(event) => setReopenAt(event.target.value)}
+                      min={getLocalDateValue()}
+                      value={reopenDate}
+                      onChange={(event) => {
+                        setReopenDate(event.target.value);
+                        setStatusError("");
+                      }}
                       disabled={statusPending}
                       className="h-11 w-full rounded-md border border-neutral-300 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-black disabled:opacity-60"
                     />
+
+                    <p className="mt-1.5 text-xs text-neutral-500">
+                      Reopening time: 7:30 AM (Automatically set)
+                    </p>
                   </div>
                 )}
               </div>

@@ -1,10 +1,11 @@
 import { prisma } from "@/lib/prisma";
 
 import RevenueDateFilter from "@/components/dashboard/revenue-date-filter";
-import PageTagline from "@/components/ui/page-tagline";
-
 import RevenueSummary from "@/components/dashboard/revenue-summary";
 import RevenueTable from "@/components/dashboard/revenue-table";
+
+import Breadcrumbs from "@/components/ui/breadcrumbs";
+import PageTagline from "@/components/ui/page-tagline";
 
 export const metadata = {
   title: "Sales Revenue",
@@ -156,13 +157,10 @@ export default async function SalesRevenuePage({ searchParams }) {
   return (
     <div className="space-y-4 sm:space-y-5">
       {/* Breadcrumb */}
-      <div className="flex items-center gap-1.5 text-xs sm:text-sm">
-        <span className="font-semibold text-black">Sales Tracker</span>
-
-        <span className="text-[#777]">/</span>
-
-        <span className="text-[#666]">Sales Revenue</span>
-      </div>
+      <Breadcrumbs
+        items={[{ label: "Sales Tracker", href: "/admin" }]}
+        currentPage="Sales Revenue"
+      />
 
       {/* Date Selector */}
       <RevenueDateFilter
