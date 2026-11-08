@@ -5,6 +5,8 @@ import { useActionState, useEffect, useState } from "react";
 import { createOpportunity } from "@/app/admin/opportunities/new/actions";
 import { updateOpportunity } from "@/app/admin/opportunities/[id]/actions";
 
+import Input from "@/components/ui/input";
+
 const initialState = {
   error: null,
   values: {},
@@ -17,7 +19,6 @@ const initialState = {
 function formatDateInput(value) {
   if (!value) return "";
 
-  // Already in YYYY-MM-DD format
   if (typeof value === "string") {
     const match = value.match(/^(\d{4}-\d{2}-\d{2})/);
 
@@ -28,7 +29,6 @@ function formatDateInput(value) {
 
   if (Number.isNaN(date.getTime())) return "";
 
-  // Use local date values to avoid timezone shifting.
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
@@ -54,66 +54,23 @@ function prepareInitialValues(today, initialValues) {
 }
 
 /* -------------------------------------------------------
-   FORM STYLES
+   SHARED FORM STYLES
 ------------------------------------------------------- */
 
-const inputClass =
-  "peer h-[50px] w-full rounded-none border border-[#d9d9d9] bg-white px-3 pt-[15px] pb-[4px] text-xs lg:text-sm font-normal text-black outline-none transition-colors focus:border-[#111111]";
+const textareaClass = [
+  "peer min-h-[58px] w-full resize-y rounded-none",
+  "border border-[#d9d9d9] bg-white",
+  "px-3 pt-[20px] pb-2",
+  "text-xs font-normal text-[#111111] lg:text-sm",
+  "outline-none transition-colors",
+  "focus:border-[#111111]",
+].join(" ");
 
-const textareaClass =
-  "peer min-h-[58px] w-full resize-y rounded-none border border-[#d9d9d9] bg-white px-3 pt-[20px] pb-2 text-xs lg:text-sm font-normal text-[#111111] outline-none transition-colors focus:border-[#111111]";
-
-const labelBase =
-  "pointer-events-none absolute left-3 z-[1] font-medium uppercase tracking-[0.02em] text-[#565656] transition-all duration-150";
-
-/* -------------------------------------------------------
-   FLOATING INPUT
-------------------------------------------------------- */
-
-function FloatingInput({
-  name,
-  label,
-  type = "text",
-  value = "",
-  onChange,
-  required = false,
-  min,
-  step,
-}) {
-  const [focused, setFocused] = useState(false);
-
-  const floating = focused || String(value) !== "";
-
-  return (
-    <div className="relative w-full">
-      <input
-        id={name}
-        name={name}
-        type={type}
-        value={value}
-        onChange={onChange}
-        onFocus={() => setFocused(true)}
-        onBlur={() => setFocused(false)}
-        placeholder=" "
-        required={required}
-        min={min}
-        step={step}
-        className={inputClass}
-      />
-
-      <label
-        htmlFor={name}
-        className={`${labelBase} ${
-          floating
-            ? "top-[6px] text-[10px]"
-            : "top-1/2 -translate-y-1/2 text-xs"
-        }`}
-      >
-        {label}
-      </label>
-    </div>
-  );
-}
+const labelBase = [
+  "pointer-events-none absolute left-3 z-[1]",
+  "font-medium uppercase tracking-[0.02em]",
+  "text-[#565656] transition-all duration-150",
+].join(" ");
 
 /* -------------------------------------------------------
    FLOATING SELECT
@@ -141,9 +98,15 @@ function FloatingSelect({
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
         required={required}
-        className={`${inputClass} appearance-none ${
-          floating ? "text-[#111111]" : "text-transparent"
-        }`}
+        className={[
+          "peer h-[50px] w-full rounded-none",
+          "border border-[#d9d9d9] bg-white",
+          "px-3 pt-[15px] pb-[4px]",
+          "text-xs font-normal outline-none transition-colors",
+          "focus:border-[#111111]",
+          "appearance-none",
+          floating ? "text-[#111111]" : "text-transparent",
+        ].join(" ")}
       >
         <option value="" disabled hidden></option>
         {children}
@@ -158,6 +121,12 @@ function FloatingSelect({
         }`}
       >
         {label}
+
+        {required && (
+          <span className="ml-1 text-red-600" aria-hidden="true">
+            *
+          </span>
+        )}
       </label>
 
       <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#666666]">
@@ -211,38 +180,6 @@ function FloatingTextarea({ name, label, value = "", onChange }) {
 }
 
 /* -------------------------------------------------------
-   FLOATING DATE
-------------------------------------------------------- */
-
-function FloatingDate({
-  name,
-  label,
-  value = "",
-  onChange,
-  min,
-  required = false,
-}) {
-  return (
-    <div className="relative w-full">
-      <input
-        id={name}
-        name={name}
-        type="date"
-        value={formatDateInput(value)}
-        onChange={onChange}
-        min={min}
-        required={required}
-        className={`${inputClass} pt-[15px]`}
-      />
-
-      <label htmlFor={name} className={`${labelBase} top-[6px] text-[10px]`}>
-        {label}
-      </label>
-    </div>
-  );
-}
-
-/* -------------------------------------------------------
    NEW / EDIT OPPORTUNITY FORM
 ------------------------------------------------------- */
 
@@ -265,6 +202,7 @@ export default function NewEditOpportunity({
   );
 
   /* Restore form values after validation errors */
+
   useEffect(() => {
     if (state.values) {
       setValues((previous) => ({
@@ -280,6 +218,7 @@ export default function NewEditOpportunity({
   }, [state.values, isEdit]);
 
   /* Handle input changes */
+
   function handleChange(event) {
     const { name, value } = event.target;
 
@@ -290,6 +229,7 @@ export default function NewEditOpportunity({
   }
 
   /* Error messages */
+
   const errorMessages = {
     required: "Please complete all required fields.",
     source: "Invalid opportunity source.",
@@ -307,10 +247,11 @@ export default function NewEditOpportunity({
   return (
     <section className="w-full max-w-[700px]">
       {/* Validation Error */}
+
       {state.error && (
         <div
           role="alert"
-          className="mb-4 border border-[#f1caca] bg-[#fff5f5] px-3 py-2.5 text-xs lg:text-sm font-normal text-[#b42318]"
+          className="mb-4 border border-[#f1caca] bg-[#fff5f5] px-3 py-2.5 text-xs font-normal text-[#b42318] lg:text-sm"
         >
           {errorMessages[state.error] ||
             "Something went wrong. Please try again."}
@@ -319,21 +260,25 @@ export default function NewEditOpportunity({
 
       <form action={formAction} className="flex w-full flex-col gap-[9px]">
         {/* Opportunity ID */}
+
         {isEdit && (
           <input type="hidden" name="opportunityId" value={opportunityId} />
         )}
 
         {/* Opportunity Date */}
-        <FloatingDate
+
+        <Input
           name="opportunityDate"
           label="Today's Date"
+          type="date"
           value={values.opportunityDate}
           onChange={handleChange}
           required={!isEdit}
         />
 
         {/* POC Name */}
-        <FloatingInput
+
+        <Input
           name="pocName"
           label="POC Name"
           value={values.pocName}
@@ -341,7 +286,8 @@ export default function NewEditOpportunity({
         />
 
         {/* Business Name */}
-        <FloatingInput
+
+        <Input
           name="businessName"
           label="Business Name"
           value={values.businessName}
@@ -350,6 +296,7 @@ export default function NewEditOpportunity({
         />
 
         {/* Job Type */}
+
         <FloatingSelect
           name="jobType"
           label="Job Type"
@@ -375,7 +322,8 @@ export default function NewEditOpportunity({
         </FloatingSelect>
 
         {/* Email */}
-        <FloatingInput
+
+        <Input
           name="email"
           label="Email"
           type="email"
@@ -384,6 +332,7 @@ export default function NewEditOpportunity({
         />
 
         {/* Text Message */}
+
         <FloatingTextarea
           name="textMessage"
           label="Text Message"
@@ -392,7 +341,8 @@ export default function NewEditOpportunity({
         />
 
         {/* Phone Number */}
-        <FloatingInput
+
+        <Input
           name="phone"
           label="Phone Number (If Different)"
           type="tel"
@@ -401,7 +351,8 @@ export default function NewEditOpportunity({
         />
 
         {/* Location */}
-        <FloatingInput
+
+        <Input
           name="location"
           label="Location"
           value={values.location}
@@ -409,7 +360,8 @@ export default function NewEditOpportunity({
         />
 
         {/* Approximate Dollar Value */}
-        <FloatingInput
+
+        <Input
           name="value"
           label="Approximate Dollar Value"
           type="number"
@@ -420,10 +372,12 @@ export default function NewEditOpportunity({
         />
 
         {/* Follow-up Date - New Mode Only */}
+
         {!isEdit && (
-          <FloatingDate
+          <Input
             name="followUpDate"
             label="Follow-Up Date"
+            type="date"
             value={values.followUpDate}
             onChange={handleChange}
             min={values.opportunityDate}
@@ -431,6 +385,7 @@ export default function NewEditOpportunity({
         )}
 
         {/* Submit Button */}
+
         <button
           type="submit"
           disabled={pending}

@@ -3,6 +3,10 @@
 import { useEffect, useRef, useState } from "react";
 import SvgIcon from "@/components/icons/svg-icons";
 
+// ============================================
+// DATE PRESETS
+// ============================================
+
 const PRESETS = [
   "Custom",
   "Today",
@@ -18,6 +22,10 @@ const PRESETS = [
   "Q3",
   "Q4",
 ];
+
+// ============================================
+// DATE HELPERS
+// ============================================
 
 function toInputDate(date) {
   const year = date.getFullYear();
@@ -39,8 +47,17 @@ function formatDate(dateString) {
   });
 }
 
+function getInitialRange() {
+  return getDateRange("MTD");
+}
+
+// ============================================
+// GET DATE RANGE
+// ============================================
+
 function getDateRange(preset) {
   const today = new Date();
+
   today.setHours(0, 0, 0, 0);
 
   const year = today.getFullYear();
@@ -51,68 +68,81 @@ function getDateRange(preset) {
   let end = new Date(today);
 
   switch (preset) {
-    case "Today":
+    case "Today": {
       start = new Date(today);
       break;
+    }
 
-    case "Yesterday":
+    case "Yesterday": {
       start = new Date(today);
-      start.setDate(day - 1);
+      start.setDate(start.getDate() - 1);
       end = new Date(start);
       break;
+    }
 
-    case "Last 7 Days":
+    case "Last 7 Days": {
       start = new Date(today);
-      start.setDate(day - 6);
+      start.setDate(start.getDate() - 6);
       break;
+    }
 
-    case "Last 30 Days":
+    case "Last 30 Days": {
       start = new Date(today);
-      start.setDate(day - 29);
+      start.setDate(start.getDate() - 29);
       break;
+    }
 
-    case "Last 365 Days":
+    case "Last 365 Days": {
       start = new Date(today);
-      start.setDate(day - 364);
+      start.setDate(start.getDate() - 364);
       break;
+    }
 
-    case "MTD":
+    case "MTD": {
       start = new Date(year, month, 1);
       break;
+    }
 
     case "QTD": {
       const quarterStartMonth = Math.floor(month / 3) * 3;
+
       start = new Date(year, quarterStartMonth, 1);
       break;
     }
 
-    case "YTD":
+    case "YTD": {
       start = new Date(year, 0, 1);
       break;
+    }
 
-    case "Q1":
+    case "Q1": {
       start = new Date(year, 0, 1);
       end = new Date(year, 2, 31);
       break;
+    }
 
-    case "Q2":
+    case "Q2": {
       start = new Date(year, 3, 1);
       end = new Date(year, 5, 30);
       break;
+    }
 
-    case "Q3":
+    case "Q3": {
       start = new Date(year, 6, 1);
       end = new Date(year, 8, 30);
       break;
+    }
 
-    case "Q4":
+    case "Q4": {
       start = new Date(year, 9, 1);
       end = new Date(year, 11, 31);
       break;
+    }
 
-    default:
+    default: {
       start = new Date(year, month, 1);
       end = new Date(year, month + 1, 0);
+    }
   }
 
   return {
@@ -121,29 +151,47 @@ function getDateRange(preset) {
   };
 }
 
+// ============================================
+// DATE SELECTOR
+// ============================================
+
 export default function DateSelector({
   value,
   onChange,
   className = "",
   disabled = false,
+  compact = false,
 }) {
-  const initialRange = getDateRange("MTD");
+  // ------------------------------------------
+  // INITIAL STATE
+  // ------------------------------------------
+
+  const initialRange = getInitialRange();
 
   const [internalValue, setInternalValue] = useState(
     () => value || initialRange,
   );
 
-  const [isOpen, setIsOpen] = useState(false);
-  const [selectedPreset, setSelectedPreset] = useState("MTD");
-  const [customMode, setCustomMode] = useState(false);
-
   const [draft, setDraft] = useState(() => value || initialRange);
+
+  const [isOpen, setIsOpen] = useState(false);
+
+  const [selectedPreset, setSelectedPreset] = useState("MTD");
+
+  const [customMode, setCustomMode] = useState(false);
 
   const containerRef = useRef(null);
 
+  // ------------------------------------------
+  // CONTROLLED / UNCONTROLLED VALUE
+  // ------------------------------------------
+
   const selectedRange = value || internalValue;
 
-  // Sync external date range
+  // ------------------------------------------
+  // SYNC EXTERNAL VALUE
+  // ------------------------------------------
+
   useEffect(() => {
     if (!value) return;
 
@@ -151,7 +199,73 @@ export default function DateSelector({
     setDraft(value);
   }, [value]);
 
-  // Close dropdown when clicking outside
+  // ------------------------------------------
+  // APPLY DATE RANGE
+  // ------------------------------------------
+
+  function applyRange(range, preset) {
+    setInternalValue(range);
+    setDraft(range);
+
+    setSelectedPreset(preset);
+
+    setCustomMode(false);
+    setIsOpen(false);
+
+    onChange?.(range);
+  }
+
+  // ------------------------------------------
+  // HANDLE PRESET SELECTION
+  // ------------------------------------------
+
+  function handlePresetClick(preset) {
+    if (preset === "Custom") {
+      setSelectedPreset("Custom");
+      setCustomMode(true);
+
+      setDraft({ ...selectedRange });
+
+      return;
+    }
+
+    const range = getDateRange(preset);
+
+    applyRange(range, preset);
+  }
+
+  // ------------------------------------------
+  // HANDLE CUSTOM RANGE
+  // ------------------------------------------
+
+  function handleCustomApply() {
+    if (!draft.startDate || !draft.endDate || draft.startDate > draft.endDate) {
+      return;
+    }
+
+    applyRange(draft, "Custom");
+  }
+
+  // ------------------------------------------
+  // TOGGLE DROPDOWN
+  // ------------------------------------------
+
+  function handleToggle() {
+    if (disabled) return;
+
+    if (!isOpen) {
+      setDraft({ ...selectedRange });
+    }
+
+    setIsOpen((previous) => !previous);
+
+    setCustomMode(false);
+  }
+
+  // ------------------------------------------
+  // CLOSE ON OUTSIDE CLICK
+  // ------------------------------------------
+
   useEffect(() => {
     function handleOutsideClick(event) {
       if (
@@ -170,7 +284,10 @@ export default function DateSelector({
     };
   }, []);
 
-  // Close dropdown with Escape key
+  // ------------------------------------------
+  // CLOSE ON ESCAPE
+  // ------------------------------------------
+
   useEffect(() => {
     function handleEscape(event) {
       if (event.key === "Escape") {
@@ -186,53 +303,30 @@ export default function DateSelector({
     };
   }, []);
 
-  // Apply selected date range
-  function applyRange(range, preset) {
-    setInternalValue(range);
-    setDraft(range);
-    setSelectedPreset(preset);
-    setCustomMode(false);
-    setIsOpen(false);
+  // ============================================
+  // STYLES
+  // ============================================
 
-    onChange?.(range);
-  }
+  const triggerClass = compact
+    ? "min-h-[44px] gap-3 px-3"
+    : "min-h-[76px] gap-5 px-5 sm:px-6";
 
-  // Handle preset selection
-  function handlePresetClick(preset) {
-    if (preset === "Custom") {
-      setSelectedPreset("Custom");
-      setCustomMode(true);
-      setDraft({ ...selectedRange });
-      return;
-    }
+  const calendarClass = compact ? "h-5 w-5" : "h-10 w-10";
 
-    applyRange(getDateRange(preset), preset);
-  }
+  const dateTextClass = compact ? "text-xs" : "text-sm sm:text-base";
 
-  // Apply custom date range
-  function handleCustomApply() {
-    if (!draft.startDate || !draft.endDate || draft.startDate > draft.endDate) {
-      return;
-    }
+  const chevronClass = compact ? "h-4 w-4" : "h-6 w-6";
 
-    applyRange(draft, "Custom");
-  }
-
-  // Toggle dropdown
-  function handleToggle() {
-    if (disabled) return;
-
-    if (!isOpen) {
-      setDraft({ ...selectedRange });
-    }
-
-    setIsOpen((previous) => !previous);
-    setCustomMode(false);
-  }
+  // ============================================
+  // RENDER
+  // ============================================
 
   return (
     <div ref={containerRef} className={`relative z-30 w-full ${className}`}>
-      {/* Date Selector Trigger */}
+      {/* ---------------------------------- */}
+      {/* DATE SELECTOR TRIGGER */}
+      {/* ---------------------------------- */}
+
       <div className="relative border border-[#d5d5d5] bg-white">
         <button
           type="button"
@@ -241,57 +335,87 @@ export default function DateSelector({
           aria-expanded={isOpen}
           aria-haspopup="true"
           aria-label="Select date range"
-          className="flex min-h-[76px] w-full items-center gap-5 px-5 text-left transition-colors hover:bg-[#fafafa] disabled:cursor-not-allowed disabled:opacity-50 sm:px-6"
+          className={[
+            "flex w-full items-center text-left",
+            "transition-colors hover:bg-[#fafafa]",
+            "disabled:cursor-not-allowed disabled:opacity-50",
+            triggerClass,
+          ].join(" ")}
         >
+          {/* Calendar Icon */}
+
           <SvgIcon
             name="calendar"
-            className="h-10 w-10 shrink-0 text-[#565656]"
+            className={`shrink-0 text-[#565656] ${calendarClass}`}
           />
 
-          <span className="min-w-0 flex-1 text-sm font-medium text-[#555] sm:text-base">
+          {/* Selected Date Range */}
+
+          <span
+            className={`min-w-0 flex-1 font-medium text-[#555] ${dateTextClass}`}
+          >
             {formatDate(selectedRange.startDate)} -{" "}
             {formatDate(selectedRange.endDate)}
           </span>
 
+          {/* Chevron Icon */}
+
           <SvgIcon
             name="chevronDown"
-            className={`h-6 w-6 shrink-0 text-[#555] transition-transform duration-200 ${
-              isOpen ? "rotate-180" : ""
-            }`}
+            className={[
+              "shrink-0 text-[#555]",
+              "transition-transform duration-200",
+              chevronClass,
+              isOpen ? "rotate-180" : "",
+            ].join(" ")}
           />
         </button>
       </div>
 
-      {/* Floating Dropdown Overlay */}
+      {/* ---------------------------------- */}
+      {/* DROPDOWN */}
+      {/* ---------------------------------- */}
+
       {isOpen && (
         <div className="absolute left-0 right-0 top-full z-50 border border-t-0 border-[#d5d5d5] bg-white shadow-md">
           <div className="max-h-[min(65vh,560px)] overflow-y-auto overscroll-contain px-5 pb-4 pt-1 sm:px-6">
+            {/* ================================== */}
+            {/* PRESET OPTIONS */}
+            {/* ================================== */}
+
             {!customMode ? (
-              /* Preset Options */
               <div className="flex flex-col">
                 {PRESETS.map((preset) => (
                   <button
                     key={preset}
                     type="button"
                     onClick={() => handlePresetClick(preset)}
-                    className={`min-h-[40px] w-fit text-left text-sm font-medium text-[#555] transition-colors hover:text-black sm:text-base ${
+                    className={[
+                      "min-h-[40px] w-fit text-left",
+                      "text-sm font-medium text-[#555]",
+                      "transition-colors hover:text-black",
+                      "sm:text-base",
                       selectedPreset === preset
                         ? "font-semibold text-black"
-                        : ""
-                    }`}
+                        : "",
+                    ].join(" ")}
                   >
                     {preset}
                   </button>
                 ))}
               </div>
             ) : (
-              /* Custom Date Range */
+              /* ================================== */
+              /* CUSTOM DATE RANGE */
+              /* ================================== */
+
               <div className="space-y-4 py-4">
                 <h3 className="text-sm font-bold uppercase tracking-wide text-black">
                   Custom Date Range
                 </h3>
 
                 {/* Start Date */}
+
                 <div>
                   <label
                     htmlFor="date-start"
@@ -311,11 +435,16 @@ export default function DateSelector({
                         startDate: event.target.value,
                       }))
                     }
-                    className="h-11 w-full border border-[#d5d5d5] px-3 text-sm outline-none focus:border-black"
+                    className={[
+                      "h-11 w-full border border-[#d5d5d5]",
+                      "px-3 text-sm outline-none",
+                      "focus:border-black",
+                    ].join(" ")}
                   />
                 </div>
 
                 {/* End Date */}
+
                 <div>
                   <label
                     htmlFor="date-end"
@@ -335,16 +464,25 @@ export default function DateSelector({
                         endDate: event.target.value,
                       }))
                     }
-                    className="h-11 w-full border border-[#d5d5d5] px-3 text-sm outline-none focus:border-black"
+                    className={[
+                      "h-11 w-full border border-[#d5d5d5]",
+                      "px-3 text-sm outline-none",
+                      "focus:border-black",
+                    ].join(" ")}
                   />
                 </div>
 
-                {/* Actions */}
+                {/* Custom Actions */}
+
                 <div className="flex gap-2 border-t border-[#e5e5e5] pt-3">
                   <button
                     type="button"
                     onClick={() => setCustomMode(false)}
-                    className="h-10 flex-1 border border-[#d5d5d5] text-sm font-medium text-[#555] transition-colors hover:bg-[#f5f5f5]"
+                    className={[
+                      "h-10 flex-1 border border-[#d5d5d5]",
+                      "text-sm font-medium text-[#555]",
+                      "transition-colors hover:bg-[#f5f5f5]",
+                    ].join(" ")}
                   >
                     Back
                   </button>
@@ -357,7 +495,12 @@ export default function DateSelector({
                       !draft.endDate ||
                       draft.startDate > draft.endDate
                     }
-                    className="h-10 flex-1 bg-black text-sm font-semibold text-white transition-colors hover:bg-[#333] disabled:cursor-not-allowed disabled:opacity-40"
+                    className={[
+                      "h-10 flex-1 bg-black",
+                      "text-sm font-semibold text-white",
+                      "transition-colors hover:bg-[#333]",
+                      "disabled:cursor-not-allowed disabled:opacity-40",
+                    ].join(" ")}
                   >
                     Apply
                   </button>

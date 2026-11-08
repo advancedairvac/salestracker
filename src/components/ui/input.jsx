@@ -1,25 +1,90 @@
 
 "use client";
 
+import { useState } from "react";
+
 export default function Input({
   label,
   id,
+  name,
+  type = "text",
+  value = "",
   error,
   hint,
+  required = false,
   className = "",
+  wrapperClassName = "",
+  onFocus,
+  onBlur,
   ...props
 }) {
-  const inputId = id || props.name;
+  const [focused, setFocused] = useState(false);
+
+  const inputId = id || name;
+
+  const hasValue =
+    value !== null &&
+    value !== undefined &&
+    String(value) !== "";
+
+  // Date inputs always keep their label at the top.
+  const floating = focused || hasValue || type === "date";
+
+  const describedBy = error
+    ? `${inputId}-error`
+    : hint
+      ? `${inputId}-hint`
+      : undefined;
 
   return (
-    <div className="w-full space-y-1.5">
+    <div className={`relative w-full ${wrapperClassName}`}>
+      <input
+        {...props}
+        id={inputId}
+        name={name}
+        type={type}
+        value={value ?? ""}
+        required={required}
+        placeholder=" "
+        onFocus={(event) => {
+          setFocused(true);
+          onFocus?.(event);
+        }}
+        onBlur={(event) => {
+          setFocused(false);
+          onBlur?.(event);
+        }}
+        aria-invalid={Boolean(error)}
+        aria-describedby={describedBy}
+        className={[
+          "peer h-[50px] w-full rounded-none",
+          "border border-[#d9d9d9] bg-white",
+          "px-3 pt-[15px] pb-[4px]",
+          "text-xs font-normal text-black lg:text-sm",
+          "outline-none transition-colors",
+          "focus:border-[#111111]",
+          "disabled:cursor-not-allowed disabled:bg-[#f5f5f5]",
+          error ? "border-red-500" : "",
+          className,
+        ].join(" ")}
+      />
+
       {label && (
         <label
           htmlFor={inputId}
-          className="block text-xs font-semibold text-neutral-800"
+          className={[
+            "pointer-events-none absolute left-3 z-[1]",
+            "font-medium uppercase tracking-[0.02em]",
+            "transition-all duration-150",
+            error ? "text-red-600" : "text-[#565656]",
+            floating
+              ? "top-[6px] text-[10px]"
+              : "top-1/2 -translate-y-1/2 text-xs",
+          ].join(" ")}
         >
           {label}
-          {props.required && (
+
+          {required && (
             <span className="ml-1 text-red-600" aria-hidden="true">
               *
             </span>
@@ -27,52 +92,21 @@ export default function Input({
         </label>
       )}
 
-      <input
-        id={inputId}
-        aria-invalid={Boolean(error)}
-        aria-describedby={
-          error
-            ? `${inputId}-error`
-            : hint
-              ? `${inputId}-hint`
-              : undefined
-        }
-        className={[
-          // Default input styling
-          "min-h-[42px] w-full rounded-none border border-black",
-          "bg-white px-3 py-2 text-sm text-black",
-          "placeholder:text-black",
-
-          // Focus styling
-          "outline-none focus:outline-none focus:ring-0",
-          "focus:border-black",
-
-          // Autofill styling
-          "[&:-webkit-autofill]:[-webkit-text-fill-color:#000]",
-          "[&:-webkit-autofill]:[transition:background-color_999999s_ease-in-out_0s]",
-
-          // Error and disabled states
-          error ? "border-red-500" : "",
-          "disabled:cursor-not-allowed disabled:bg-neutral-100",
-
-          // Optional custom classes
-          className,
-        ].join(" ")}
-        {...props}
-      />
-
       {error && (
         <p
           id={`${inputId}-error`}
           role="alert"
-          className="text-xs text-red-600"
+          className="mt-1 text-xs text-red-600"
         >
           {error}
         </p>
       )}
 
       {!error && hint && (
-        <p id={`${inputId}-hint`} className="text-xs text-neutral-500">
+        <p
+          id={`${inputId}-hint`}
+          className="mt-1 text-xs text-neutral-500"
+        >
           {hint}
         </p>
       )}

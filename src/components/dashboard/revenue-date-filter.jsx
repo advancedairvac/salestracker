@@ -1,10 +1,12 @@
-
 "use client";
 
 import { useRouter } from "next/navigation";
 import DateSelector from "@/components/ui/date-selector";
 
-export default function RevenueDateFilter({ value }) {
+export default function RevenueDateFilter({
+  value,
+  basePath = "/admin/sales-revenue",
+}) {
   const router = useRouter();
 
   function handleDateChange(range) {
@@ -13,13 +15,8 @@ export default function RevenueDateFilter({ value }) {
       endDate: range.endDate,
     });
 
-    router.push(`/admin/sales-revenue?${params.toString()}`);
+    router.push(`${basePath}?${params.toString()}`);
   }
 
-  return (
-    <DateSelector
-      value={value}
-      onChange={handleDateChange}
-    />
-  );
+  return <DateSelector value={value} onChange={handleDateChange} />;
 }

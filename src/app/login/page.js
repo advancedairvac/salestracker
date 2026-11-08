@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+
 import AppShell from "@/components/layout/app-shell";
 import Breadcrumbs from "@/components/ui/breadcrumbs";
-import Input from "@/components/ui/input";
 import { getAuthenticatedUser } from "@/lib/auth";
 
 export const metadata = {
@@ -22,8 +22,9 @@ export default async function LoginPage({ searchParams }) {
 
   return (
     <AppShell role="salesperson" isAuthenticated={false}>
-      <main className="flex flex-1 flex-col bg-white text-blac">
+      <main className="flex flex-1 flex-col bg-white text-black">
         <div className="flex w-full max-w-2xl flex-1 flex-col">
+          {/* Breadcrumb */}
           <div className="pt-5 sm:pt-6">
             <Breadcrumbs
               items={[{ label: "Sales Tracker", href: "/" }]}
@@ -31,6 +32,7 @@ export default async function LoginPage({ searchParams }) {
             />
           </div>
 
+          {/* Login Form */}
           <section className="mt-5 flex flex-1 flex-col sm:mt-6">
             <h1 className="max-w-[650px] text-[22px] font-semibold leading-[1.3] sm:text-[26px] lg:text-[28px]">
               Excellence, accountability, organization; Advanced.
@@ -41,6 +43,7 @@ export default async function LoginPage({ searchParams }) {
               method="post"
               className="mt-16 flex w-full flex-col gap-[7px] sm:mt-20 lg:mt-24"
             >
+              {/* Login Error */}
               {error && (
                 <p role="alert" className="mb-3 text-sm text-red-600">
                   {error === "invalid"
@@ -49,26 +52,43 @@ export default async function LoginPage({ searchParams }) {
                 </p>
               )}
 
-              <Input
+              {/* Username */}
+              <input
                 id="username"
                 name="username"
                 type="text"
                 placeholder="username or email"
                 autoComplete="username"
-                required
                 aria-label="Username or email"
+                required
+                className={[
+                  "min-h-[42px] w-full rounded-none",
+                  "border border-black bg-white px-3 py-2",
+                  "text-sm text-black placeholder:text-black",
+                  "outline-none focus:border-black focus:outline-none",
+                  "focus:ring-0",
+                ].join(" ")}
               />
 
-              <Input
+              {/* Password */}
+              <input
                 id="password"
                 name="password"
                 type="password"
                 placeholder="password"
                 autoComplete="current-password"
-                required
                 aria-label="Password"
+                required
+                className={[
+                  "min-h-[42px] w-full rounded-none",
+                  "border border-black bg-white px-3 py-2",
+                  "text-sm text-black placeholder:text-black",
+                  "outline-none focus:border-black focus:outline-none",
+                  "focus:ring-0",
+                ].join(" ")}
               />
 
+              {/* Submit Button */}
               <button
                 type="submit"
                 className={[
@@ -85,6 +105,7 @@ export default async function LoginPage({ searchParams }) {
                 Log In
               </button>
 
+              {/* Forgot Credentials */}
               <p className="mt-5 text-sm text-black">
                 Forgot{" "}
                 <Link

@@ -80,7 +80,6 @@ export default async function OpportunityDetailsPage({ params }) {
       <Breadcrumbs
         items={[
           { label: "Sales Tracker", href: "/admin" },
-          { label: "Opportunities", href: "/admin/opportunities" },
         ]}
         currentPage="Opportunity Details"
       />

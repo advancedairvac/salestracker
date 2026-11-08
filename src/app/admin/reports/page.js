@@ -1,31 +1,66 @@
 
-import QuickBooksTabs from "@/components/quickbooks-testing/quickbooks-tabs";
+import { redirect } from "next/navigation";
+
+import { prisma } from "@/lib/prisma";
+import { getAuthenticatedUser } from "@/lib/auth";
+
+import Breadcrumbs from "@/components/ui/breadcrumbs";
+import PageTagline from "@/components/ui/page-tagline";
+import GenerateReportForm from "@/components/dashboard/generateReport-form";
 
 export const metadata = {
-  title: "QuickBooks API Testing | Advanced Sales Tracker",
-  description: "Test QuickBooks Online Accounting API resources.",
+  title: "Generate Report | Sales Tracker",
 };
 
-export default function QuickBooksTestingPage() {
+export default async function ReportsPage() {
+  const user = await getAuthenticatedUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  if (user.role !== "ADMIN") {
+    redirect("/login");
+  }
+
+  const users = await prisma.user.findMany({
+    where: {
+      role: {
+        in: ["ADMIN", "SALESPERSON"],
+      },
+      isActive: true,
+    },
+    select: {
+      id: true,
+      name: true,
+      role: true,
+    },
+    orderBy: {
+      name: "asc",
+    },
+  });
+
   return (
-    <div className="space-y-6">
-      <section>
-        <p className="text-sm font-medium uppercase tracking-wide text-[#0690c8]">
-          INTEGRATION TESTING
-        </p>
+    <div className="flex min-h-full w-full flex-col">
+      {/* Breadcrumb */}
+      <Breadcrumbs
+        items={[
+          { label: "Sales Tracker", href: "/admin" },
+        ]}
+        currentPage="Generate Report"
+      />
 
-        <h2 className="mt-2 text-2xl font-semibold text-[#0d0d0d]">
-          QuickBooks API Testing
-        </h2>
-
-        <p className="mt-2 max-w-3xl text-sm leading-6 text-gray-500">
-          Inspect company information and test read-only QuickBooks Online
-          Accounting API resources. Use the tabs below to review returned
-          records and raw JSON responses.
-        </p>
+      {/* Generate Report Form */}
+      <section className="mt-5 w-full sm:mt-6">
+        <GenerateReportForm users={users} />
       </section>
 
-      <QuickBooksTabs />
+      {/* Page Tagline */}
+      <div className="mt-auto pt-24">
+        <PageTagline>
+          Boss yourself around, so no one else has to.
+        </PageTagline>
+      </div>
     </div>
   );
 }
