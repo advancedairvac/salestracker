@@ -307,6 +307,7 @@ export default async function AdminDashboardPage() {
                 monthlyGoal={member.monthlyGoal}
                 opportunities={member.opportunities}
                 closeRate={member.closeRate}
+                href={`/admin/salesmen/${member.id}`}
               />
             ))}
           </div>
