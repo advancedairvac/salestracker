@@ -219,14 +219,14 @@ export default async function SalesmanDetailsPage({ params, searchParams }) {
       },
     }),
 
-    // Pending follow-ups due within the selected range
+    // Future pending follow-ups assigned to this salesperson
     prisma.followUp.findMany({
       where: {
         assignedToId: salesman.id,
         status: "PENDING",
+        isActive: true,
         dueAt: {
-          gte: start,
-          lt: endExclusive,
+          gte: new Date(),
         },
       },
       orderBy: {
@@ -237,9 +237,16 @@ export default async function SalesmanDetailsPage({ params, searchParams }) {
           select: {
             id: true,
             title: true,
+            jobType: true,
             customer: {
               select: {
                 businessName: true,
+              },
+            },
+            assignedTo: {
+              select: {
+                id: true,
+                name: true,
               },
             },
           },
@@ -252,6 +259,18 @@ export default async function SalesmanDetailsPage({ params, searchParams }) {
       },
     }),
   ]);
+
+  // ============================================
+  // SERIALIZE OPPORTUNITIES
+  // ============================================
+
+  const opportunityData = opportunities.map((opportunity) => ({
+    ...opportunity,
+    value:
+      opportunity.value !== null && opportunity.value !== undefined
+        ? Number(opportunity.value)
+        : null,
+  }));
 
   // ============================================
   // SALESMAN REVENUE
@@ -281,16 +300,12 @@ export default async function SalesmanDetailsPage({ params, searchParams }) {
 
   const commissionRate = 5;
 
-  // This is an estimated commission, not an actual payroll calculation.
   const estimatedCommission = (totalRevenue * commissionRate) / 100;
 
   // ============================================
   // CLOSE RATE
   // ============================================
 
-  // The current Opportunity enum does not contain
-  // WON or LOST statuses, so an accurate close rate
-  // cannot currently be calculated.
   const closeRate = 0;
 
   // ============================================
@@ -299,8 +314,6 @@ export default async function SalesmanDetailsPage({ params, searchParams }) {
 
   return (
     <div className="space-y-4 sm:space-y-5">
-      {/* Breadcrumb */}
-
       <Breadcrumbs
         items={[
           {
@@ -315,8 +328,6 @@ export default async function SalesmanDetailsPage({ params, searchParams }) {
         currentPage={salesman.name}
       />
 
-      {/* Date Selector */}
-
       <RevenueDateFilter
         value={{
           startDate,
@@ -325,8 +336,6 @@ export default async function SalesmanDetailsPage({ params, searchParams }) {
         preset={selectedPreset}
         basePath={`/admin/salesmen/${salesman.id}`}
       />
-
-      {/* Salesman Information */}
 
       <section className="border-b border-[#d9d9d9] pb-5">
         <div className="flex items-start justify-between gap-4 px-1">
@@ -357,9 +366,8 @@ export default async function SalesmanDetailsPage({ params, searchParams }) {
 
         <RevenueSummary
           revenue={totalRevenue}
-          monthlyGoal={selectedPeriodGoal}
-          startDate={startDate}
-          endDate={endDate}
+          goal={selectedPeriodGoal}
+          goalLabel={goalConfiguration.label}
           commissionRate={commissionRate}
         />
 
@@ -380,8 +388,6 @@ export default async function SalesmanDetailsPage({ params, searchParams }) {
         </section>
       </section>
 
-      {/* Section Divider */}
-
       <div className="flex items-center gap-0 pt-2">
         <div className="h-[4px] w-8 rounded-full bg-black" />
         <div className="h-[3px] flex-1 rounded-full bg-[#eeeeee]" />
@@ -394,10 +400,8 @@ export default async function SalesmanDetailsPage({ params, searchParams }) {
           Follow-ups
         </h2>
 
-        <FollowUpsTable followUps={followUps} />
+        <FollowUpsTable followUps={followUps} showSalesman={false} />
       </section>
-
-      {/* Section Divider */}
 
       <div className="flex items-center gap-0 pt-2">
         <div className="h-[4px] w-8 rounded-full bg-black" />
@@ -411,17 +415,13 @@ export default async function SalesmanDetailsPage({ params, searchParams }) {
           Estimates
         </h2>
 
-        <EstimatesTable opportunities={opportunities} />
+        <EstimatesTable opportunities={opportunityData} />
       </section>
-
-      {/* Section Divider */}
 
       <div className="flex items-center gap-0 pt-2">
         <div className="h-[4px] w-8 rounded-full bg-black" />
         <div className="h-[3px] flex-1 rounded-full bg-[#eeeeee]" />
       </div>
-
-      {/* Page Tagline */}
 
       <PageTagline>Men produce, boys consume.</PageTagline>
     </div>

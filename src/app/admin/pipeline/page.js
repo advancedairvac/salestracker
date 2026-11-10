@@ -16,6 +16,10 @@ export const metadata = {
   title: "In The Pipeline",
 };
 
+// ============================================
+// DATE HELPERS
+// ============================================
+
 function getDayStart(date) {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 }
@@ -71,6 +75,10 @@ function getFollowUpDateRange(filter) {
   return null;
 }
 
+// ============================================
+// FILTER HELPERS
+// ============================================
+
 function getSelectedFilter(value, users) {
   if (!value || value === "ALL") {
     return "ALL";
@@ -101,13 +109,20 @@ function getSelectedFilter(value, users) {
   return "ALL";
 }
 
+// ============================================
+// PIPELINE PAGE
+// ============================================
+
 export default async function PipelinePage({ searchParams }) {
   const params = await searchParams;
 
   const requestedFilter =
     typeof params?.filter === "string" ? params.filter : "ALL";
 
-  // Get active Admins and Salespersons
+  // ============================================
+  // FETCH ACTIVE USERS
+  // ============================================
+
   const users = await prisma.user.findMany({
     where: {
       role: {
@@ -133,9 +148,13 @@ export default async function PipelinePage({ searchParams }) {
   const selectedFilter = getSelectedFilter(requestedFilter, users);
 
   const isUserFilter = selectedFilter.startsWith("USER:");
+
   const selectedUserId = isUserFilter ? selectedFilter.slice(5) : null;
 
-  // Follow-up query
+  // ============================================
+  // FOLLOW-UP FILTER
+  // ============================================
+
   const followUpWhere = {
     status: "PENDING",
     isActive: true,
@@ -145,7 +164,7 @@ export default async function PipelinePage({ searchParams }) {
     followUpWhere.assignedToId = selectedUserId;
   }
 
-  // ALL shows only upcoming follow-ups
+  // ALL shows only upcoming follow-ups.
   if (selectedFilter === "ALL") {
     followUpWhere.dueAt = {
       gte: new Date(),
@@ -158,7 +177,10 @@ export default async function PipelinePage({ searchParams }) {
     }
   }
 
-  // Fetch Follow-ups, ServiceTitan Estimates and Customers
+  // ============================================
+  // FETCH FOLLOW-UPS, ESTIMATES & CUSTOMERS
+  // ============================================
+
   const [followUps, serviceTitanEstimates, serviceTitanCustomers] =
     await Promise.all([
       prisma.followUp.findMany({
@@ -197,7 +219,36 @@ export default async function PipelinePage({ searchParams }) {
       }),
     ]);
 
-  // Get ServiceTitan Estimate IDs
+  // ============================================
+  // SERIALIZE FOLLOW-UPS
+  // ============================================
+
+  const followUpData = followUps.map((followUp) => ({
+    ...followUp,
+
+    commissionEstimate:
+      followUp.commissionEstimate !== null &&
+      followUp.commissionEstimate !== undefined
+        ? Number(followUp.commissionEstimate)
+        : 0,
+
+    opportunity: followUp.opportunity
+      ? {
+          ...followUp.opportunity,
+
+          value:
+            followUp.opportunity.value !== null &&
+            followUp.opportunity.value !== undefined
+              ? Number(followUp.opportunity.value)
+              : null,
+        }
+      : null,
+  }));
+
+  // ============================================
+  // GET SERVICETITAN ESTIMATE IDS
+  // ============================================
+
   const estimateIds = [
     ...new Set(
       serviceTitanEstimates
@@ -207,7 +258,10 @@ export default async function PipelinePage({ searchParams }) {
     ),
   ];
 
-  // Find CRM assignments matching ServiceTitan Estimate IDs
+  // ============================================
+  // FETCH CRM ASSIGNMENTS
+  // ============================================
+
   const crmAssignments = estimateIds.length
     ? await prisma.opportunity.findMany({
         where: {
@@ -228,7 +282,10 @@ export default async function PipelinePage({ searchParams }) {
       })
     : [];
 
-  // Map CRM assignments by ServiceTitan Estimate ID
+  // ============================================
+  // CREATE ASSIGNMENT MAP
+  // ============================================
+
   const assignmentMap = new Map(
     crmAssignments.map((assignment) => [
       String(assignment.serviceTitanEstimateId),
@@ -236,20 +293,32 @@ export default async function PipelinePage({ searchParams }) {
     ]),
   );
 
-  // Map ServiceTitan Customers by Customer ID
+  // ============================================
+  // CREATE CUSTOMER MAP
+  // ============================================
+
   const customerMap = new Map(
     serviceTitanCustomers
-      .filter((customer) => customer.stCustomerId)
+      .filter(
+        (customer) =>
+          customer.stCustomerId !== undefined && customer.stCustomerId !== null,
+      )
       .map((customer) => [String(customer.stCustomerId), customer]),
   );
 
-  // Format ServiceTitan Estimates
+  // ============================================
+  // FORMAT SERVICETITAN ESTIMATES
+  // ============================================
+
   const estimates = serviceTitanEstimates.map((estimate) => {
     const estimateId = String(estimate.id);
 
     const assignment = assignmentMap.get(estimateId);
 
     const customer = customerMap.get(String(estimate.customerId));
+
+    const estimateValue =
+      estimate.total ?? estimate.subtotal ?? estimate.amount ?? 0;
 
     return {
       id: estimateId,
@@ -261,7 +330,7 @@ export default async function PipelinePage({ searchParams }) {
         businessName: customer?.pocName || estimate.customerName || "—",
       },
 
-      value: estimate.total ?? estimate.subtotal ?? estimate.amount ?? 0,
+      value: Number(estimateValue) || 0,
 
       assignedTo: assignment?.assignedTo || null,
 
@@ -271,7 +340,10 @@ export default async function PipelinePage({ searchParams }) {
     };
   });
 
-  // Apply Salesperson Filter
+  // ============================================
+  // APPLY SALESPERSON FILTER TO ESTIMATES
+  // ============================================
+
   const filteredEstimates = selectedUserId
     ? estimates.filter((estimate) => {
         const assignment = assignmentMap.get(estimate.id);
@@ -280,48 +352,64 @@ export default async function PipelinePage({ searchParams }) {
       })
     : estimates;
 
+  // ============================================
+  // RENDER
+  // ============================================
+
   return (
     <div className="w-full">
       {/* Breadcrumb */}
+
       <Breadcrumbs
-        items={[{ label: "Sales Tracker", href: "/admin" }]}
+        items={[
+          {
+            label: "Sales Tracker",
+            href: "/admin",
+          },
+        ]}
         currentPage="In The Pipeline"
       />
 
       {/* Pipeline Filter */}
+
       <PipelineFilter users={users} selectedFilter={selectedFilter} />
 
       {/* Follow-ups */}
+
       <section className="mt-7 w-full">
         <h2 className="mb-5 px-1 text-sm font-bold uppercase text-black sm:text-base">
           Follow-ups
         </h2>
 
-        <FollowUpsTable followUps={followUps} />
+        <FollowUpsTable followUps={followUpData} />
       </section>
 
       {/* First Progress Separator */}
+
       <div className="my-8 flex w-full items-center">
         <div className="h-[4px] w-8 shrink-0 rounded-full bg-black" />
         <div className="h-[4px] flex-1 rounded-full bg-[#eeeeee]" />
       </div>
 
       {/* ServiceTitan Estimates */}
+
       <section className="w-full">
         <h2 className="mb-5 px-1 text-sm font-bold uppercase text-black sm:text-base">
           Estimates
         </h2>
 
-        <EstimatesTable opportunities={filteredEstimates} />
+        <EstimatesTable estimates={filteredEstimates} />
       </section>
 
       {/* Second Progress Separator */}
+
       <div className="my-8 flex w-full items-center">
         <div className="h-[4px] w-8 shrink-0 rounded-full bg-black" />
         <div className="h-[4px] flex-1 rounded-full bg-[#eeeeee]" />
       </div>
 
       {/* Page Tagline */}
+
       <PageTagline>Drive thy business, or it will drive thee.</PageTagline>
     </div>
   );

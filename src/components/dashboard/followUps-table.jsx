@@ -28,7 +28,12 @@ function formatDueDate(date) {
 
   const day = value.getDate();
 
-  return `${weekday} / ${month} ${day}\n7:30 AM`;
+  const time = new Intl.DateTimeFormat("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(value);
+
+  return `${weekday} / ${month} ${day}\n${time}`;
 }
 
 function getFollowUpStatus(dueAt) {
@@ -87,6 +92,7 @@ export default function FollowUpsTable({
   followUps = [],
   currency = "$",
   className = "",
+  showSalesman = true,
 }) {
   // ============================================
   // PAGINATION STATE
@@ -123,6 +129,8 @@ export default function FollowUpsTable({
   // RENDER
   // ============================================
 
+  const columnCount = showSalesman ? 6 : 5;
+
   return (
     <section className={`w-full ${className}`}>
       <div className="w-full overflow-x-auto">
@@ -137,9 +145,11 @@ export default function FollowUpsTable({
                 Customer/Opp.
               </th>
 
-              <th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-black sm:text-xs">
-                Salesman
-              </th>
+              {showSalesman && (
+                <th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-black sm:text-xs">
+                  Salesman
+                </th>
+              )}
 
               <th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-black sm:text-xs">
                 Status
@@ -184,32 +194,38 @@ export default function FollowUpsTable({
                     {/* CUSTOMER / OPPORTUNITY */}
 
                     <td className="px-3 py-2 text-xs leading-tight text-black lg:text-sm">
-                      <Link
-                        href={`/admin/opportunities/${opportunity.id}`}
-                        className="underline underline-offset-2"
-                      >
-                        <span className="font-bold">{customerName}</span>
+                      {opportunity?.id ? (
+                        <Link
+                          href={`/admin/opportunities/${opportunity.id}`}
+                          className="underline underline-offset-2"
+                        >
+                          <span className="font-bold">{customerName}</span>
 
-                        <br />
+                          <br />
 
-                        <span className="font-normal">{jobType}</span>
-                      </Link>
+                          <span className="font-normal">{jobType || "—"}</span>
+                        </Link>
+                      ) : (
+                        customerName
+                      )}
                     </td>
 
                     {/* SALESMAN */}
 
-                    <td className="whitespace-nowrap px-3 py-2 text-xs text-black lg:text-sm">
-                      {salesman?.id ? (
-                        <Link
-                          href={`/admin/salesmen/${salesman.id}`}
-                          className="underline underline-offset-2"
-                        >
-                          {salesman.name}
-                        </Link>
-                      ) : (
-                        "—"
-                      )}
-                    </td>
+                    {showSalesman && (
+                      <td className="whitespace-nowrap px-3 py-2 text-xs text-black lg:text-sm">
+                        {salesman?.id ? (
+                          <Link
+                            href={`/admin/salesmen/${salesman.id}`}
+                            className="underline underline-offset-2"
+                          >
+                            {salesman.name}
+                          </Link>
+                        ) : (
+                          "—"
+                        )}
+                      </td>
+                    )}
 
                     {/* STATUS */}
 
@@ -237,7 +253,7 @@ export default function FollowUpsTable({
             ) : (
               <tr>
                 <td
-                  colSpan={6}
+                  colSpan={columnCount}
                   className="px-3 py-8 text-center text-xs text-[#777]"
                 >
                   No follow-ups found.

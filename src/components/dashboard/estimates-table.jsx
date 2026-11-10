@@ -1,7 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+
 import TablePagination from "@/components/dashboard/table-pagination";
+
+// ============================================
+// HELPERS
+// ============================================
 
 function formatCurrency(amount, currency = "$") {
   return `${currency}${new Intl.NumberFormat("en-US", {
@@ -21,8 +26,12 @@ function formatSource(source) {
   return source || "—";
 }
 
+// ============================================
+// ESTIMATES TABLE
+// ============================================
+
 export default function EstimatesTable({
-  opportunities = [],
+  estimates = [],
   currency = "$",
   className = "",
 }) {
@@ -33,18 +42,15 @@ export default function EstimatesTable({
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
-  const totalItems = opportunities.length;
-
+  const totalItems = estimates.length;
   const totalPages = Math.ceil(totalItems / pageSize);
 
-  // Keep current page within the available page range.
   useEffect(() => {
     if (currentPage > Math.max(1, totalPages)) {
       setCurrentPage(Math.max(1, totalPages));
     }
   }, [currentPage, totalPages]);
 
-  // Reset to first page when page size changes.
   function handlePageSizeChange(size) {
     setPageSize(size);
     setCurrentPage(1);
@@ -54,11 +60,11 @@ export default function EstimatesTable({
   // PAGINATED DATA
   // ============================================
 
-  const paginatedOpportunities = useMemo(() => {
+  const paginatedEstimates = useMemo(() => {
     const startIndex = (currentPage - 1) * pageSize;
 
-    return opportunities.slice(startIndex, startIndex + pageSize);
-  }, [opportunities, currentPage, pageSize]);
+    return estimates.slice(startIndex, startIndex + pageSize);
+  }, [estimates, currentPage, pageSize]);
 
   // ============================================
   // RENDER
@@ -97,44 +103,44 @@ export default function EstimatesTable({
           </thead>
 
           <tbody>
-            {paginatedOpportunities.length > 0 ? (
-              paginatedOpportunities.map((opportunity) => (
+            {paginatedEstimates.length > 0 ? (
+              paginatedEstimates.map((estimate) => (
                 <tr
-                  key={opportunity.id}
+                  key={estimate.id}
                   className="border-b border-[#d9d9d9] transition-colors hover:bg-[#f8f8f8]"
                 >
                   <td className="whitespace-nowrap px-4 py-2 text-xs text-black lg:text-sm">
-                    {opportunity.serviceTitanEstimateId || "—"}
+                    {estimate.serviceTitanEstimateId || "—"}
                   </td>
 
                   <td className="whitespace-nowrap px-4 py-2 text-xs text-black lg:text-sm">
-                    {opportunity.customer?.businessName || "—"}
+                    {estimate.customer?.businessName || "—"}
                   </td>
 
                   <td className="whitespace-nowrap px-4 py-2 text-xs text-black lg:text-sm">
-                    {formatCurrency(opportunity.value, currency)}
+                    {formatCurrency(estimate.value, currency)}
                   </td>
 
                   <td className="whitespace-nowrap px-4 py-2 text-xs text-black lg:text-sm">
-                    {opportunity.assignedTo?.name || "—"}
+                    {estimate.assignedTo?.name || "—"}
                   </td>
 
                   <td className="whitespace-nowrap px-4 py-2 text-xs text-black lg:text-sm">
-                    {formatSource(opportunity.source)}
+                    {formatSource(estimate.source)}
                   </td>
 
                   <td className="whitespace-nowrap px-4 py-2 text-xs text-black lg:text-sm">
-                    {formatCurrency(
-                      opportunity.commissionEstimate || 0,
-                      currency,
-                    )}
+                    {formatCurrency(estimate.commissionEstimate || 0, currency)}
                   </td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan={6} className="px-4 py-10 text-sm text-[#777]">
-                  No open estimates found.
+                <td
+                  colSpan={6}
+                  className="px-4 py-10 text-center text-sm text-[#777]"
+                >
+                  No estimates found.
                 </td>
               </tr>
             )}
