@@ -1,23 +1,3 @@
-function getMonthCount(startDate, endDate) {
-  if (!startDate || !endDate) return 1;
-
-  const start = new Date(startDate);
-  const end = new Date(endDate);
-
-  if (
-    Number.isNaN(start.getTime()) ||
-    Number.isNaN(end.getTime()) ||
-    end < start
-  ) {
-    return 1;
-  }
-
-  return (
-    (end.getFullYear() - start.getFullYear()) * 12 +
-    (end.getMonth() - start.getMonth()) +
-    1
-  );
-}
 
 function formatCurrency(amount, currency) {
   return `${currency}${new Intl.NumberFormat("en-US", {
@@ -27,35 +7,58 @@ function formatCurrency(amount, currency) {
 
 export default function RevenueSummary({
   revenue = 0,
-  monthlyGoal = 0,
-  startDate,
-  endDate,
+  goal = 0,
+  goalLabel = "MONTHLY GOAL",
   commissionRate = 5,
   currency = "$",
   className = "",
 }) {
+  // ============================================
+  // SUMMARY VALUES
+  // ============================================
+
   const totalRevenue = Number(revenue) || 0;
-  const monthlyTarget = Number(monthlyGoal) || 0;
+  const totalGoal = Number(goal) || 0;
   const commissionPercentage = Number(commissionRate) || 0;
 
-  const monthCount = getMonthCount(startDate, endDate);
+  // ============================================
+  // GOAL PROGRESS
+  // ============================================
 
-  const totalGoal = monthlyTarget * monthCount;
+  const calculatedProgress =
+    totalGoal > 0
+      ? Math.round((totalRevenue / totalGoal) * 100)
+      : 0;
 
-  const progress =
-    totalGoal > 0 ? Math.round((totalRevenue / totalGoal) * 100) : 0;
+  // Progress cannot exceed 100%.
+  const progress = Math.min(
+    Math.max(calculatedProgress, 0),
+    100,
+  );
 
-  const commission = totalRevenue * (commissionPercentage / 100);
+  // ============================================
+  // COMMISSION
+  // ============================================
 
-  const ringProgress = Math.min(Math.max(progress, 0), 100);
+  const commission =
+    totalRevenue * (commissionPercentage / 100);
 
-  const circumference = 2 * Math.PI * 35;
+  // ============================================
+  // CIRCLE PROGRESS
+  // ============================================
 
-  const dashOffset = circumference - (ringProgress / 100) * circumference;
+  const circumference = 2 * Math.PI * 51;
+
+  const dashOffset =
+    circumference - (progress / 100) * circumference;
+
+  // ============================================
+  // RENDER
+  // ============================================
 
   return (
     <section
-      className={`w-full px-4 lg:px-8 py-8 lg:py-18 bg-white ${className}`}
+      className={`w-full px-4 py-8 lg:px-8 lg:py-18 bg-white ${className}`}
       aria-label="Revenue summary"
     >
       {/* Goal Progress */}
@@ -70,6 +73,7 @@ export default function RevenueSummary({
             className="h-full w-full -rotate-90"
             aria-hidden="true"
           >
+            {/* Background Circle */}
             <circle
               cx="55"
               cy="55"
@@ -79,6 +83,7 @@ export default function RevenueSummary({
               strokeWidth="2"
             />
 
+            {/* Progress Circle */}
             <circle
               cx="55"
               cy="55"
@@ -87,27 +92,25 @@ export default function RevenueSummary({
               stroke="#000000"
               strokeWidth="4"
               strokeLinecap="round"
-              strokeDasharray={2 * Math.PI * 51}
-              strokeDashoffset={
-                2 * Math.PI * 51 -
-                (Math.min(Math.max(progress, 0), 100) / 100) *
-                  (2 * Math.PI * 51)
-              }
+              strokeDasharray={circumference}
+              strokeDashoffset={dashOffset}
             />
           </svg>
 
+          {/* Percentage */}
           <span className="absolute inset-0 flex items-center justify-center text-[27px] font-bold text-black">
             {progress}%
           </span>
         </div>
 
+        {/* Goal Amount and Label */}
         <div className="min-w-0">
           <p className="text-2xl font-medium leading-tight text-black lg:text-3xl">
             {formatCurrency(totalGoal, currency)}
           </p>
 
           <p className="mt-1 text-sm uppercase tracking-wide text-[#555]">
-            {monthCount === 1 ? "Monthly" : `${monthCount} Months`} Goal
+            {goalLabel}
           </p>
         </div>
       </div>

@@ -24,8 +24,6 @@ enum LeadSource {
 
 enum OpportunityStatus {
   OPEN
-  WON
-  LOST
   PERMANENTLY_CLOSED
   TEMPORARILY_CLOSED
   SCHEDULED_TO_REOPEN
@@ -108,9 +106,6 @@ model User {
   // Activity Relations
   activities Activity[]
 
-  // Sales Relations
-  closedSales Sale[] @relation("SaleClosedBy")
-
   @@index([role, isActive])
 }
 
@@ -141,11 +136,13 @@ model Customer {
   id           String  @id @default(cuid())
   displayId    String? @unique
 
+  // External Integration IDs
   stCustomerId String? @unique
   qbCustomerId String? @unique
 
+  // Customer Information
   pocName      String?
-  businessName String
+  businessName String?
   phone        String?
   email        String?
   location     String? @db.Text
@@ -179,7 +176,7 @@ model Opportunity {
   // Opportunity Information
   title           String
   opportunityDate DateTime @default(now())
-  jobType         String
+  jobType         String?
   textMessage     String?  @db.Text
 
   // Estimated Value
@@ -225,9 +222,6 @@ model Opportunity {
 
   // Activity Relation
   activities Activity[]
-
-  // One Opportunity = One Sale
-  sale Sale?
 
   @@index([customerId])
   @@index([assignedToId, status])
@@ -356,44 +350,4 @@ model Activity {
   @@index([opportunityId, createdAt])
   @@index([userId, createdAt])
   @@index([type, createdAt])
-}
-
-// ============================================
-// SALE
-// ============================================
-
-model Sale {
-  id        String  @id @default(cuid())
-  displayId String? @unique
-
-  // One Sale per Opportunity
-  opportunityId String @unique
-
-  closedById String
-
-  // Final Sale Value
-  saleValue Decimal @db.Decimal(12, 2)
-
-  // Copied from Opportunity
-  source LeadSource
-
-  // ServiceTitan Work Order / Job ID
-  serviceTitanJobId String? @unique
-
-  // Sale Notes
-  notes String? @db.Text
-
-  closedAt  DateTime @default(now())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Opportunity Relation
-  opportunity Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Restrict)
-
-  // Closed By
-  closedBy User @relation("SaleClosedBy", fields: [closedById], references: [id], onDelete: Restrict)
-
-  @@index([closedById, closedAt])
-  @@index([source, closedAt])
-  @@index([closedAt])
 }

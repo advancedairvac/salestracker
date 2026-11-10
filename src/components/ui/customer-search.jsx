@@ -1,128 +1,142 @@
-
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState } from "react";
+import Input from "@/components/ui/input";
 
-import { searchCustomers } from "@/app/admin/opportunities/new/actions";
-
-export default function CustomerSearch({
-  onSelect,
-  onClear,
-}) {
-  const [query, setQuery] = useState("");
+export default function CustomerSearch({ value = "", onChange, onSelect }) {
   const [customers, setCustomers] = useState([]);
-  const [selectedCustomer, setSelectedCustomer] = useState(null);
-  const [isOpen, setIsOpen] = useState(false);
-  const [isPending, startTransition] = useTransition();
+  const [loading, setLoading] = useState(true);
+  const [open, setOpen] = useState(false);
+  const [selected, setSelected] = useState(false);
 
+  const wrapperRef = useRef(null);
+
+  // Fetch customer data only once
   useEffect(() => {
-    if (selectedCustomer || query.trim().length < 2) {
-      setCustomers([]);
-      setIsOpen(false);
-      return;
+    const controller = new AbortController();
+
+    async function fetchCustomers() {
+      try {
+        setLoading(true);
+
+        const response = await fetch(
+          "/api/servicetitan/customers?page=1&pageSize=100",
+          {
+            cache: "no-store",
+            signal: controller.signal,
+          },
+        );
+
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+          throw new Error(result.message || "Failed to load customers.");
+        }
+
+        setCustomers(result.customers || []);
+      } catch (error) {
+        if (error.name !== "AbortError") {
+          console.error("Customer loading error:", error);
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
+      }
     }
 
-    const timer = setTimeout(() => {
-      startTransition(async () => {
-        try {
-          const results = await searchCustomers(query.trim());
-          setCustomers(results || []);
-          setIsOpen(true);
-        } catch (error) {
-          console.error("Customer search failed:", error);
-          setCustomers([]);
-        }
-      });
-    }, 300);
+    fetchCustomers();
 
-    return () => clearTimeout(timer);
-  }, [query, selectedCustomer]);
+    return () => controller.abort();
+  }, []);
 
-  function handleSelect(customer) {
-    setSelectedCustomer(customer);
-    setQuery(customer.businessName);
-    setCustomers([]);
-    setIsOpen(false);
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleOutsideClick(event) {
+      if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
+        setOpen(false);
+      }
+    }
 
-    onSelect?.(customer);
+    document.addEventListener("mousedown", handleOutsideClick);
+
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideClick);
+    };
+  }, []);
+
+  // Instant local search
+  const searchTerm = value.trim().toLowerCase();
+
+  const filteredCustomers =
+    searchTerm.length >= 2
+      ? customers
+          .filter((customer) => {
+            return (
+              customer.pocName?.toLowerCase().includes(searchTerm) ||
+              customer.phone?.toLowerCase().includes(searchTerm) ||
+              customer.email?.toLowerCase().includes(searchTerm)
+            );
+          })
+          .slice(0, 10)
+      : [];
+
+  function handleInputChange(event) {
+    setSelected(false);
+    onChange(event);
+    setOpen(true);
   }
 
-  function handleClear() {
-    setSelectedCustomer(null);
-    setQuery("");
-    setCustomers([]);
-    setIsOpen(false);
-
-    onClear?.();
+  function handleSelect(customer) {
+    setSelected(true);
+    setOpen(false);
+    onSelect(customer);
   }
 
   return (
-    <div className="relative w-full">
-      <div className="relative">
-        <input
-          type="text"
-          value={query}
-          onChange={(event) => {
-            setQuery(event.target.value);
-            setSelectedCustomer(null);
-            onClear?.();
-          }}
-          onFocus={() => {
-            if (customers.length > 0 && !selectedCustomer) {
-              setIsOpen(true);
-            }
-          }}
-          placeholder="Search by Business Name or POC Name"
-          autoComplete="off"
-          className="h-[42px] w-full border border-[#d9d9d9] bg-white px-[10px] pr-10 text-[11px] text-black outline-none transition-colors placeholder:text-[#777] focus:border-black"
-        />
+    <div ref={wrapperRef} className="relative w-full">
+      <Input
+        name="pocName"
+        label="POC Name"
+        value={value}
+        onChange={handleInputChange}
+        autoComplete="off"
+        required
+      />
 
-        {isPending && (
-          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-[#777]">
-            Searching...
-          </span>
-        )}
-
-        {!isPending && selectedCustomer && (
-          <button
-            type="button"
-            onClick={handleClear}
-            aria-label="Clear selected customer"
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-[#777] hover:text-black"
-          >
-            ×
-          </button>
-        )}
-      </div>
-
-      {isOpen && !selectedCustomer && (
-        <div className="absolute left-0 right-0 top-full z-30 mt-1 max-h-60 overflow-y-auto border border-[#dedede] bg-white shadow-lg">
-          {customers.length > 0 ? (
-            customers.map((customer) => (
+      {open && !selected && searchTerm.length >= 2 && (
+        <div className="absolute left-0 top-full z-30 mt-1 max-h-[280px] w-full overflow-y-auto border border-[#d9d9d9] bg-white shadow-lg">
+          {loading ? (
+            <div className="px-3 py-4 text-xs text-[#666666]">
+              Loading customers...
+            </div>
+          ) : filteredCustomers.length > 0 ? (
+            filteredCustomers.map((customer) => (
               <button
                 key={customer.id}
                 type="button"
                 onClick={() => handleSelect(customer)}
-                className="flex w-full flex-col gap-1 border-b border-[#eee] px-3 py-3 text-left transition-colors last:border-b-0 hover:bg-[#f7f7f7]"
+                className="flex w-full flex-col gap-1 border-b border-[#eeeeee] px-3 py-3 text-left transition-colors hover:bg-[#f7f7f7]"
               >
-                <span className="text-[11px] font-semibold text-black">
-                  {customer.businessName}
+                <span className="text-xs font-semibold text-[#111111]">
+                  {customer.pocName}
                 </span>
 
-                <span className="text-[10px] text-[#777]">
-                  {customer.pocName || "No POC Name"}
+                <span className="text-[11px] text-[#666666]">
+                  {customer.phone || "No phone"}
+                  {customer.email ? ` · ${customer.email}` : ""}
                 </span>
 
-                <span className="text-[10px] text-[#999]">
-                  {[customer.email, customer.phone]
-                    .filter(Boolean)
-                    .join(" · ")}
-                </span>
+                {customer.location && (
+                  <span className="text-[11px] text-[#888888]">
+                    {customer.location}
+                  </span>
+                )}
               </button>
             ))
           ) : (
-            <div className="px-3 py-3 text-[11px] text-[#777]">
-              No existing customer found. You can create a new customer.
+            <div className="px-3 py-4 text-xs text-[#666666]">
+              No matching customers found. You can enter the details manually.
             </div>
           )}
         </div>

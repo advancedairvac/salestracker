@@ -33,23 +33,6 @@ function formatTime(date) {
   });
 }
 
-function getLocalDateTimeValue(date) {
-  if (!date) return "";
-
-  const value = new Date(date);
-
-  if (Number.isNaN(value.getTime())) return "";
-
-  const year = value.getFullYear();
-  const month = String(value.getMonth() + 1).padStart(2, "0");
-  const day = String(value.getDate()).padStart(2, "0");
-  const hours = String(value.getHours()).padStart(2, "0");
-  const minutes = String(value.getMinutes()).padStart(2, "0");
-
-  return `${year}-${month}-${day}T${hours}:${minutes}`;
-}
-
-// Format a date using the browser's local timezone.
 function getLocalDateValue(date = new Date()) {
   const value = new Date(date);
 
@@ -60,6 +43,34 @@ function getLocalDateValue(date = new Date()) {
   const day = String(value.getDate()).padStart(2, "0");
 
   return `${year}-${month}-${day}`;
+}
+
+// Convert selected date into local 7:30 AM.
+function getManualFollowUpDateTime(date) {
+  if (!date) return null;
+
+  const value = new Date(`${date}T07:30:00`);
+
+  if (Number.isNaN(value.getTime())) return null;
+
+  return value;
+}
+
+// Get the earliest date that still allows a future 7:30 AM follow-up.
+function getEarliestFollowUpDate() {
+  const now = new Date();
+
+  const todayAt730 = new Date(now);
+  todayAt730.setHours(7, 30, 0, 0);
+
+  if (todayAt730 <= now) {
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    return getLocalDateValue(tomorrow);
+  }
+
+  return getLocalDateValue(now);
 }
 
 // Set reopening time to 7:30 AM in the browser's local timezone.
@@ -80,10 +91,7 @@ function isOverdue(date) {
 function getStatusLabel(status) {
   const labels = {
     OPEN: "Open",
-    WON: "Won",
-    LOST: "Lost",
     TEMPORARILY_CLOSED: "Temporarily Closed",
-    PERMANENTLY_CLOSED: "Permanently Closed",
     SCHEDULED_TO_REOPEN: "Scheduled to Reopen",
   };
 
@@ -170,8 +178,8 @@ export default function OpportunityActions({ opportunity, schedule }) {
     initialManualFollowUp?.dueAt || null,
   );
 
-  const [manualDateTime, setManualDateTime] = useState(() =>
-    getLocalDateTimeValue(initialManualFollowUp?.dueAt),
+  const [manualDate, setManualDate] = useState(() =>
+    getLocalDateValue(initialManualFollowUp?.dueAt || new Date()),
   );
 
   const [nextFollowUpAt, setNextFollowUpAt] = useState(
@@ -183,21 +191,15 @@ export default function OpportunityActions({ opportunity, schedule }) {
   );
 
   // ============================================
-  // STATUS ACTION STATE
+  // OPPORTUNITY STATUS STATE
   // ============================================
 
   const [currentStatus, setCurrentStatus] = useState(opportunity.status);
 
-  const [showStatusMenu, setShowStatusMenu] = useState(false);
-  const [selectedAction, setSelectedAction] = useState("");
+  const [showCloseForm, setShowCloseForm] = useState(false);
   const [closeType, setCloseType] = useState("");
 
-  // Use the original opportunity estimate as the default final sale value.
-  const [finalValue, setFinalValue] = useState(String(opportunity.value ?? 0));
-
   const [note, setNote] = useState("");
-
-  // Reopen date only. Time is automatically set to 7:30 AM.
   const [reopenDate, setReopenDate] = useState("");
 
   const [statusError, setStatusError] = useState("");
@@ -251,18 +253,16 @@ export default function OpportunityActions({ opportunity, schedule }) {
 
       if (result.needsDate) {
         setSavedManualDateTime(null);
-        setManualDateTime("");
+        setManualDate(getLocalDateValue());
         setNextFollowUpAt(null);
         setShowEditor(true);
         return;
       }
 
-      setSavedManualDateTime(result.manualDateTime || result.nextFollowUpAt);
+      const savedDateTime = result.manualDateTime || result.nextFollowUpAt;
 
-      setManualDateTime(
-        getLocalDateTimeValue(result.manualDateTime || result.nextFollowUpAt),
-      );
-
+      setSavedManualDateTime(savedDateTime);
+      setManualDate(getLocalDateValue(savedDateTime));
       setNextFollowUpAt(result.nextFollowUpAt || null);
       setShowEditor(false);
       setSuccess("Saved manual follow-up activated.");
@@ -273,11 +273,16 @@ export default function OpportunityActions({ opportunity, schedule }) {
   // OPEN FOLLOW-UP EDITOR
   // ============================================
 
-  function handleEditTime() {
+  function handleEditDate() {
     setError("");
     setSuccess("");
 
-    setManualDateTime(getLocalDateTimeValue(savedManualDateTime));
+    setManualDate(
+      savedManualDateTime
+        ? getLocalDateValue(savedManualDateTime)
+        : getLocalDateValue(),
+    );
+
     setShowEditor(true);
   }
 
@@ -286,20 +291,22 @@ export default function OpportunityActions({ opportunity, schedule }) {
   // ============================================
 
   function handleManualSave() {
-    if (!manualDateTime) {
-      setError("Please select a follow-up date and time.");
+    if (!manualDate) {
+      setError("Please select a follow-up date.");
       return;
     }
 
-    const selectedDate = new Date(manualDateTime);
+    const selectedDate = getManualFollowUpDateTime(manualDate);
 
-    if (Number.isNaN(selectedDate.getTime())) {
-      setError("Please select a valid date and time.");
+    if (!selectedDate) {
+      setError("Please select a valid follow-up date.");
       return;
     }
 
     if (selectedDate <= new Date()) {
-      setError("Please select a future date and time.");
+      setError(
+        "Please select a future date. Follow-up time is automatically set to 7:30 AM.",
+      );
       return;
     }
 
@@ -322,16 +329,14 @@ export default function OpportunityActions({ opportunity, schedule }) {
 
       setMode("MANUAL");
 
-      setSavedManualDateTime(result.manualDateTime || selectedDateISO);
+      const savedDateTime = result.manualDateTime || selectedDateISO;
 
-      setManualDateTime(
-        getLocalDateTimeValue(result.manualDateTime || selectedDateISO),
-      );
-
+      setSavedManualDateTime(savedDateTime);
+      setManualDate(getLocalDateValue(savedDateTime));
       setNextFollowUpAt(result.nextFollowUpAt || selectedDateISO);
 
       setShowEditor(false);
-      setSuccess("Manual follow-up date and time saved.");
+      setSuccess("Manual follow-up date saved. Time: 7:30 AM.");
     });
   }
 
@@ -348,128 +353,84 @@ export default function OpportunityActions({ opportunity, schedule }) {
       return;
     }
 
-    setManualDateTime(getLocalDateTimeValue(savedManualDateTime));
-
+    setManualDate(getLocalDateValue(savedManualDateTime));
     setShowEditor(false);
   }
 
   // ============================================
-  // OPEN STATUS ACTION
+  // OPEN CLOSE FORM
   // ============================================
 
-  function handleSelectAction(action) {
-    setSelectedAction(action);
+  function handleOpenCloseForm() {
     setCloseType("");
-
-    // Restore the original estimate when opening the Won form.
-    setFinalValue(action === "WON" ? String(opportunity.value ?? 0) : "");
-
     setNote("");
     setReopenDate("");
-
     setStatusError("");
     setStatusSuccess("");
-
-    setShowStatusMenu(false);
+    setShowCloseForm(true);
   }
 
   // ============================================
-  // CANCEL STATUS ACTION
+  // CANCEL CLOSE FORM
   // ============================================
 
-  function handleCancelStatusAction() {
-    setSelectedAction("");
+  function handleCancelCloseForm() {
+    setShowCloseForm(false);
     setCloseType("");
-
-    setFinalValue(String(opportunity.value ?? 0));
     setNote("");
     setReopenDate("");
-
     setStatusError("");
   }
 
   // ============================================
-  // SUBMIT STATUS ACTION
+  // SUBMIT CLOSE ACTION
   // ============================================
 
   function handleStatusSubmit(event) {
     event.preventDefault();
 
-    if (statusPending || !selectedAction) return;
+    if (statusPending || !showCloseForm) return;
 
     setStatusError("");
     setStatusSuccess("");
 
+    if (!closeType) {
+      setStatusError("Please select a closing option.");
+      return;
+    }
+
     const payload = {
       note: note.trim(),
+      closeType,
     };
 
-    const action = selectedAction;
-
-    // ------------------------------------------
-    // WON VALIDATION
-    // ------------------------------------------
-
-    if (selectedAction === "WON") {
-      if (finalValue.trim() === "" || !Number.isFinite(Number(finalValue))) {
-        setStatusError("Please enter a valid final sale value.");
+    if (closeType === "SCHEDULE_REOPEN") {
+      if (!reopenDate) {
+        setStatusError("Please select a reopening date.");
         return;
       }
 
-      if (Number(finalValue) < 0) {
-        setStatusError("Final value cannot be negative.");
+      const selectedDate = getReopenDateTime(reopenDate);
+
+      if (!selectedDate) {
+        setStatusError("Please select a valid reopening date.");
         return;
       }
 
-      payload.finalValue = Number(finalValue);
+      if (selectedDate <= new Date()) {
+        setStatusError(
+          "Please select a future date. The opportunity will reopen at 7:30 AM.",
+        );
+        return;
+      }
+
+      payload.reopenAt = selectedDate.toISOString();
     }
-
-    // ------------------------------------------
-    // CLOSE VALIDATION
-    // ------------------------------------------
-
-    if (selectedAction === "CLOSE") {
-      if (!closeType) {
-        setStatusError("Please select a closing option.");
-        return;
-      }
-
-      payload.closeType = closeType;
-
-      // Schedule Reopen: Date only, automatically 7:30 AM.
-      if (closeType === "SCHEDULE_REOPEN") {
-        if (!reopenDate) {
-          setStatusError("Please select a reopening date.");
-          return;
-        }
-
-        const selectedDate = getReopenDateTime(reopenDate);
-
-        if (!selectedDate) {
-          setStatusError("Please select a valid reopening date.");
-          return;
-        }
-
-        if (selectedDate <= new Date()) {
-          setStatusError(
-            "Please select a future date. The opportunity will reopen at 7:30 AM.",
-          );
-          return;
-        }
-
-        // Convert the selected local date and 7:30 AM to UTC.
-        payload.reopenAt = selectedDate.toISOString();
-      }
-    }
-
-    // ------------------------------------------
-    // SAVE STATUS
-    // ------------------------------------------
 
     startStatusTransition(async () => {
       const result = await updateOpportunityStatus(
         opportunity.id,
-        action,
+        "CLOSE",
         payload,
       );
 
@@ -481,18 +442,12 @@ export default function OpportunityActions({ opportunity, schedule }) {
       }
 
       const nextStatus =
-        action === "WON"
-          ? "WON"
-          : action === "LOST"
-            ? "LOST"
-            : closeType === "TEMPORARY"
-              ? "TEMPORARILY_CLOSED"
-              : closeType === "PERMANENT"
-                ? "PERMANENTLY_CLOSED"
-                : "SCHEDULED_TO_REOPEN";
+        closeType === "TEMPORARY"
+          ? "TEMPORARILY_CLOSED"
+          : "SCHEDULED_TO_REOPEN";
 
       setCurrentStatus(nextStatus);
-      setSelectedAction("");
+      setShowCloseForm(false);
       setCloseType("");
 
       setStatusSuccess(
@@ -551,17 +506,17 @@ export default function OpportunityActions({ opportunity, schedule }) {
 
               {manualIsOverdue && (
                 <p className="mt-2 text-xs font-medium leading-5 text-red-600">
-                  Follow-up overdue. Please update the follow-up date and time.
+                  Follow-up overdue. Please update the follow-up date.
                 </p>
               )}
 
               <button
                 type="button"
                 disabled={pending}
-                onClick={handleEditTime}
+                onClick={handleEditDate}
                 className="mt-3 text-sm font-medium text-neutral-900 underline underline-offset-4 transition-colors hover:text-neutral-500 disabled:opacity-50"
               >
-                Edit Time
+                Edit Date
               </button>
             </div>
           )}
@@ -572,30 +527,34 @@ export default function OpportunityActions({ opportunity, schedule }) {
             <div className="mt-4 ml-14 w-full max-w-sm space-y-4">
               <div>
                 <label
-                  htmlFor="manualFollowUpDateTime"
+                  htmlFor="manualFollowUpDate"
                   className="mb-2 block text-sm font-medium text-neutral-700"
                 >
-                  Select Follow-up Date & Time
+                  Select Follow-up Date
                 </label>
 
                 <input
-                  id="manualFollowUpDateTime"
-                  type="datetime-local"
-                  value={manualDateTime}
-                  min={getLocalDateTimeValue(new Date())}
+                  id="manualFollowUpDate"
+                  type="date"
+                  value={manualDate}
+                  min={getEarliestFollowUpDate()}
                   onChange={(event) => {
-                    setManualDateTime(event.target.value);
+                    setManualDate(event.target.value);
                     setError("");
                     setSuccess("");
                   }}
                   disabled={pending}
                   className="h-11 w-full rounded-md border border-neutral-300 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-black disabled:opacity-60"
                 />
+
+                <p className="mt-2 text-xs text-neutral-500">
+                  Follow-up time: 7:30 AM (Automatically set)
+                </p>
               </div>
 
               <button
                 type="button"
-                disabled={pending || !manualDateTime}
+                disabled={pending || !manualDate}
                 onClick={handleManualSave}
                 className="flex h-10 w-full items-center justify-center gap-2 rounded-md bg-black px-4 text-sm font-semibold text-white transition-colors hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-50"
               >
@@ -650,7 +609,7 @@ export default function OpportunityActions({ opportunity, schedule }) {
         <p>{formatDate(opportunity.opportunityDate)}</p>
       </div>
 
-      {/* OPPORTUNITY STATUS ACTIONS */}
+      {/* OPPORTUNITY STATUS */}
 
       <section className="border-y border-neutral-200 py-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -664,195 +623,125 @@ export default function OpportunityActions({ opportunity, schedule }) {
             </p>
           </div>
 
-          {isOpen && (
-            <div className="relative">
-              <button
-                type="button"
-                disabled={statusPending}
-                onClick={() => setShowStatusMenu((value) => !value)}
-                className="flex h-10 items-center gap-2 rounded-md bg-black px-4 text-sm font-semibold text-white transition-colors hover:bg-neutral-800 disabled:opacity-50"
-              >
-                Actions
-                <span aria-hidden="true">▾</span>
-              </button>
+          {/* DIRECT CLOSE BUTTON */}
 
-              {showStatusMenu && (
-                <div className="absolute right-0 z-20 mt-2 w-52 overflow-hidden rounded-md border border-neutral-200 bg-white py-1 shadow-lg">
-                  <button
-                    type="button"
-                    onClick={() => handleSelectAction("WON")}
-                    className="block w-full px-4 py-2.5 text-left text-sm text-neutral-800 hover:bg-neutral-100"
-                  >
-                    Mark as Won
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleSelectAction("LOST")}
-                    className="block w-full px-4 py-2.5 text-left text-sm text-neutral-800 hover:bg-neutral-100"
-                  >
-                    Mark as Lost
-                  </button>
-
-                  <div className="my-1 border-t border-neutral-100" />
-
-                  <button
-                    type="button"
-                    onClick={() => handleSelectAction("CLOSE")}
-                    className="block w-full px-4 py-2.5 text-left text-sm text-neutral-800 hover:bg-neutral-100"
-                  >
-                    Close Opportunity
-                  </button>
-                </div>
-              )}
-            </div>
+          {isOpen && !showCloseForm && (
+            <button
+              type="button"
+              disabled={statusPending}
+              onClick={handleOpenCloseForm}
+              className="flex h-10 items-center justify-center rounded-md bg-black px-5 text-sm font-semibold text-white transition-colors hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Close Opportunity
+            </button>
           )}
         </div>
 
-        {/* STATUS ACTION FORM */}
+        {/* CLOSE FORM */}
 
-        {selectedAction && isOpen && (
+        {showCloseForm && isOpen && (
           <form
             onSubmit={handleStatusSubmit}
             className="mt-5 max-w-lg space-y-4 rounded-md border border-neutral-200 bg-neutral-50 p-4"
           >
             <div>
               <h3 className="text-sm font-semibold text-neutral-900">
-                {selectedAction === "WON"
-                  ? "Mark Opportunity as Won"
-                  : selectedAction === "LOST"
-                    ? "Mark Opportunity as Lost"
-                    : "Close Opportunity"}
+                Close Opportunity
               </h3>
 
               <p className="mt-1 text-xs leading-5 text-neutral-500">
-                {selectedAction === "WON"
-                  ? "Review or update the final sale value before confirming."
-                  : selectedAction === "LOST"
-                    ? "You can optionally add a note about why this opportunity was lost."
-                    : "Choose how you want to close this opportunity."}
+                Choose how you want to close this opportunity.
               </p>
             </div>
 
-            {/* WON: EDITABLE FINAL VALUE */}
+            {/* CLOSING OPTIONS */}
 
-            {selectedAction === "WON" && (
-              <div>
-                <label
-                  htmlFor="finalSaleValue"
-                  className="mb-1.5 block text-sm font-medium text-neutral-700"
-                >
-                  Final Sale Value <span className="text-red-500">*</span>
-                </label>
+            <div className="space-y-3">
+              <p className="text-sm font-medium text-neutral-700">
+                Select closing type
+              </p>
 
-                <input
-                  id="finalSaleValue"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  required
-                  value={finalValue}
-                  onChange={(event) => setFinalValue(event.target.value)}
-                  placeholder="Enter final sale value"
-                  disabled={statusPending}
-                  className="h-11 w-full rounded-md border border-neutral-300 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-black disabled:opacity-60"
-                />
-              </div>
-            )}
-
-            {/* CLOSE OPTIONS */}
-
-            {selectedAction === "CLOSE" && (
-              <div className="space-y-3">
-                <p className="text-sm font-medium text-neutral-700">
-                  Select closing type
-                </p>
-
-                <div className="space-y-2">
-                  {[
-                    {
-                      value: "TEMPORARY",
-                      label: "Temporary Close",
-                      description: "Close for now. May be reopened later.",
-                    },
-                    {
-                      value: "PERMANENT",
-                      label: "Permanent Close",
-                      description: "Permanently close this opportunity.",
-                    },
-                    {
-                      value: "SCHEDULE_REOPEN",
-                      label: "Schedule Reopen",
-                      description:
-                        "Close now and save a future reopening date.",
-                    },
-                  ].map((option) => (
-                    <label
-                      key={option.value}
-                      className={`flex cursor-pointer gap-3 rounded-md border p-3 transition-colors ${
-                        closeType === option.value
-                          ? "border-black bg-white"
-                          : "border-neutral-200 bg-white hover:border-neutral-400"
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        name="closeType"
-                        value={option.value}
-                        checked={closeType === option.value}
-                        onChange={() => {
-                          setCloseType(option.value);
-                          setStatusError("");
-                        }}
-                        disabled={statusPending}
-                        className="mt-1 accent-black"
-                      />
-
-                      <span>
-                        <span className="block text-sm font-medium text-neutral-900">
-                          {option.label}
-                        </span>
-
-                        <span className="mt-0.5 block text-xs text-neutral-500">
-                          {option.description}
-                        </span>
-                      </span>
-                    </label>
-                  ))}
-                </div>
-
-                {/* SCHEDULE REOPEN: DATE ONLY */}
-
-                {closeType === "SCHEDULE_REOPEN" && (
-                  <div>
-                    <label
-                      htmlFor="reopenDate"
-                      className="mb-1.5 block text-sm font-medium text-neutral-700"
-                    >
-                      Reopen Date <span className="text-red-600">*</span>
-                    </label>
-
+              <div className="space-y-2">
+                {[
+                  {
+                    value: "TEMPORARY",
+                    label: "Temporary Close",
+                    description:
+                      "Close for now. It can be reopened manually later.",
+                  },
+                  {
+                    value: "SCHEDULE_REOPEN",
+                    label: "Schedule Reopen",
+                    description:
+                      "Close now and automatically reopen on a selected date.",
+                  },
+                ].map((option) => (
+                  <label
+                    key={option.value}
+                    className={`flex cursor-pointer gap-3 rounded-md border p-3 transition-colors ${
+                      closeType === option.value
+                        ? "border-black bg-white"
+                        : "border-neutral-200 bg-white hover:border-neutral-400"
+                    }`}
+                  >
                     <input
-                      id="reopenDate"
-                      type="date"
-                      required
-                      min={getLocalDateValue()}
-                      value={reopenDate}
-                      onChange={(event) => {
-                        setReopenDate(event.target.value);
+                      type="radio"
+                      name="closeType"
+                      value={option.value}
+                      checked={closeType === option.value}
+                      onChange={() => {
+                        setCloseType(option.value);
                         setStatusError("");
+                        setReopenDate("");
                       }}
                       disabled={statusPending}
-                      className="h-11 w-full rounded-md border border-neutral-300 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-black disabled:opacity-60"
+                      className="mt-1 accent-black"
                     />
 
-                    <p className="mt-1.5 text-xs text-neutral-500">
-                      Reopening time: 7:30 AM (Automatically set)
-                    </p>
-                  </div>
-                )}
+                    <span>
+                      <span className="block text-sm font-medium text-neutral-900">
+                        {option.label}
+                      </span>
+
+                      <span className="mt-0.5 block text-xs text-neutral-500">
+                        {option.description}
+                      </span>
+                    </span>
+                  </label>
+                ))}
               </div>
-            )}
+
+              {/* SCHEDULE REOPEN DATE */}
+
+              {closeType === "SCHEDULE_REOPEN" && (
+                <div>
+                  <label
+                    htmlFor="reopenDate"
+                    className="mb-1.5 block text-sm font-medium text-neutral-700"
+                  >
+                    Reopen Date <span className="text-red-600">*</span>
+                  </label>
+
+                  <input
+                    id="reopenDate"
+                    type="date"
+                    required
+                    min={getLocalDateValue()}
+                    value={reopenDate}
+                    onChange={(event) => {
+                      setReopenDate(event.target.value);
+                      setStatusError("");
+                    }}
+                    disabled={statusPending}
+                    className="h-11 w-full rounded-md border border-neutral-300 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-black disabled:opacity-60"
+                  />
+
+                  <p className="mt-1.5 text-xs text-neutral-500">
+                    Reopening time: 7:30 AM (Automatically set)
+                  </p>
+                </div>
+              )}
+            </div>
 
             {/* OPTIONAL NOTE */}
 
@@ -882,6 +771,8 @@ export default function OpportunityActions({ opportunity, schedule }) {
               </p>
             )}
 
+            {/* FORM BUTTONS */}
+
             <div className="flex flex-wrap gap-2">
               <button
                 type="submit"
@@ -901,7 +792,7 @@ export default function OpportunityActions({ opportunity, schedule }) {
               <button
                 type="button"
                 disabled={statusPending}
-                onClick={handleCancelStatusAction}
+                onClick={handleCancelCloseForm}
                 className="h-10 rounded-md border border-neutral-300 bg-white px-4 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-100 disabled:opacity-50"
               >
                 Cancel

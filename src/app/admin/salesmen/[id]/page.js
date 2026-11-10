@@ -3,6 +3,16 @@ import { redirect, notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth";
 
+import {
+  getAllJobs,
+  getAllAppointmentAssignments,
+  getServiceTitanCustomers,
+} from "@/lib/integrations/servicetitan";
+
+import { PRESETS, getInitialRange } from "@/lib/date/date-utils";
+
+import { getGoalConfiguration, calculateTeamGoal } from "@/lib/date/goal-utils";
+
 import RevenueDateFilter from "@/components/dashboard/revenue-date-filter";
 import RevenueSummary from "@/components/dashboard/revenue-summary";
 import RevenueTable from "@/components/dashboard/revenue-table";
@@ -17,31 +27,11 @@ export const metadata = {
 };
 
 // ============================================
-// HELPERS
+// DATE HELPERS
 // ============================================
 
-function formatDate(date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-
-  return `${year}-${month}-${day}`;
-}
-
-function getInitialDateRange() {
-  const now = new Date();
-
-  const start = new Date(now.getFullYear(), now.getMonth(), 1);
-  const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-
-  return {
-    startDate: formatDate(start),
-    endDate: formatDate(end),
-  };
-}
-
 function isValidDateString(value) {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value || "")) {
     return false;
   }
 
@@ -50,6 +40,7 @@ function isValidDateString(value) {
   const date = new Date(year, month - 1, day);
 
   return (
+    !Number.isNaN(date.getTime()) &&
     date.getFullYear() === year &&
     date.getMonth() === month - 1 &&
     date.getDate() === day
@@ -57,28 +48,63 @@ function isValidDateString(value) {
 }
 
 function getDateRange(startDate, endDate) {
-  const start = new Date(`${startDate}T00:00:00.000`);
-  const end = new Date(`${endDate}T23:59:59.999`);
+  const [startYear, startMonth, startDay] = startDate.split("-").map(Number);
 
-  return { start, end };
+  const [endYear, endMonth, endDay] = endDate.split("-").map(Number);
+
+  return {
+    start: new Date(startYear, startMonth - 1, startDay),
+    endExclusive: new Date(endYear, endMonth - 1, endDay + 1),
+  };
 }
 
-function calculateRevenue(sales) {
-  return sales.reduce((total, sale) => total + Number(sale.saleValue || 0), 0);
+function isWithinRange(dateValue, start, endExclusive) {
+  if (!dateValue) return false;
+
+  const date = new Date(dateValue);
+
+  return !Number.isNaN(date.getTime()) && date >= start && date < endExclusive;
 }
 
-function calculateCloseRate(opportunities) {
-  const won = opportunities.filter(
-    (opportunity) => opportunity.status === "WON",
-  ).length;
+function normalizeName(name) {
+  return String(name || "")
+    .trim()
+    .toLowerCase();
+}
 
-  const lost = opportunities.filter(
-    (opportunity) => opportunity.status === "LOST",
-  ).length;
+function getList(response, possibleKeys = []) {
+  if (Array.isArray(response)) {
+    return response;
+  }
 
-  const closed = won + lost;
+  if (!response || typeof response !== "object") {
+    return [];
+  }
 
-  return closed > 0 ? Math.round((won / closed) * 100) : 0;
+  for (const key of possibleKeys) {
+    if (Array.isArray(response[key])) {
+      return response[key];
+    }
+  }
+
+  if (Array.isArray(response.data)) {
+    return response.data;
+  }
+
+  return [];
+}
+
+function getCustomerName(customer) {
+  if (!customer) return "—";
+
+  if (customer.name) {
+    return customer.name;
+  }
+
+  const firstName = customer.firstName || "";
+  const lastName = customer.lastName || "";
+
+  return `${firstName} ${lastName}`.trim() || "—";
 }
 
 // ============================================
@@ -107,10 +133,15 @@ export default async function SalesmanDetailsPage({ params, searchParams }) {
   const { id } = await params;
   const query = await searchParams;
 
-  const defaultRange = getInitialDateRange();
+  const defaultRange = getInitialRange();
 
-  const requestedStartDate = query?.startDate || defaultRange.startDate;
-  const requestedEndDate = query?.endDate || defaultRange.endDate;
+  const requestedStartDate =
+    typeof query?.startDate === "string"
+      ? query.startDate
+      : defaultRange.startDate;
+
+  const requestedEndDate =
+    typeof query?.endDate === "string" ? query.endDate : defaultRange.endDate;
 
   const validRange =
     isValidDateString(requestedStartDate) &&
@@ -121,7 +152,14 @@ export default async function SalesmanDetailsPage({ params, searchParams }) {
 
   const endDate = validRange ? requestedEndDate : defaultRange.endDate;
 
-  const { start, end } = getDateRange(startDate, endDate);
+  const requestedPreset =
+    typeof query?.preset === "string" ? query.preset : "MTD";
+
+  const selectedPreset = PRESETS.includes(requestedPreset)
+    ? requestedPreset
+    : "MTD";
+
+  const { start, endExclusive } = getDateRange(startDate, endDate);
 
   // ============================================
   // SALESMAN INFORMATION
@@ -139,6 +177,8 @@ export default async function SalesmanDetailsPage({ params, searchParams }) {
       name: true,
       title: true,
       monthlyGoal: true,
+      quarterlyGoal: true,
+      annualGoal: true,
     },
   });
 
@@ -147,136 +187,219 @@ export default async function SalesmanDetailsPage({ params, searchParams }) {
   }
 
   // ============================================
-  // DATABASE QUERIES
+  // GOAL CONFIGURATION
   // ============================================
 
-  const [sales, opportunities, followUps, closedOpportunities] =
-    await Promise.all([
-      // Sales closed by this salesman within selected date range
-      prisma.sale.findMany({
-        where: {
-          closedById: salesman.id,
-          closedAt: {
-            gte: start,
-            lte: end,
+  const goalConfiguration = getGoalConfiguration(
+    selectedPreset,
+    startDate,
+    endDate,
+  );
+
+  const selectedPeriodGoal = calculateTeamGoal(
+    [salesman],
+    goalConfiguration.goalType,
+  );
+
+  // ============================================
+  // FETCH DATA
+  // ============================================
+
+  const [
+    allJobsResponse,
+    assignmentsResponse,
+    customersResponse,
+    opportunities,
+    followUps,
+  ] = await Promise.all([
+    // ServiceTitan Jobs
+    getAllJobs({
+      pageSize: 100,
+      maxPages: 10,
+    }),
+
+    // ServiceTitan Appointment Assignments
+    getAllAppointmentAssignments({
+      pageSize: 100,
+      maxPages: 100,
+    }),
+
+    // ServiceTitan Customers
+    getServiceTitanCustomers(),
+
+    // Open opportunities assigned to this salesman
+    // within the selected date range
+    prisma.opportunity.findMany({
+      where: {
+        assignedToId: salesman.id,
+        status: "OPEN",
+        opportunityDate: {
+          gte: start,
+          lt: endExclusive,
+        },
+      },
+      orderBy: {
+        updatedAt: "desc",
+      },
+      include: {
+        customer: {
+          select: {
+            businessName: true,
           },
         },
-        orderBy: {
-          closedAt: "desc",
-        },
-        include: {
-          closedBy: {
-            select: {
-              name: true,
-            },
+        assignedTo: {
+          select: {
+            name: true,
           },
-          opportunity: {
-            select: {
-              customer: {
-                select: {
-                  businessName: true,
-                },
+        },
+      },
+    }),
+
+    // Pending follow-ups due within the selected range
+    prisma.followUp.findMany({
+      where: {
+        assignedToId: salesman.id,
+        status: "PENDING",
+        dueAt: {
+          gte: start,
+          lt: endExclusive,
+        },
+      },
+      orderBy: {
+        dueAt: "asc",
+      },
+      include: {
+        opportunity: {
+          select: {
+            id: true,
+            title: true,
+            customer: {
+              select: {
+                businessName: true,
               },
             },
           },
         },
-      }),
+        assignedTo: {
+          select: {
+            name: true,
+          },
+        },
+      },
+    }),
+  ]);
 
-      // Open opportunities assigned to this salesman
-      prisma.opportunity.findMany({
-        where: {
-          assignedToId: salesman.id,
-          status: "OPEN",
-        },
-        orderBy: {
-          updatedAt: "desc",
-        },
-        include: {
-          customer: {
-            select: {
-              businessName: true,
-            },
-          },
-          assignedTo: {
-            select: {
-              name: true,
-            },
-          },
-        },
-      }),
+  const allJobs = getList(allJobsResponse, ["jobs", "data", "items"]);
 
-      // Pending follow-ups assigned to this salesman
-      prisma.followUp.findMany({
-        where: {
-          assignedToId: salesman.id,
-          status: "PENDING",
-          dueAt: {
-            not: null,
-          },
-        },
-        orderBy: {
-          dueAt: "asc",
-        },
-        include: {
-          opportunity: {
-            select: {
-              id: true,
-              title: true,
-              customer: {
-                select: {
-                  businessName: true,
-                },
-              },
-            },
-          },
-          assignedTo: {
-            select: {
-              name: true,
-            },
-          },
-        },
-      }),
+  const allAssignments = getList(assignmentsResponse, [
+    "appointmentAssignments",
+    "data",
+    "items",
+  ]);
 
-      // Won and lost opportunities within selected date range
-      prisma.opportunity.findMany({
-        where: {
-          assignedToId: salesman.id,
-          status: {
-            in: ["WON", "LOST"],
-          },
-          closedAt: {
-            gte: start,
-            lte: end,
-          },
-        },
-        select: {
-          status: true,
-        },
-      }),
-    ]);
+  const customers = getList(customersResponse, ["customers", "data", "items"]);
 
   // ============================================
-  // REVENUE CALCULATIONS
+  // CUSTOMER LOOKUP
   // ============================================
 
-  const totalRevenue = calculateRevenue(sales);
+  const customerMap = new Map(
+    customers.map((customer) => [
+      String(customer.id),
+      getCustomerName(customer),
+    ]),
+  );
 
-  const monthlyGoal = Number(salesman.monthlyGoal || 0);
+  // ============================================
+  // ASSIGNMENTS BY JOB
+  // ============================================
 
-  const closeRate = calculateCloseRate(closedOpportunities);
+  const assignmentsByJob = new Map();
+
+  for (const assignment of allAssignments) {
+    if (
+      assignment.status !== "Done" ||
+      assignment.active === false ||
+      !assignment.jobId ||
+      !assignment.technicianName
+    ) {
+      continue;
+    }
+
+    const jobId = String(assignment.jobId);
+
+    if (!assignmentsByJob.has(jobId)) {
+      assignmentsByJob.set(jobId, []);
+    }
+
+    const technicianNames = assignmentsByJob.get(jobId);
+
+    if (!technicianNames.includes(assignment.technicianName)) {
+      technicianNames.push(assignment.technicianName);
+    }
+  }
+
+  // ============================================
+  // FILTER COMPLETED JOBS BY DATE
+  // ============================================
+
+  const selectedPeriodJobs = allJobs.filter(
+    (job) =>
+      job.jobStatus === "Completed" &&
+      isWithinRange(job.completedOn, start, endExclusive),
+  );
+
+  // ============================================
+  // SALESMAN REVENUE
+  // ============================================
+
+  const revenueJobs = selectedPeriodJobs.filter((job) => {
+    const technicianNames = assignmentsByJob.get(String(job.id)) || [];
+
+    return technicianNames.some(
+      (name) => normalizeName(name) === normalizeName(salesman.name),
+    );
+  });
+
+  const totalRevenue = revenueJobs.reduce(
+    (total, job) => total + Number(job.total || 0),
+    0,
+  );
 
   // ============================================
   // REVENUE TABLE DATA
   // ============================================
 
-  const revenueData = sales.map((sale) => ({
-    id: sale.id,
-    serviceTitanJobId: sale.serviceTitanJobId,
-    customerName: sale.opportunity?.customer?.businessName || "—",
-    saleValue: Number(sale.saleValue || 0),
-    source: sale.source,
-    salesmanName: sale.closedBy?.name || "—",
-  }));
+  const revenueData = revenueJobs
+    .sort(
+      (a, b) =>
+        new Date(b.completedOn).getTime() - new Date(a.completedOn).getTime(),
+    )
+    .map((job) => ({
+      id: job.id,
+      serviceTitanJobId: job.jobNumber || job.id,
+      customerName: customerMap.get(String(job.customerId)) || "—",
+      saleValue: Number(job.total || 0),
+      source: "Company",
+      salesmanName: salesman.name,
+    }));
+
+  // ============================================
+  // REVENUE SUMMARY
+  // ============================================
+
+  const commissionRate = 5;
+
+  const estimatedCommission = (totalRevenue * commissionRate) / 100;
+
+  // ============================================
+  // CLOSE RATE
+  // ============================================
+
+  // Your current Opportunity enum does not contain
+  // WON or LOST. Therefore, an accurate close rate
+  // cannot be calculated from the current schema.
+  const closeRate = 0;
 
   // ============================================
   // RENDER
@@ -285,6 +408,7 @@ export default async function SalesmanDetailsPage({ params, searchParams }) {
   return (
     <div className="space-y-4 sm:space-y-5">
       {/* Breadcrumb */}
+
       <Breadcrumbs
         items={[
           {
@@ -293,22 +417,25 @@ export default async function SalesmanDetailsPage({ params, searchParams }) {
           },
           {
             label: "Dashboard",
-            href: "/admin/salesmen",
+            href: "/admin",
           },
         ]}
         currentPage={salesman.name}
       />
 
       {/* Date Selector */}
+
       <RevenueDateFilter
         value={{
           startDate,
           endDate,
         }}
+        preset={selectedPreset}
         basePath={`/admin/salesmen/${salesman.id}`}
       />
 
       {/* Salesman Information */}
+
       <section className="border-b border-[#d9d9d9] pb-5">
         <div className="flex items-start justify-between gap-4 px-1">
           <div>
@@ -330,6 +457,7 @@ export default async function SalesmanDetailsPage({ params, searchParams }) {
       </section>
 
       {/* Sales Revenue */}
+
       <section className="space-y-4">
         <h2 className="px-1 text-sm font-bold uppercase text-black sm:text-base">
           Sales Revenue
@@ -337,13 +465,14 @@ export default async function SalesmanDetailsPage({ params, searchParams }) {
 
         <RevenueSummary
           revenue={totalRevenue}
-          monthlyGoal={monthlyGoal}
+          monthlyGoal={selectedPeriodGoal}
           startDate={startDate}
           endDate={endDate}
-          commissionRate={5}
+          commissionRate={commissionRate}
         />
 
         {/* Revenue Details */}
+
         <section className="space-y-3">
           <div className="flex items-center justify-between gap-3">
             <h3 className="text-sm font-bold uppercase text-[#555]">
@@ -360,12 +489,14 @@ export default async function SalesmanDetailsPage({ params, searchParams }) {
       </section>
 
       {/* Section Divider */}
+
       <div className="flex items-center gap-0 pt-2">
         <div className="h-[4px] w-8 rounded-full bg-black" />
         <div className="h-[3px] flex-1 rounded-full bg-[#eeeeee]" />
       </div>
 
       {/* Follow-ups */}
+
       <section className="space-y-3">
         <h2 className="px-1 text-sm font-bold uppercase text-black sm:text-base">
           Follow-ups
@@ -375,12 +506,14 @@ export default async function SalesmanDetailsPage({ params, searchParams }) {
       </section>
 
       {/* Section Divider */}
+
       <div className="flex items-center gap-0 pt-2">
         <div className="h-[4px] w-8 rounded-full bg-black" />
         <div className="h-[3px] flex-1 rounded-full bg-[#eeeeee]" />
       </div>
 
       {/* Estimates */}
+
       <section className="space-y-3">
         <h2 className="px-1 text-sm font-bold uppercase text-black sm:text-base">
           Estimates
@@ -390,12 +523,14 @@ export default async function SalesmanDetailsPage({ params, searchParams }) {
       </section>
 
       {/* Section Divider */}
+
       <div className="flex items-center gap-0 pt-2">
         <div className="h-[4px] w-8 rounded-full bg-black" />
         <div className="h-[3px] flex-1 rounded-full bg-[#eeeeee]" />
       </div>
 
       {/* Page Tagline */}
+
       <PageTagline>Men produce, boys consume.</PageTagline>
     </div>
   );

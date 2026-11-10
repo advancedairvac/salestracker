@@ -189,7 +189,7 @@ export type CustomerGroupByOutputType = {
   stCustomerId: string | null
   qbCustomerId: string | null
   pocName: string | null
-  businessName: string
+  businessName: string | null
   phone: string | null
   email: string | null
   location: string | null
@@ -224,7 +224,7 @@ export type CustomerWhereInput = {
   stCustomerId?: Prisma.StringNullableFilter<"Customer"> | string | null
   qbCustomerId?: Prisma.StringNullableFilter<"Customer"> | string | null
   pocName?: Prisma.StringNullableFilter<"Customer"> | string | null
-  businessName?: Prisma.StringFilter<"Customer"> | string
+  businessName?: Prisma.StringNullableFilter<"Customer"> | string | null
   phone?: Prisma.StringNullableFilter<"Customer"> | string | null
   email?: Prisma.StringNullableFilter<"Customer"> | string | null
   location?: Prisma.StringNullableFilter<"Customer"> | string | null
@@ -239,7 +239,7 @@ export type CustomerOrderByWithRelationInput = {
   stCustomerId?: Prisma.SortOrderInput | Prisma.SortOrder
   qbCustomerId?: Prisma.SortOrderInput | Prisma.SortOrder
   pocName?: Prisma.SortOrderInput | Prisma.SortOrder
-  businessName?: Prisma.SortOrder
+  businessName?: Prisma.SortOrderInput | Prisma.SortOrder
   phone?: Prisma.SortOrderInput | Prisma.SortOrder
   email?: Prisma.SortOrderInput | Prisma.SortOrder
   location?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -257,7 +257,7 @@ export type CustomerWhereUniqueInput = Prisma.AtLeast<{
   OR?: Prisma.CustomerWhereInput[]
   NOT?: Prisma.CustomerWhereInput | Prisma.CustomerWhereInput[]
   pocName?: Prisma.StringNullableFilter<"Customer"> | string | null
-  businessName?: Prisma.StringFilter<"Customer"> | string
+  businessName?: Prisma.StringNullableFilter<"Customer"> | string | null
   phone?: Prisma.StringNullableFilter<"Customer"> | string | null
   email?: Prisma.StringNullableFilter<"Customer"> | string | null
   location?: Prisma.StringNullableFilter<"Customer"> | string | null
@@ -272,7 +272,7 @@ export type CustomerOrderByWithAggregationInput = {
   stCustomerId?: Prisma.SortOrderInput | Prisma.SortOrder
   qbCustomerId?: Prisma.SortOrderInput | Prisma.SortOrder
   pocName?: Prisma.SortOrderInput | Prisma.SortOrder
-  businessName?: Prisma.SortOrder
+  businessName?: Prisma.SortOrderInput | Prisma.SortOrder
   phone?: Prisma.SortOrderInput | Prisma.SortOrder
   email?: Prisma.SortOrderInput | Prisma.SortOrder
   location?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -292,7 +292,7 @@ export type CustomerScalarWhereWithAggregatesInput = {
   stCustomerId?: Prisma.StringNullableWithAggregatesFilter<"Customer"> | string | null
   qbCustomerId?: Prisma.StringNullableWithAggregatesFilter<"Customer"> | string | null
   pocName?: Prisma.StringNullableWithAggregatesFilter<"Customer"> | string | null
-  businessName?: Prisma.StringWithAggregatesFilter<"Customer"> | string
+  businessName?: Prisma.StringNullableWithAggregatesFilter<"Customer"> | string | null
   phone?: Prisma.StringNullableWithAggregatesFilter<"Customer"> | string | null
   email?: Prisma.StringNullableWithAggregatesFilter<"Customer"> | string | null
   location?: Prisma.StringNullableWithAggregatesFilter<"Customer"> | string | null
@@ -306,7 +306,7 @@ export type CustomerCreateInput = {
   stCustomerId?: string | null
   qbCustomerId?: string | null
   pocName?: string | null
-  businessName: string
+  businessName?: string | null
   phone?: string | null
   email?: string | null
   location?: string | null
@@ -321,7 +321,7 @@ export type CustomerUncheckedCreateInput = {
   stCustomerId?: string | null
   qbCustomerId?: string | null
   pocName?: string | null
-  businessName: string
+  businessName?: string | null
   phone?: string | null
   email?: string | null
   location?: string | null
@@ -336,7 +336,7 @@ export type CustomerUpdateInput = {
   stCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   qbCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pocName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  businessName?: Prisma.StringFieldUpdateOperationsInput | string
+  businessName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -351,7 +351,7 @@ export type CustomerUncheckedUpdateInput = {
   stCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   qbCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pocName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  businessName?: Prisma.StringFieldUpdateOperationsInput | string
+  businessName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -366,7 +366,7 @@ export type CustomerCreateManyInput = {
   stCustomerId?: string | null
   qbCustomerId?: string | null
   pocName?: string | null
-  businessName: string
+  businessName?: string | null
   phone?: string | null
   email?: string | null
   location?: string | null
@@ -380,7 +380,7 @@ export type CustomerUpdateManyMutationInput = {
   stCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   qbCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pocName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  businessName?: Prisma.StringFieldUpdateOperationsInput | string
+  businessName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -394,7 +394,7 @@ export type CustomerUncheckedUpdateManyInput = {
   stCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   qbCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pocName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  businessName?: Prisma.StringFieldUpdateOperationsInput | string
+  businessName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -469,7 +469,7 @@ export type CustomerCreateWithoutOpportunitiesInput = {
   stCustomerId?: string | null
   qbCustomerId?: string | null
   pocName?: string | null
-  businessName: string
+  businessName?: string | null
   phone?: string | null
   email?: string | null
   location?: string | null
@@ -483,7 +483,7 @@ export type CustomerUncheckedCreateWithoutOpportunitiesInput = {
   stCustomerId?: string | null
   qbCustomerId?: string | null
   pocName?: string | null
-  businessName: string
+  businessName?: string | null
   phone?: string | null
   email?: string | null
   location?: string | null
@@ -513,7 +513,7 @@ export type CustomerUpdateWithoutOpportunitiesInput = {
   stCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   qbCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pocName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  businessName?: Prisma.StringFieldUpdateOperationsInput | string
+  businessName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -527,7 +527,7 @@ export type CustomerUncheckedUpdateWithoutOpportunitiesInput = {
   stCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   qbCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pocName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  businessName?: Prisma.StringFieldUpdateOperationsInput | string
+  businessName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -643,7 +643,7 @@ export type $CustomerPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     stCustomerId: string | null
     qbCustomerId: string | null
     pocName: string | null
-    businessName: string
+    businessName: string | null
     phone: string | null
     email: string | null
     location: string | null

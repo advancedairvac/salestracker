@@ -270,7 +270,7 @@ export type OpportunityGroupByOutputType = {
   customerId: string
   title: string
   opportunityDate: Date
-  jobType: string
+  jobType: string | null
   textMessage: string | null
   value: runtime.Decimal
   source: $Enums.LeadSource
@@ -315,7 +315,7 @@ export type OpportunityWhereInput = {
   customerId?: Prisma.StringFilter<"Opportunity"> | string
   title?: Prisma.StringFilter<"Opportunity"> | string
   opportunityDate?: Prisma.DateTimeFilter<"Opportunity"> | Date | string
-  jobType?: Prisma.StringFilter<"Opportunity"> | string
+  jobType?: Prisma.StringNullableFilter<"Opportunity"> | string | null
   textMessage?: Prisma.StringNullableFilter<"Opportunity"> | string | null
   value?: Prisma.DecimalFilter<"Opportunity"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   source?: Prisma.EnumLeadSourceFilter<"Opportunity"> | $Enums.LeadSource
@@ -345,7 +345,7 @@ export type OpportunityOrderByWithRelationInput = {
   customerId?: Prisma.SortOrder
   title?: Prisma.SortOrder
   opportunityDate?: Prisma.SortOrder
-  jobType?: Prisma.SortOrder
+  jobType?: Prisma.SortOrderInput | Prisma.SortOrder
   textMessage?: Prisma.SortOrderInput | Prisma.SortOrder
   value?: Prisma.SortOrder
   source?: Prisma.SortOrder
@@ -378,7 +378,7 @@ export type OpportunityWhereUniqueInput = Prisma.AtLeast<{
   customerId?: Prisma.StringFilter<"Opportunity"> | string
   title?: Prisma.StringFilter<"Opportunity"> | string
   opportunityDate?: Prisma.DateTimeFilter<"Opportunity"> | Date | string
-  jobType?: Prisma.StringFilter<"Opportunity"> | string
+  jobType?: Prisma.StringNullableFilter<"Opportunity"> | string | null
   textMessage?: Prisma.StringNullableFilter<"Opportunity"> | string | null
   value?: Prisma.DecimalFilter<"Opportunity"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   source?: Prisma.EnumLeadSourceFilter<"Opportunity"> | $Enums.LeadSource
@@ -408,7 +408,7 @@ export type OpportunityOrderByWithAggregationInput = {
   customerId?: Prisma.SortOrder
   title?: Prisma.SortOrder
   opportunityDate?: Prisma.SortOrder
-  jobType?: Prisma.SortOrder
+  jobType?: Prisma.SortOrderInput | Prisma.SortOrder
   textMessage?: Prisma.SortOrderInput | Prisma.SortOrder
   value?: Prisma.SortOrder
   source?: Prisma.SortOrder
@@ -438,7 +438,7 @@ export type OpportunityScalarWhereWithAggregatesInput = {
   customerId?: Prisma.StringWithAggregatesFilter<"Opportunity"> | string
   title?: Prisma.StringWithAggregatesFilter<"Opportunity"> | string
   opportunityDate?: Prisma.DateTimeWithAggregatesFilter<"Opportunity"> | Date | string
-  jobType?: Prisma.StringWithAggregatesFilter<"Opportunity"> | string
+  jobType?: Prisma.StringNullableWithAggregatesFilter<"Opportunity"> | string | null
   textMessage?: Prisma.StringNullableWithAggregatesFilter<"Opportunity"> | string | null
   value?: Prisma.DecimalWithAggregatesFilter<"Opportunity"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   source?: Prisma.EnumLeadSourceWithAggregatesFilter<"Opportunity"> | $Enums.LeadSource
@@ -459,7 +459,7 @@ export type OpportunityCreateInput = {
   serviceTitanEstimateId?: string | null
   title: string
   opportunityDate?: Date | string
-  jobType: string
+  jobType?: string | null
   textMessage?: string | null
   value?: runtime.Decimal | runtime.DecimalJsLike | number | string
   source: $Enums.LeadSource
@@ -486,7 +486,7 @@ export type OpportunityUncheckedCreateInput = {
   customerId: string
   title: string
   opportunityDate?: Date | string
-  jobType: string
+  jobType?: string | null
   textMessage?: string | null
   value?: runtime.Decimal | runtime.DecimalJsLike | number | string
   source: $Enums.LeadSource
@@ -511,7 +511,7 @@ export type OpportunityUpdateInput = {
   serviceTitanEstimateId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   opportunityDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  jobType?: Prisma.StringFieldUpdateOperationsInput | string
+  jobType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   textMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   value?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   source?: Prisma.EnumLeadSourceFieldUpdateOperationsInput | $Enums.LeadSource
@@ -538,7 +538,7 @@ export type OpportunityUncheckedUpdateInput = {
   customerId?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   opportunityDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  jobType?: Prisma.StringFieldUpdateOperationsInput | string
+  jobType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   textMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   value?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   source?: Prisma.EnumLeadSourceFieldUpdateOperationsInput | $Enums.LeadSource
@@ -564,7 +564,7 @@ export type OpportunityCreateManyInput = {
   customerId: string
   title: string
   opportunityDate?: Date | string
-  jobType: string
+  jobType?: string | null
   textMessage?: string | null
   value?: runtime.Decimal | runtime.DecimalJsLike | number | string
   source: $Enums.LeadSource
@@ -585,7 +585,7 @@ export type OpportunityUpdateManyMutationInput = {
   serviceTitanEstimateId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   opportunityDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  jobType?: Prisma.StringFieldUpdateOperationsInput | string
+  jobType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   textMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   value?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   source?: Prisma.EnumLeadSourceFieldUpdateOperationsInput | $Enums.LeadSource
@@ -604,7 +604,7 @@ export type OpportunityUncheckedUpdateManyInput = {
   customerId?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   opportunityDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  jobType?: Prisma.StringFieldUpdateOperationsInput | string
+  jobType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   textMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   value?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   source?: Prisma.EnumLeadSourceFieldUpdateOperationsInput | $Enums.LeadSource
@@ -946,7 +946,7 @@ export type OpportunityCreateWithoutAssignedToInput = {
   serviceTitanEstimateId?: string | null
   title: string
   opportunityDate?: Date | string
-  jobType: string
+  jobType?: string | null
   textMessage?: string | null
   value?: runtime.Decimal | runtime.DecimalJsLike | number | string
   source: $Enums.LeadSource
@@ -972,7 +972,7 @@ export type OpportunityUncheckedCreateWithoutAssignedToInput = {
   customerId: string
   title: string
   opportunityDate?: Date | string
-  jobType: string
+  jobType?: string | null
   textMessage?: string | null
   value?: runtime.Decimal | runtime.DecimalJsLike | number | string
   source: $Enums.LeadSource
@@ -1006,7 +1006,7 @@ export type OpportunityCreateWithoutCreatedByInput = {
   serviceTitanEstimateId?: string | null
   title: string
   opportunityDate?: Date | string
-  jobType: string
+  jobType?: string | null
   textMessage?: string | null
   value?: runtime.Decimal | runtime.DecimalJsLike | number | string
   source: $Enums.LeadSource
@@ -1032,7 +1032,7 @@ export type OpportunityUncheckedCreateWithoutCreatedByInput = {
   customerId: string
   title: string
   opportunityDate?: Date | string
-  jobType: string
+  jobType?: string | null
   textMessage?: string | null
   value?: runtime.Decimal | runtime.DecimalJsLike | number | string
   source: $Enums.LeadSource
@@ -1066,7 +1066,7 @@ export type OpportunityCreateWithoutClosedByInput = {
   serviceTitanEstimateId?: string | null
   title: string
   opportunityDate?: Date | string
-  jobType: string
+  jobType?: string | null
   textMessage?: string | null
   value?: runtime.Decimal | runtime.DecimalJsLike | number | string
   source: $Enums.LeadSource
@@ -1092,7 +1092,7 @@ export type OpportunityUncheckedCreateWithoutClosedByInput = {
   customerId: string
   title: string
   opportunityDate?: Date | string
-  jobType: string
+  jobType?: string | null
   textMessage?: string | null
   value?: runtime.Decimal | runtime.DecimalJsLike | number | string
   source: $Enums.LeadSource
@@ -1146,7 +1146,7 @@ export type OpportunityScalarWhereInput = {
   customerId?: Prisma.StringFilter<"Opportunity"> | string
   title?: Prisma.StringFilter<"Opportunity"> | string
   opportunityDate?: Prisma.DateTimeFilter<"Opportunity"> | Date | string
-  jobType?: Prisma.StringFilter<"Opportunity"> | string
+  jobType?: Prisma.StringNullableFilter<"Opportunity"> | string | null
   textMessage?: Prisma.StringNullableFilter<"Opportunity"> | string | null
   value?: Prisma.DecimalFilter<"Opportunity"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   source?: Prisma.EnumLeadSourceFilter<"Opportunity"> | $Enums.LeadSource
@@ -1199,7 +1199,7 @@ export type OpportunityCreateWithoutCustomerInput = {
   serviceTitanEstimateId?: string | null
   title: string
   opportunityDate?: Date | string
-  jobType: string
+  jobType?: string | null
   textMessage?: string | null
   value?: runtime.Decimal | runtime.DecimalJsLike | number | string
   source: $Enums.LeadSource
@@ -1224,7 +1224,7 @@ export type OpportunityUncheckedCreateWithoutCustomerInput = {
   serviceTitanEstimateId?: string | null
   title: string
   opportunityDate?: Date | string
-  jobType: string
+  jobType?: string | null
   textMessage?: string | null
   value?: runtime.Decimal | runtime.DecimalJsLike | number | string
   source: $Enums.LeadSource
@@ -1275,7 +1275,7 @@ export type OpportunityCreateWithoutFollowUpSchedulesInput = {
   serviceTitanEstimateId?: string | null
   title: string
   opportunityDate?: Date | string
-  jobType: string
+  jobType?: string | null
   textMessage?: string | null
   value?: runtime.Decimal | runtime.DecimalJsLike | number | string
   source: $Enums.LeadSource
@@ -1301,7 +1301,7 @@ export type OpportunityUncheckedCreateWithoutFollowUpSchedulesInput = {
   customerId: string
   title: string
   opportunityDate?: Date | string
-  jobType: string
+  jobType?: string | null
   textMessage?: string | null
   value?: runtime.Decimal | runtime.DecimalJsLike | number | string
   source: $Enums.LeadSource
@@ -1341,7 +1341,7 @@ export type OpportunityUpdateWithoutFollowUpSchedulesInput = {
   serviceTitanEstimateId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   opportunityDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  jobType?: Prisma.StringFieldUpdateOperationsInput | string
+  jobType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   textMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   value?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   source?: Prisma.EnumLeadSourceFieldUpdateOperationsInput | $Enums.LeadSource
@@ -1367,7 +1367,7 @@ export type OpportunityUncheckedUpdateWithoutFollowUpSchedulesInput = {
   customerId?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   opportunityDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  jobType?: Prisma.StringFieldUpdateOperationsInput | string
+  jobType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   textMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   value?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   source?: Prisma.EnumLeadSourceFieldUpdateOperationsInput | $Enums.LeadSource
@@ -1391,7 +1391,7 @@ export type OpportunityCreateWithoutFollowUpsInput = {
   serviceTitanEstimateId?: string | null
   title: string
   opportunityDate?: Date | string
-  jobType: string
+  jobType?: string | null
   textMessage?: string | null
   value?: runtime.Decimal | runtime.DecimalJsLike | number | string
   source: $Enums.LeadSource
@@ -1417,7 +1417,7 @@ export type OpportunityUncheckedCreateWithoutFollowUpsInput = {
   customerId: string
   title: string
   opportunityDate?: Date | string
-  jobType: string
+  jobType?: string | null
   textMessage?: string | null
   value?: runtime.Decimal | runtime.DecimalJsLike | number | string
   source: $Enums.LeadSource
@@ -1457,7 +1457,7 @@ export type OpportunityUpdateWithoutFollowUpsInput = {
   serviceTitanEstimateId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   opportunityDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  jobType?: Prisma.StringFieldUpdateOperationsInput | string
+  jobType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   textMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   value?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   source?: Prisma.EnumLeadSourceFieldUpdateOperationsInput | $Enums.LeadSource
@@ -1483,7 +1483,7 @@ export type OpportunityUncheckedUpdateWithoutFollowUpsInput = {
   customerId?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   opportunityDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  jobType?: Prisma.StringFieldUpdateOperationsInput | string
+  jobType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   textMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   value?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   source?: Prisma.EnumLeadSourceFieldUpdateOperationsInput | $Enums.LeadSource
@@ -1507,7 +1507,7 @@ export type OpportunityCreateWithoutActivitiesInput = {
   serviceTitanEstimateId?: string | null
   title: string
   opportunityDate?: Date | string
-  jobType: string
+  jobType?: string | null
   textMessage?: string | null
   value?: runtime.Decimal | runtime.DecimalJsLike | number | string
   source: $Enums.LeadSource
@@ -1533,7 +1533,7 @@ export type OpportunityUncheckedCreateWithoutActivitiesInput = {
   customerId: string
   title: string
   opportunityDate?: Date | string
-  jobType: string
+  jobType?: string | null
   textMessage?: string | null
   value?: runtime.Decimal | runtime.DecimalJsLike | number | string
   source: $Enums.LeadSource
@@ -1573,7 +1573,7 @@ export type OpportunityUpdateWithoutActivitiesInput = {
   serviceTitanEstimateId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   opportunityDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  jobType?: Prisma.StringFieldUpdateOperationsInput | string
+  jobType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   textMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   value?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   source?: Prisma.EnumLeadSourceFieldUpdateOperationsInput | $Enums.LeadSource
@@ -1599,7 +1599,7 @@ export type OpportunityUncheckedUpdateWithoutActivitiesInput = {
   customerId?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   opportunityDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  jobType?: Prisma.StringFieldUpdateOperationsInput | string
+  jobType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   textMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   value?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   source?: Prisma.EnumLeadSourceFieldUpdateOperationsInput | $Enums.LeadSource
@@ -1623,7 +1623,7 @@ export type OpportunityCreateWithoutSaleInput = {
   serviceTitanEstimateId?: string | null
   title: string
   opportunityDate?: Date | string
-  jobType: string
+  jobType?: string | null
   textMessage?: string | null
   value?: runtime.Decimal | runtime.DecimalJsLike | number | string
   source: $Enums.LeadSource
@@ -1649,7 +1649,7 @@ export type OpportunityUncheckedCreateWithoutSaleInput = {
   customerId: string
   title: string
   opportunityDate?: Date | string
-  jobType: string
+  jobType?: string | null
   textMessage?: string | null
   value?: runtime.Decimal | runtime.DecimalJsLike | number | string
   source: $Enums.LeadSource
@@ -1689,7 +1689,7 @@ export type OpportunityUpdateWithoutSaleInput = {
   serviceTitanEstimateId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   opportunityDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  jobType?: Prisma.StringFieldUpdateOperationsInput | string
+  jobType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   textMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   value?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   source?: Prisma.EnumLeadSourceFieldUpdateOperationsInput | $Enums.LeadSource
@@ -1715,7 +1715,7 @@ export type OpportunityUncheckedUpdateWithoutSaleInput = {
   customerId?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   opportunityDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  jobType?: Prisma.StringFieldUpdateOperationsInput | string
+  jobType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   textMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   value?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   source?: Prisma.EnumLeadSourceFieldUpdateOperationsInput | $Enums.LeadSource
@@ -1740,7 +1740,7 @@ export type OpportunityCreateManyAssignedToInput = {
   customerId: string
   title: string
   opportunityDate?: Date | string
-  jobType: string
+  jobType?: string | null
   textMessage?: string | null
   value?: runtime.Decimal | runtime.DecimalJsLike | number | string
   source: $Enums.LeadSource
@@ -1761,7 +1761,7 @@ export type OpportunityCreateManyCreatedByInput = {
   customerId: string
   title: string
   opportunityDate?: Date | string
-  jobType: string
+  jobType?: string | null
   textMessage?: string | null
   value?: runtime.Decimal | runtime.DecimalJsLike | number | string
   source: $Enums.LeadSource
@@ -1782,7 +1782,7 @@ export type OpportunityCreateManyClosedByInput = {
   customerId: string
   title: string
   opportunityDate?: Date | string
-  jobType: string
+  jobType?: string | null
   textMessage?: string | null
   value?: runtime.Decimal | runtime.DecimalJsLike | number | string
   source: $Enums.LeadSource
@@ -1802,7 +1802,7 @@ export type OpportunityUpdateWithoutAssignedToInput = {
   serviceTitanEstimateId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   opportunityDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  jobType?: Prisma.StringFieldUpdateOperationsInput | string
+  jobType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   textMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   value?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   source?: Prisma.EnumLeadSourceFieldUpdateOperationsInput | $Enums.LeadSource
@@ -1828,7 +1828,7 @@ export type OpportunityUncheckedUpdateWithoutAssignedToInput = {
   customerId?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   opportunityDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  jobType?: Prisma.StringFieldUpdateOperationsInput | string
+  jobType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   textMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   value?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   source?: Prisma.EnumLeadSourceFieldUpdateOperationsInput | $Enums.LeadSource
@@ -1853,7 +1853,7 @@ export type OpportunityUncheckedUpdateManyWithoutAssignedToInput = {
   customerId?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   opportunityDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  jobType?: Prisma.StringFieldUpdateOperationsInput | string
+  jobType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   textMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   value?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   source?: Prisma.EnumLeadSourceFieldUpdateOperationsInput | $Enums.LeadSource
@@ -1873,7 +1873,7 @@ export type OpportunityUpdateWithoutCreatedByInput = {
   serviceTitanEstimateId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   opportunityDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  jobType?: Prisma.StringFieldUpdateOperationsInput | string
+  jobType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   textMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   value?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   source?: Prisma.EnumLeadSourceFieldUpdateOperationsInput | $Enums.LeadSource
@@ -1899,7 +1899,7 @@ export type OpportunityUncheckedUpdateWithoutCreatedByInput = {
   customerId?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   opportunityDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  jobType?: Prisma.StringFieldUpdateOperationsInput | string
+  jobType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   textMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   value?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   source?: Prisma.EnumLeadSourceFieldUpdateOperationsInput | $Enums.LeadSource
@@ -1924,7 +1924,7 @@ export type OpportunityUncheckedUpdateManyWithoutCreatedByInput = {
   customerId?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   opportunityDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  jobType?: Prisma.StringFieldUpdateOperationsInput | string
+  jobType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   textMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   value?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   source?: Prisma.EnumLeadSourceFieldUpdateOperationsInput | $Enums.LeadSource
@@ -1944,7 +1944,7 @@ export type OpportunityUpdateWithoutClosedByInput = {
   serviceTitanEstimateId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   opportunityDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  jobType?: Prisma.StringFieldUpdateOperationsInput | string
+  jobType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   textMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   value?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   source?: Prisma.EnumLeadSourceFieldUpdateOperationsInput | $Enums.LeadSource
@@ -1970,7 +1970,7 @@ export type OpportunityUncheckedUpdateWithoutClosedByInput = {
   customerId?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   opportunityDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  jobType?: Prisma.StringFieldUpdateOperationsInput | string
+  jobType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   textMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   value?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   source?: Prisma.EnumLeadSourceFieldUpdateOperationsInput | $Enums.LeadSource
@@ -1995,7 +1995,7 @@ export type OpportunityUncheckedUpdateManyWithoutClosedByInput = {
   customerId?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   opportunityDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  jobType?: Prisma.StringFieldUpdateOperationsInput | string
+  jobType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   textMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   value?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   source?: Prisma.EnumLeadSourceFieldUpdateOperationsInput | $Enums.LeadSource
@@ -2015,7 +2015,7 @@ export type OpportunityCreateManyCustomerInput = {
   serviceTitanEstimateId?: string | null
   title: string
   opportunityDate?: Date | string
-  jobType: string
+  jobType?: string | null
   textMessage?: string | null
   value?: runtime.Decimal | runtime.DecimalJsLike | number | string
   source: $Enums.LeadSource
@@ -2036,7 +2036,7 @@ export type OpportunityUpdateWithoutCustomerInput = {
   serviceTitanEstimateId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   opportunityDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  jobType?: Prisma.StringFieldUpdateOperationsInput | string
+  jobType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   textMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   value?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   source?: Prisma.EnumLeadSourceFieldUpdateOperationsInput | $Enums.LeadSource
@@ -2061,7 +2061,7 @@ export type OpportunityUncheckedUpdateWithoutCustomerInput = {
   serviceTitanEstimateId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   opportunityDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  jobType?: Prisma.StringFieldUpdateOperationsInput | string
+  jobType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   textMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   value?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   source?: Prisma.EnumLeadSourceFieldUpdateOperationsInput | $Enums.LeadSource
@@ -2086,7 +2086,7 @@ export type OpportunityUncheckedUpdateManyWithoutCustomerInput = {
   serviceTitanEstimateId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   opportunityDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  jobType?: Prisma.StringFieldUpdateOperationsInput | string
+  jobType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   textMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   value?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   source?: Prisma.EnumLeadSourceFieldUpdateOperationsInput | $Enums.LeadSource
@@ -2299,7 +2299,7 @@ export type $OpportunityPayload<ExtArgs extends runtime.Types.Extensions.Interna
     customerId: string
     title: string
     opportunityDate: Date
-    jobType: string
+    jobType: string | null
     textMessage: string | null
     value: runtime.Decimal
     source: $Enums.LeadSource

@@ -10,6 +10,10 @@ import { getAuthenticatedUser } from "@/lib/auth";
 // HELPERS
 // ============================================
 
+function getFormValue(formData, key) {
+  return formData.get(key)?.toString().trim() || "";
+}
+
 function parseManualDateTime(value) {
   if (typeof value !== "string" || !value.trim()) {
     return null;
@@ -71,12 +75,13 @@ async function verifyAccess(opportunityId) {
   }
 
   const opportunity = await prisma.opportunity.findUnique({
-    where: { id: opportunityId },
+    where: {
+      id: opportunityId,
+    },
     select: {
       id: true,
       customerId: true,
       assignedToId: true,
-      source: true,
       status: true,
     },
   });
@@ -110,26 +115,30 @@ export async function updateOpportunity(previousState, formData) {
     };
   }
 
-  const opportunityId = String(formData.get("opportunityId") || "").trim();
+  // ------------------------------------------
+  // FORM VALUES
+  // ------------------------------------------
 
-  const pocName = String(formData.get("pocName") || "").trim();
+  const opportunityId = getFormValue(formData, "opportunityId");
+  const stCustomerId = getFormValue(formData, "stCustomerId");
+  const opportunityDateInput = getFormValue(formData, "opportunityDate");
 
-  const businessName = String(formData.get("businessName") || "").trim();
+  const pocName = getFormValue(formData, "pocName");
+  const businessName = getFormValue(formData, "businessName");
+  const jobType = getFormValue(formData, "jobType");
 
-  const jobType = String(formData.get("jobType") || "").trim();
+  const email = getFormValue(formData, "email");
+  const textMessage = getFormValue(formData, "textMessage");
+  const phone = getFormValue(formData, "phone");
+  const location = getFormValue(formData, "location");
 
-  const email = String(formData.get("email") || "").trim();
-
-  const textMessage = String(formData.get("textMessage") || "").trim();
-
-  const phone = String(formData.get("phone") || "").trim();
-
-  const location = String(formData.get("location") || "").trim();
-
-  const valueInput = String(formData.get("value") || "0").trim();
+  const valueInput = getFormValue(formData, "value");
+  const requestedAssignedToId = getFormValue(formData, "assignedToId");
 
   // Preserve form values after validation errors.
   const values = {
+    stCustomerId,
+    opportunityDate: opportunityDateInput,
     pocName,
     businessName,
     jobType,
@@ -138,18 +147,42 @@ export async function updateOpportunity(previousState, formData) {
     phone,
     location,
     value: valueInput,
+    assignedToId: requestedAssignedToId || user.id,
   };
 
-  // Required fields
-  // Opportunity Date intentionally excluded.
-  if (!opportunityId || !businessName || !jobType) {
+  // ------------------------------------------
+  // REQUIRED FIELD VALIDATION
+  // ------------------------------------------
+
+  if (
+    !opportunityId ||
+    !opportunityDateInput ||
+    !pocName ||
+    valueInput === ""
+  ) {
     return {
       error: "required",
       values,
     };
   }
 
-  // Validate email
+  // ------------------------------------------
+  // DATE VALIDATION
+  // ------------------------------------------
+
+  const opportunityDate = parseOpportunityDate(opportunityDateInput);
+
+  if (!opportunityDate) {
+    return {
+      error: "date",
+      values,
+    };
+  }
+
+  // ------------------------------------------
+  // EMAIL VALIDATION
+  // ------------------------------------------
+
   if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return {
       error: "email",
@@ -157,21 +190,64 @@ export async function updateOpportunity(previousState, formData) {
     };
   }
 
-  // Validate dollar value
+  // ------------------------------------------
+  // OPPORTUNITY VALUE VALIDATION
+  // ------------------------------------------
+
   const opportunityValue = Number(valueInput);
 
-  if (
-    valueInput === "" ||
-    !Number.isFinite(opportunityValue) ||
-    opportunityValue < 0
-  ) {
+  if (!Number.isFinite(opportunityValue) || opportunityValue < 0) {
     return {
       error: "value",
       values,
     };
   }
 
+  // ------------------------------------------
+  // ASSIGNMENT VALIDATION
+  // ------------------------------------------
+
+  // Admin can assign an opportunity to:
+  // 1. Themselves.
+  // 2. An active Salesperson.
+
+  const assignedToId = requestedAssignedToId || user.id;
+
+  if (assignedToId !== user.id) {
+    const selectedUser = await prisma.user.findFirst({
+      where: {
+        id: assignedToId,
+        role: "SALESPERSON",
+        isActive: true,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!selectedUser) {
+      return {
+        error: "assignee",
+        values,
+      };
+    }
+  }
+
+  // ------------------------------------------
+  // AUTOMATIC OPPORTUNITY SOURCE
+  // ------------------------------------------
+
+  // Admin assigning to themselves = SELF_GENERATED.
+  // Admin assigning to another salesperson = COMPANY_GENERATED.
+
+  const source =
+    assignedToId === user.id ? "SELF_GENERATED" : "COMPANY_GENERATED";
+
   try {
+    // ----------------------------------------
+    // FIND OPPORTUNITY
+    // ----------------------------------------
+
     const opportunity = await prisma.opportunity.findUnique({
       where: {
         id: opportunityId,
@@ -179,6 +255,7 @@ export async function updateOpportunity(previousState, formData) {
       select: {
         id: true,
         customerId: true,
+        assignedToId: true,
         status: true,
       },
     });
@@ -198,35 +275,112 @@ export async function updateOpportunity(previousState, formData) {
       };
     }
 
-    await prisma.$transaction(async (tx) => {
-      // Update Customer information.
-      await tx.customer.update({
-        where: {
-          id: opportunity.customerId,
-        },
-        data: {
-          businessName,
-          pocName: pocName || null,
-          email: email || null,
-          phone: phone || null,
-          location: location || null,
-        },
-      });
+    // ----------------------------------------
+    // DATABASE TRANSACTION
+    // ----------------------------------------
 
-      // Update Opportunity information.
-      // Existing opportunityDate remains unchanged.
+    await prisma.$transaction(async (tx) => {
+      // --------------------------------------
+      // CUSTOMER MATCHING
+      // --------------------------------------
+
+      let customer = null;
+
+      // 1. Match by ServiceTitan Customer ID.
+      if (stCustomerId) {
+        customer = await tx.customer.findUnique({
+          where: {
+            stCustomerId,
+          },
+        });
+      }
+
+      // 2. If no matching ServiceTitan Customer
+      // exists, use the current Opportunity Customer.
+      if (!customer) {
+        customer = await tx.customer.findUnique({
+          where: {
+            id: opportunity.customerId,
+          },
+        });
+      }
+
+      // --------------------------------------
+      // CUSTOMER CREATE / UPDATE
+      // --------------------------------------
+
+      if (customer) {
+        customer = await tx.customer.update({
+          where: {
+            id: customer.id,
+          },
+          data: {
+            stCustomerId: stCustomerId || customer.stCustomerId,
+            businessName: businessName || null,
+            pocName,
+            email: email || null,
+            phone: phone || null,
+            location: location || null,
+          },
+        });
+      } else {
+        const customerDisplayId = await generateDisplayId(tx, "CM");
+
+        customer = await tx.customer.create({
+          data: {
+            displayId: customerDisplayId,
+            stCustomerId: stCustomerId || null,
+            businessName: businessName || null,
+            pocName,
+            email: email || null,
+            phone: phone || null,
+            location: location || null,
+          },
+        });
+      }
+
+      // --------------------------------------
+      // UPDATE OPPORTUNITY
+      // --------------------------------------
+
+      const opportunityTitle = [businessName || pocName, jobType]
+        .filter(Boolean)
+        .join(" - ");
+
       await tx.opportunity.update({
         where: {
           id: opportunityId,
         },
         data: {
-          title: businessName,
-          jobType,
+          customerId: customer.id,
+          title: opportunityTitle,
+          opportunityDate,
+          jobType: jobType || null,
           textMessage: textMessage || null,
           value: opportunityValue,
+          assignedToId,
+          source,
+        },
+      });
+
+      // --------------------------------------
+      // UPDATE PENDING FOLLOW-UP ASSIGNMENTS
+      // --------------------------------------
+
+      await tx.followUp.updateMany({
+        where: {
+          opportunityId,
+          status: "PENDING",
+        },
+        data: {
+          assignedToId,
         },
       });
     });
+
+    // ----------------------------------------
+    // REVALIDATE
+    // ----------------------------------------
 
     revalidateOpportunityPages(opportunityId);
   } catch (error) {
@@ -242,7 +396,7 @@ export async function updateOpportunity(previousState, formData) {
 }
 
 // ============================================
-// UPDATE OPPORTUNITY STATUS / ACTIONS
+// CLOSE OPPORTUNITY
 // ============================================
 
 export async function updateOpportunityStatus(
@@ -253,274 +407,159 @@ export async function updateOpportunityStatus(
   try {
     const { user, opportunity } = await verifyAccess(opportunityId);
 
+    // Only OPEN opportunities can be closed.
     if (opportunity.status !== "OPEN") {
       return {
         success: false,
-        error: "Only open opportunities can be updated.",
+        error: "Only open opportunities can be closed.",
       };
     }
 
-    const note = typeof payload.note === "string" ? payload.note.trim() : "";
-
-    const now = new Date();
-
-    // ========================================
-    // WON
-    // ========================================
-
-    if (action === "WON") {
-      const finalValue = Number(payload.finalValue);
-
-      if (
-        payload.finalValue === "" ||
-        payload.finalValue === null ||
-        payload.finalValue === undefined ||
-        !Number.isFinite(finalValue) ||
-        finalValue < 0
-      ) {
-        return {
-          success: false,
-          error: "Please enter a valid Final Value.",
-        };
-      }
-
-      await prisma.$transaction(async (tx) => {
-        const existingSale = await tx.sale.findUnique({
-          where: {
-            opportunityId,
-          },
-          select: {
-            id: true,
-          },
-        });
-
-        if (existingSale) {
-          throw new Error("A sale already exists for this opportunity.");
-        }
-
-        const updatedOpportunity = await tx.opportunity.update({
-          where: {
-            id: opportunityId,
-            status: "OPEN",
-          },
-          data: {
-            status: "WON",
-            closedAt: now,
-            closedById: user.id,
-          },
-        });
-
-        const saleDisplayId = await generateDisplayId(tx, "SAL");
-
-        await tx.sale.create({
-          data: {
-            displayId: saleDisplayId,
-            opportunityId,
-            closedById: user.id,
-            saleValue: finalValue,
-            source: updatedOpportunity.source,
-            notes: note || null,
-            closedAt: now,
-          },
-        });
-
-        await tx.activity.create({
-          data: {
-            opportunityId,
-            userId: user.id,
-            type: "STATUS_CHANGE",
-            description: note
-              ? `Opportunity marked as Won. Final Value: $${finalValue.toFixed(2)}. Note: ${note}`
-              : `Opportunity marked as Won. Final Value: $${finalValue.toFixed(2)}.`,
-          },
-        });
-
-        await tx.followUp.updateMany({
-          where: {
-            opportunityId,
-            status: "PENDING",
-            isActive: true,
-          },
-          data: {
-            isActive: false,
-          },
-        });
-
-        await tx.followUpSchedule.updateMany({
-          where: {
-            opportunityId,
-            isActive: true,
-          },
-          data: {
-            isActive: false,
-          },
-        });
-      });
-    }
-
-    // ========================================
-    // LOST
-    // ========================================
-    else if (action === "LOST") {
-      await prisma.$transaction(async (tx) => {
-        await tx.opportunity.update({
-          where: {
-            id: opportunityId,
-            status: "OPEN",
-          },
-          data: {
-            status: "LOST",
-            closedAt: now,
-            closedById: user.id,
-          },
-        });
-
-        await tx.activity.create({
-          data: {
-            opportunityId,
-            userId: user.id,
-            type: "STATUS_CHANGE",
-            description: note
-              ? `Opportunity marked as Lost. Note: ${note}`
-              : "Opportunity marked as Lost.",
-          },
-        });
-
-        await tx.followUp.updateMany({
-          where: {
-            opportunityId,
-            status: "PENDING",
-            isActive: true,
-          },
-          data: {
-            isActive: false,
-          },
-        });
-
-        await tx.followUpSchedule.updateMany({
-          where: {
-            opportunityId,
-            isActive: true,
-          },
-          data: {
-            isActive: false,
-          },
-        });
-      });
-    }
-
-    // ========================================
-    // CLOSE ACTIONS
-    // ========================================
-    else if (action === "CLOSE") {
-      const closeType = payload.closeType;
-
-      const closeStatuses = {
-        TEMPORARY: "TEMPORARILY_CLOSED",
-        PERMANENT: "PERMANENTLY_CLOSED",
-        SCHEDULE_REOPEN: "SCHEDULED_TO_REOPEN",
-      };
-
-      const nextStatus = closeStatuses[closeType];
-
-      if (!nextStatus) {
-        return {
-          success: false,
-          error: "Invalid close action.",
-        };
-      }
-
-      let reopenAt = null;
-
-      if (closeType === "SCHEDULE_REOPEN") {
-        reopenAt = parseManualDateTime(payload.reopenAt);
-
-        if (!reopenAt) {
-          return {
-            success: false,
-            error: "Please select a valid reopen date and time.",
-          };
-        }
-
-        if (reopenAt <= now) {
-          return {
-            success: false,
-            error: "Reopen date and time must be in the future.",
-          };
-        }
-      }
-
-      await prisma.$transaction(async (tx) => {
-        await tx.opportunity.update({
-          where: {
-            id: opportunityId,
-            status: "OPEN",
-          },
-          data: {
-            status: nextStatus,
-            closedAt: now,
-            closedById: user.id,
-            reopenAt,
-          },
-        });
-
-        const descriptions = {
-          TEMPORARY: "Opportunity temporarily closed.",
-          PERMANENT: "Opportunity permanently closed.",
-          SCHEDULE_REOPEN: `Opportunity scheduled to reopen on ${reopenAt.toLocaleString()}.`,
-        };
-
-        await tx.activity.create({
-          data: {
-            opportunityId,
-            userId: user.id,
-            type: "STATUS_CHANGE",
-            description: note
-              ? `${descriptions[closeType]} Note: ${note}`
-              : descriptions[closeType],
-          },
-        });
-
-        await tx.followUp.updateMany({
-          where: {
-            opportunityId,
-            status: "PENDING",
-            isActive: true,
-          },
-          data: {
-            isActive: false,
-          },
-        });
-
-        await tx.followUpSchedule.updateMany({
-          where: {
-            opportunityId,
-            isActive: true,
-          },
-          data: {
-            isActive: false,
-          },
-        });
-      });
-    } else {
+    // Only CLOSE action is supported.
+    if (action !== "CLOSE") {
       return {
         success: false,
         error: "Invalid opportunity action.",
       };
     }
 
+    const note = typeof payload.note === "string" ? payload.note.trim() : "";
+
+    const closeType = payload.closeType;
+    const now = new Date();
+
+    // ------------------------------------------
+    // ALLOWED CLOSE TYPES
+    // ------------------------------------------
+
+    const closeStatuses = {
+      TEMPORARY: "TEMPORARILY_CLOSED",
+      SCHEDULE_REOPEN: "SCHEDULED_TO_REOPEN",
+    };
+
+    const nextStatus = closeStatuses[closeType];
+
+    if (!nextStatus) {
+      return {
+        success: false,
+        error: "Please select a valid closing option.",
+      };
+    }
+
+    // ------------------------------------------
+    // VALIDATE REOPEN DATE
+    // ------------------------------------------
+
+    let reopenAt = null;
+
+    if (closeType === "SCHEDULE_REOPEN") {
+      reopenAt = parseManualDateTime(payload.reopenAt);
+
+      if (!reopenAt) {
+        return {
+          success: false,
+          error: "Please select a valid reopening date and time.",
+        };
+      }
+
+      if (reopenAt <= now) {
+        return {
+          success: false,
+          error: "Reopening date and time must be in the future.",
+        };
+      }
+    }
+
+    // ------------------------------------------
+    // DATABASE TRANSACTION
+    // ------------------------------------------
+
+    await prisma.$transaction(async (tx) => {
+      // Close the opportunity.
+      await tx.opportunity.update({
+        where: {
+          id: opportunityId,
+          status: "OPEN",
+        },
+        data: {
+          status: nextStatus,
+          closedAt: now,
+          closedById: user.id,
+          reopenAt,
+        },
+      });
+
+      // ----------------------------------------
+      // CREATE ACTIVITY
+      // ----------------------------------------
+
+      const descriptions = {
+        TEMPORARY: "Opportunity temporarily closed.",
+        SCHEDULE_REOPEN: `Opportunity scheduled to reopen on ${reopenAt.toLocaleString()}.`,
+      };
+
+      await tx.activity.create({
+        data: {
+          opportunityId,
+          userId: user.id,
+          type: "STATUS_CHANGE",
+          description: note
+            ? `${descriptions[closeType]} Note: ${note}`
+            : descriptions[closeType],
+        },
+      });
+
+      // ----------------------------------------
+      // DEACTIVATE PENDING FOLLOW-UPS
+      // ----------------------------------------
+
+      await tx.followUp.updateMany({
+        where: {
+          opportunityId,
+          status: "PENDING",
+          isActive: true,
+        },
+        data: {
+          isActive: false,
+        },
+      });
+
+      // ----------------------------------------
+      // DEACTIVATE FOLLOW-UP SCHEDULE
+      // ----------------------------------------
+
+      await tx.followUpSchedule.updateMany({
+        where: {
+          opportunityId,
+          isActive: true,
+        },
+        data: {
+          isActive: false,
+        },
+      });
+    });
+
+    // ------------------------------------------
+    // REVALIDATE
+    // ------------------------------------------
+
     revalidateOpportunityPages(opportunityId);
 
     return {
       success: true,
-      action,
+      action: "CLOSE",
+      status: nextStatus,
+      message:
+        closeType === "TEMPORARY"
+          ? "Opportunity temporarily closed successfully."
+          : "Opportunity closed and scheduled to reopen successfully.",
     };
   } catch (error) {
-    console.error("Update opportunity status failed:", error);
+    console.error("Close opportunity failed:", error);
 
     return {
       success: false,
-      error: error.message || "Unable to update opportunity.",
+      error: error.message || "Unable to close opportunity.",
     };
   }
 }
@@ -643,9 +682,9 @@ export async function updateFollowUpMode(
           },
         });
 
-        // ====================================
+        // ------------------------------------
         // NO NEW DATE PROVIDED
-        // ====================================
+        // ------------------------------------
 
         if (!manualFollowUpDate) {
           if (!existingManual?.dueAt) {
@@ -703,9 +742,9 @@ export async function updateFollowUpMode(
           });
         }
 
-        // ====================================
+        // ------------------------------------
         // NEW OR UPDATED MANUAL DATE
-        // ====================================
+        // ------------------------------------
 
         if (manualFollowUpDate) {
           await tx.followUp.updateMany({

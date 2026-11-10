@@ -17,6 +17,7 @@ function getFormValue(formData, key) {
 function getFormValues(formData) {
   return {
     customerId: getFormValue(formData, "customerId"),
+    stCustomerId: getFormValue(formData, "stCustomerId"),
     opportunityDate: getFormValue(formData, "opportunityDate"),
     pocName: getFormValue(formData, "pocName"),
     businessName: getFormValue(formData, "businessName"),
@@ -202,6 +203,7 @@ export async function searchCustomers(query) {
     select: {
       id: true,
       displayId: true,
+      stCustomerId: true,
       businessName: true,
       pocName: true,
       email: true,
@@ -232,6 +234,7 @@ export async function createOpportunity(previousState, formData) {
 
   const {
     customerId,
+    stCustomerId,
     opportunityDate: opportunityDateInput,
     pocName,
     businessName,
@@ -254,14 +257,15 @@ export async function createOpportunity(previousState, formData) {
   }
 
   // ------------------------------------------
-  // VALIDATION
+  // REQUIRED FIELD VALIDATION
   // ------------------------------------------
 
-  if (!businessName || !jobType || !opportunityDateInput) {
+  if (!opportunityDateInput || !pocName || valueInput === "") {
     return getErrorState("required", values);
   }
 
-  const value = valueInput === "" ? 0 : Number(valueInput);
+  // Zero is allowed. Negative values are not allowed.
+  const value = Number(valueInput);
 
   if (!Number.isFinite(value) || value < 0) {
     return getErrorState("value", values);
@@ -294,14 +298,18 @@ export async function createOpportunity(previousState, formData) {
   // ASSIGNMENT
   // ------------------------------------------
 
-  // By default, assign the opportunity to its creator.
+  // Salesperson can only create opportunities
+  // assigned to themselves.
   let assignedToId = user.id;
 
-  // Only Admin can assign opportunities to other members.
-  if (user.role === "ADMIN" && requestedAssignedToId) {
+  // Admin can assign to themselves or another
+  // active team member.
+  if (user.role === "ADMIN") {
+    const selectedAssigneeId = requestedAssignedToId || user.id;
+
     const selectedUser = await prisma.user.findFirst({
       where: {
-        id: requestedAssignedToId,
+        id: selectedAssigneeId,
         isActive: true,
         role: {
           in: ["ADMIN", "SALESPERSON"],
@@ -323,19 +331,17 @@ export async function createOpportunity(previousState, formData) {
   // OPPORTUNITY SOURCE
   // ------------------------------------------
 
-  // Admin creates for another member:
-  // COMPANY_GENERATED
-  //
   // Admin creates for themselves:
   // SELF_GENERATED
+  //
+  // Admin assigns to another team member:
+  // COMPANY_GENERATED
   //
   // Salesperson creates for themselves:
   // SELF_GENERATED
 
   const source =
-    user.role === "ADMIN" && assignedToId !== user.id
-      ? "COMPANY_GENERATED"
-      : "SELF_GENERATED";
+    assignedToId === user.id ? "SELF_GENERATED" : "COMPANY_GENERATED";
 
   // ------------------------------------------
   // FOLLOW-UP MODE
@@ -357,8 +363,17 @@ export async function createOpportunity(previousState, formData) {
 
       let customer = null;
 
-      // Verify selected customer.
-      if (customerId) {
+      // 1. Match by ServiceTitan Customer ID.
+      if (stCustomerId) {
+        customer = await tx.customer.findUnique({
+          where: {
+            stCustomerId,
+          },
+        });
+      }
+
+      // 2. Match by local Customer ID.
+      if (!customer && customerId) {
         customer = await tx.customer.findUnique({
           where: {
             id: customerId,
@@ -366,17 +381,19 @@ export async function createOpportunity(previousState, formData) {
         });
       }
 
-      // Find existing customer if no valid
-      // selected customer was provided.
-      if (!customer) {
-        const customerConditions = [
-          {
+      // 3. Fallback matching for manually entered customers.
+      // Do not search using empty Business Name.
+      if (!customer && (businessName || pocName)) {
+        const customerConditions = [];
+
+        if (businessName) {
+          customerConditions.push({
             businessName: {
               equals: businessName,
               mode: "insensitive",
             },
-          },
-        ];
+          });
+        }
 
         if (pocName) {
           customerConditions.push({
@@ -407,11 +424,12 @@ export async function createOpportunity(previousState, formData) {
             id: customer.id,
           },
           data: {
-            businessName,
-            pocName: pocName || customer.pocName,
+            businessName: businessName || customer.businessName || null,
+            pocName,
             phone: phone || customer.phone,
             email: email || customer.email,
             location: location || customer.location,
+            ...(stCustomerId ? { stCustomerId } : {}),
           },
         });
       } else {
@@ -420,8 +438,9 @@ export async function createOpportunity(previousState, formData) {
         customer = await tx.customer.create({
           data: {
             displayId: customerDisplayId,
-            businessName,
-            pocName: pocName || null,
+            stCustomerId: stCustomerId || null,
+            businessName: businessName || null,
+            pocName,
             phone: phone || null,
             email: email || null,
             location: location || null,
@@ -435,13 +454,17 @@ export async function createOpportunity(previousState, formData) {
 
       const opportunityDisplayId = await generateDisplayId(tx, "EST");
 
+      const opportunityTitle = [businessName || pocName, jobType]
+        .filter(Boolean)
+        .join(" - ");
+
       const opportunity = await tx.opportunity.create({
         data: {
           displayId: opportunityDisplayId,
-          title: `${businessName} - ${jobType}`,
+          title: opportunityTitle,
           customerId: customer.id,
           opportunityDate,
-          jobType,
+          jobType: jobType || null,
           textMessage: textMessage || null,
           value,
           source,

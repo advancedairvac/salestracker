@@ -54,6 +54,23 @@ export default async function EditOpportunityPage({ params }) {
     redirect(`/admin/opportunities/${opportunity.id}`);
   }
 
+  // Get all active salespeople for the Assigned To dropdown.
+  const users = await prisma.user.findMany({
+    where: {
+      role: "SALESPERSON",
+      isActive: true,
+    },
+    select: {
+      id: true,
+      name: true,
+      role: true,
+      isActive: true,
+    },
+    orderBy: {
+      name: "asc",
+    },
+  });
+
   const initialValues = {
     opportunityDate: formatDateForInput(opportunity.opportunityDate),
     businessName: opportunity.customer?.businessName || "",
@@ -64,6 +81,9 @@ export default async function EditOpportunityPage({ params }) {
     phone: opportunity.customer?.phone || "",
     location: opportunity.customer?.location || "",
     value: Number(opportunity.value || 0),
+
+    // Keep the current assignee selected while editing.
+    assignedToId: opportunity.assignedToId,
   };
 
   const today = formatDateForInput(new Date());
@@ -88,7 +108,7 @@ export default async function EditOpportunityPage({ params }) {
       {/* REUSABLE FORM */}
       <NewEditOpportunity
         user={user}
-        users={[]}
+        users={users}
         today={today}
         mode="edit"
         opportunityId={opportunity.id}

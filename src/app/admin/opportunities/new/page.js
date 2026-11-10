@@ -78,9 +78,7 @@ export default async function NewOpportunityPage() {
     <div className="space-y-4 sm:space-y-5">
       {/* Breadcrumb */}
       <Breadcrumbs
-        items={[
-          { label: "Sales Tracker", href: "/admin" },
-        ]}
+        items={[{ label: "Sales Tracker", href: "/admin" }]}
         currentPage="New Opportunity"
       />
 

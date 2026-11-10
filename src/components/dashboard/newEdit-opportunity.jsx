@@ -6,6 +6,7 @@ import { createOpportunity } from "@/app/admin/opportunities/new/actions";
 import { updateOpportunity } from "@/app/admin/opportunities/[id]/actions";
 
 import Input from "@/components/ui/input";
+import CustomerSearch from "@/components/ui/customer-search";
 
 const initialState = {
   error: null,
@@ -36,10 +37,11 @@ function formatDateInput(value) {
   return `${year}-${month}-${day}`;
 }
 
-function prepareInitialValues(today, initialValues) {
+function prepareInitialValues(today, initialValues, user) {
   return {
     opportunityDate: formatDateInput(initialValues?.opportunityDate || today),
     pocName: "",
+    stCustomerId: "",
     businessName: "",
     jobType: "",
     email: "",
@@ -48,8 +50,10 @@ function prepareInitialValues(today, initialValues) {
     location: "",
     value: "",
     followUpDate: "",
+    assignedToId: user?.id || "",
     ...initialValues,
     opportunityDate: formatDateInput(initialValues?.opportunityDate || today),
+    assignedToId: initialValues?.assignedToId || user?.id || "",
   };
 }
 
@@ -192,32 +196,49 @@ export default function NewEditOpportunity({
   initialValues = {},
 }) {
   const isEdit = mode === "edit";
+  const isAdmin = user?.role === "ADMIN";
 
   const action = isEdit ? updateOpportunity : createOpportunity;
 
   const [state, formAction, pending] = useActionState(action, initialState);
 
   const [values, setValues] = useState(() =>
-    prepareInitialValues(today, initialValues),
+    prepareInitialValues(today, initialValues, user),
   );
 
-  /* Restore form values after validation errors */
+  /* -------------------------------------------------------
+     ASSIGNMENT OPTIONS
+  ------------------------------------------------------- */
+
+  const activeSalespeople = users.filter(
+    (item) => item.role === "SALESPERSON" && item.isActive !== false,
+  );
+
+  const assignmentUsers = [
+    ...(isAdmin ? [user] : []),
+    ...activeSalespeople.filter((item) => item.id !== user?.id),
+  ];
+
+  /* -------------------------------------------------------
+     RESTORE FORM VALUES AFTER VALIDATION ERRORS
+  ------------------------------------------------------- */
 
   useEffect(() => {
     if (state.values) {
       setValues((previous) => ({
         ...previous,
         ...state.values,
-        opportunityDate: isEdit
-          ? previous.opportunityDate
-          : formatDateInput(
-              state.values.opportunityDate || previous.opportunityDate,
-            ),
+        opportunityDate: formatDateInput(
+          state.values.opportunityDate || previous.opportunityDate,
+        ),
+        assignedToId: state.values.assignedToId || previous.assignedToId,
       }));
     }
-  }, [state.values, isEdit]);
+  }, [state.values]);
 
-  /* Handle input changes */
+  /* -------------------------------------------------------
+     HANDLE INPUT CHANGES
+  ------------------------------------------------------- */
 
   function handleChange(event) {
     const { name, value } = event.target;
@@ -225,14 +246,33 @@ export default function NewEditOpportunity({
     setValues((previous) => ({
       ...previous,
       [name]: value,
+
+      // Reset ServiceTitan ID when POC Name is manually changed.
+      ...(name === "pocName" ? { stCustomerId: "" } : {}),
     }));
   }
 
-  /* Error messages */
+  /* -------------------------------------------------------
+     HANDLE SERVICETITAN CUSTOMER SELECTION
+  ------------------------------------------------------- */
+
+  function handleCustomerSelect(customer) {
+    setValues((previous) => ({
+      ...previous,
+      stCustomerId: customer.stCustomerId || "",
+      pocName: customer.pocName || "",
+      email: customer.email || "",
+      phone: customer.phone || "",
+      location: customer.location || "",
+    }));
+  }
+
+  /* -------------------------------------------------------
+     ERROR MESSAGES
+  ------------------------------------------------------- */
 
   const errorMessages = {
     required: "Please complete all required fields.",
-    source: "Invalid opportunity source.",
     value: "Please enter a valid dollar value.",
     email: "Please enter a valid email address.",
     date: "Please select a valid opportunity date.",
@@ -242,11 +282,12 @@ export default function NewEditOpportunity({
     update: "Unable to update opportunity. Please try again.",
     opportunity: "Opportunity not found.",
     status: "This opportunity can no longer be edited.",
+    permission: "You do not have permission to perform this action.",
   };
 
   return (
     <section className="w-full max-w-[700px]">
-      {/* Validation Error */}
+      {/* VALIDATION ERROR */}
 
       {state.error && (
         <div
@@ -259,13 +300,21 @@ export default function NewEditOpportunity({
       )}
 
       <form action={formAction} className="flex w-full flex-col gap-[9px]">
-        {/* Opportunity ID */}
+        {/* OPPORTUNITY ID */}
 
         {isEdit && (
           <input type="hidden" name="opportunityId" value={opportunityId} />
         )}
 
-        {/* Opportunity Date */}
+        {/* SERVICETITAN CUSTOMER ID */}
+
+        <input
+          type="hidden"
+          name="stCustomerId"
+          value={values.stCustomerId || ""}
+        />
+
+        {/* OPPORTUNITY DATE - REQUIRED */}
 
         <Input
           name="opportunityDate"
@@ -273,55 +322,47 @@ export default function NewEditOpportunity({
           type="date"
           value={values.opportunityDate}
           onChange={handleChange}
-          required={!isEdit}
+          required
         />
 
-        {/* POC Name */}
+        {/* POC NAME - REQUIRED */}
 
-        <Input
-          name="pocName"
-          label="POC Name"
+        <CustomerSearch
           value={values.pocName}
           onChange={handleChange}
+          onSelect={handleCustomerSelect}
+          required
         />
 
-        {/* Business Name */}
+        {/* BUSINESS NAME - OPTIONAL */}
 
         <Input
           name="businessName"
           label="Business Name"
           value={values.businessName}
           onChange={handleChange}
-          required
         />
 
-        {/* Job Type */}
+        {/* JOB TYPE - OPTIONAL */}
 
         <FloatingSelect
           name="jobType"
           label="Job Type"
           value={values.jobType}
           onChange={handleChange}
-          required
         >
           <option value="EQUIPMENT ONLY">EQUIPMENT ONLY</option>
-
           <option value="INSTALL">INSTALL</option>
-
           <option value="SERVICE">SERVICE</option>
-
           <option value="PREVENTATIVE MAINTENANCE">
             PREVENTATIVE MAINTENANCE
           </option>
-
           <option value="AUTOMOTIVE">AUTOMOTIVE</option>
-
           <option value="HVACR">HVACR</option>
-
           <option value="OTHER">OTHER</option>
         </FloatingSelect>
 
-        {/* Email */}
+        {/* EMAIL - OPTIONAL */}
 
         <Input
           name="email"
@@ -331,7 +372,7 @@ export default function NewEditOpportunity({
           onChange={handleChange}
         />
 
-        {/* Text Message */}
+        {/* TEXT MESSAGE - OPTIONAL */}
 
         <FloatingTextarea
           name="textMessage"
@@ -340,7 +381,7 @@ export default function NewEditOpportunity({
           onChange={handleChange}
         />
 
-        {/* Phone Number */}
+        {/* PHONE NUMBER - OPTIONAL */}
 
         <Input
           name="phone"
@@ -350,7 +391,7 @@ export default function NewEditOpportunity({
           onChange={handleChange}
         />
 
-        {/* Location */}
+        {/* LOCATION - OPTIONAL */}
 
         <Input
           name="location"
@@ -359,7 +400,7 @@ export default function NewEditOpportunity({
           onChange={handleChange}
         />
 
-        {/* Approximate Dollar Value */}
+        {/* APPROXIMATE DOLLAR VALUE - REQUIRED */}
 
         <Input
           name="value"
@@ -369,9 +410,10 @@ export default function NewEditOpportunity({
           step="0.01"
           value={values.value}
           onChange={handleChange}
+          required
         />
 
-        {/* Follow-up Date - New Mode Only */}
+        {/* FOLLOW-UP DATE - OPTIONAL, NEW MODE ONLY */}
 
         {!isEdit && (
           <Input
@@ -384,7 +426,27 @@ export default function NewEditOpportunity({
           />
         )}
 
-        {/* Submit Button */}
+        {/* ASSIGNED TO - ALWAYS AT THE END */}
+
+        {isAdmin ? (
+          <FloatingSelect
+            name="assignedToId"
+            label="Assigned To"
+            value={values.assignedToId}
+            onChange={handleChange}
+            required
+          >
+            {assignmentUsers.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.id === user.id ? `${item.name} (You)` : item.name}
+              </option>
+            ))}
+          </FloatingSelect>
+        ) : (
+          <input type="hidden" name="assignedToId" value={user.id} />
+        )}
+
+        {/* SUBMIT BUTTON */}
 
         <button
           type="submit"
