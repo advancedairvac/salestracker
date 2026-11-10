@@ -1,3 +1,12 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+
+import TablePagination from "@/components/dashboard/table-pagination";
+
+// ============================================
+// HELPERS
+// ============================================
 
 function formatCurrency(amount, currency) {
   return `${currency}${new Intl.NumberFormat("en-US", {
@@ -17,11 +26,50 @@ function formatSource(source) {
   return source || "—";
 }
 
+// ============================================
+// REVENUE TABLE
+// ============================================
+
 export default function RevenueTable({
   sales = [],
   currency = "$",
   className = "",
 }) {
+  // ============================================
+  // PAGINATION STATE
+  // ============================================
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  const totalItems = sales.length;
+  const totalPages = Math.ceil(totalItems / pageSize);
+
+  useEffect(() => {
+    if (currentPage > Math.max(1, totalPages)) {
+      setCurrentPage(Math.max(1, totalPages));
+    }
+  }, [currentPage, totalPages]);
+
+  function handlePageSizeChange(size) {
+    setPageSize(size);
+    setCurrentPage(1);
+  }
+
+  // ============================================
+  // PAGINATED DATA
+  // ============================================
+
+  const paginatedSales = useMemo(() => {
+    const startIndex = (currentPage - 1) * pageSize;
+
+    return sales.slice(startIndex, startIndex + pageSize);
+  }, [sales, currentPage, pageSize]);
+
+  // ============================================
+  // RENDER
+  // ============================================
+
   return (
     <section className={`w-full ${className}`}>
       <div className="w-full overflow-x-auto">
@@ -51,8 +99,8 @@ export default function RevenueTable({
           </thead>
 
           <tbody>
-            {sales.length > 0 ? (
-              sales.map((sale) => (
+            {paginatedSales.length > 0 ? (
+              paginatedSales.map((sale) => (
                 <tr
                   key={sale.id}
                   className="border-b border-[#d9d9d9] transition-colors hover:bg-[#f8f8f8]"
@@ -86,10 +134,7 @@ export default function RevenueTable({
               ))
             ) : (
               <tr>
-                <td
-                  colSpan={5}
-                  className="px-4 py-10 text-sm text-[#777]"
-                >
+                <td colSpan={5} className="px-4 py-10 text-sm text-[#777]">
                   No sales records found for this date range.
                 </td>
               </tr>
@@ -97,6 +142,18 @@ export default function RevenueTable({
           </tbody>
         </table>
       </div>
+
+      {/* PAGINATION */}
+
+      <TablePagination
+        currentPage={currentPage}
+        pageSize={pageSize}
+        totalItems={totalItems}
+        onPageChange={setCurrentPage}
+        onPageSizeChange={handlePageSizeChange}
+      />
+
+      {/* TOTAL SALES COUNT */}
 
       {sales.length > 0 && (
         <p className="mt-2 text-right text-xs text-[#777]">

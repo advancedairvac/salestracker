@@ -1,4 +1,13 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
+
+import TablePagination from "@/components/dashboard/table-pagination";
+
+// ============================================
+// HELPERS
+// ============================================
 
 function formatCurrency(amount, currency = "$") {
   return `${currency}${new Intl.NumberFormat("en-US", {
@@ -70,11 +79,50 @@ function formatType(type) {
   return labels[type] || type;
 }
 
+// ============================================
+// FOLLOW-UPS TABLE
+// ============================================
+
 export default function FollowUpsTable({
   followUps = [],
   currency = "$",
   className = "",
 }) {
+  // ============================================
+  // PAGINATION STATE
+  // ============================================
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  const totalItems = followUps.length;
+  const totalPages = Math.ceil(totalItems / pageSize);
+
+  useEffect(() => {
+    if (currentPage > Math.max(1, totalPages)) {
+      setCurrentPage(Math.max(1, totalPages));
+    }
+  }, [currentPage, totalPages]);
+
+  function handlePageSizeChange(size) {
+    setPageSize(size);
+    setCurrentPage(1);
+  }
+
+  // ============================================
+  // PAGINATED DATA
+  // ============================================
+
+  const paginatedFollowUps = useMemo(() => {
+    const startIndex = (currentPage - 1) * pageSize;
+
+    return followUps.slice(startIndex, startIndex + pageSize);
+  }, [followUps, currentPage, pageSize]);
+
+  // ============================================
+  // RENDER
+  // ============================================
+
   return (
     <section className={`w-full ${className}`}>
       <div className="w-full overflow-x-auto">
@@ -108,8 +156,8 @@ export default function FollowUpsTable({
           </thead>
 
           <tbody>
-            {followUps.length > 0 ? (
-              followUps.map((followUp) => {
+            {paginatedFollowUps.length > 0 ? (
+              paginatedFollowUps.map((followUp) => {
                 const opportunity = followUp.opportunity;
                 const customer = opportunity?.customer;
 
@@ -127,13 +175,15 @@ export default function FollowUpsTable({
                     key={followUp.id}
                     className="border-b border-[#d9d9d9] transition-colors hover:bg-[#f8f8f8]"
                   >
-                    {/* Date */}
-                    <td className="whitespace-pre-line px-3 py-2 leading-tight text-[#333] text-xs lg:text-sm">
+                    {/* DATE */}
+
+                    <td className="whitespace-pre-line px-3 py-2 text-xs leading-tight text-[#333] lg:text-sm">
                       {formatDueDate(followUp.dueAt)}
                     </td>
 
-                    {/* Customer / Opportunity */}
-                    <td className="px-3 py-2 leading-tight text-black text-xs lg:text-sm">
+                    {/* CUSTOMER / OPPORTUNITY */}
+
+                    <td className="px-3 py-2 text-xs leading-tight text-black lg:text-sm">
                       <Link
                         href={`/admin/opportunities/${opportunity.id}`}
                         className="underline underline-offset-2"
@@ -146,8 +196,9 @@ export default function FollowUpsTable({
                       </Link>
                     </td>
 
-                    {/* Salesman */}
-                    <td className="whitespace-nowrap px-3 py-2 text-black text-xs lg:text-sm">
+                    {/* SALESMAN */}
+
+                    <td className="whitespace-nowrap px-3 py-2 text-xs text-black lg:text-sm">
                       {salesman?.id ? (
                         <Link
                           href={`/admin/salesmen/${salesman.id}`}
@@ -160,18 +211,21 @@ export default function FollowUpsTable({
                       )}
                     </td>
 
-                    {/* Status */}
-                    <td className="whitespace-nowrap px-3 py-2 text-black text-xs lg:text-sm">
+                    {/* STATUS */}
+
+                    <td className="whitespace-nowrap px-3 py-2 text-xs text-black lg:text-sm">
                       {getFollowUpStatus(followUp.dueAt)}
                     </td>
 
-                    {/* Type */}
-                    <td className="whitespace-nowrap px-3 py-2 text-black text-xs lg:text-sm">
+                    {/* TYPE */}
+
+                    <td className="whitespace-nowrap px-3 py-2 text-xs text-black lg:text-sm">
                       {formatType(followUp.type)}
                     </td>
 
-                    {/* Commission Estimate */}
-                    <td className="whitespace-nowrap px-3 py-2 text-black text-xs lg:text-sm">
+                    {/* COMMISSION ESTIMATE */}
+
+                    <td className="whitespace-nowrap px-3 py-2 text-xs text-black lg:text-sm">
                       {formatCurrency(
                         followUp.commissionEstimate || 0,
                         currency,
@@ -193,6 +247,16 @@ export default function FollowUpsTable({
           </tbody>
         </table>
       </div>
+
+      {/* PAGINATION */}
+
+      <TablePagination
+        currentPage={currentPage}
+        pageSize={pageSize}
+        totalItems={totalItems}
+        onPageChange={setCurrentPage}
+        onPageSizeChange={handlePageSizeChange}
+      />
     </section>
   );
 }

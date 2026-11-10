@@ -1,4 +1,7 @@
-import Link from "next/link";
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import TablePagination from "@/components/dashboard/table-pagination";
 
 function formatCurrency(amount, currency = "$") {
   return `${currency}${new Intl.NumberFormat("en-US", {
@@ -23,6 +26,44 @@ export default function EstimatesTable({
   currency = "$",
   className = "",
 }) {
+  // ============================================
+  // PAGINATION STATE
+  // ============================================
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  const totalItems = opportunities.length;
+
+  const totalPages = Math.ceil(totalItems / pageSize);
+
+  // Keep current page within the available page range.
+  useEffect(() => {
+    if (currentPage > Math.max(1, totalPages)) {
+      setCurrentPage(Math.max(1, totalPages));
+    }
+  }, [currentPage, totalPages]);
+
+  // Reset to first page when page size changes.
+  function handlePageSizeChange(size) {
+    setPageSize(size);
+    setCurrentPage(1);
+  }
+
+  // ============================================
+  // PAGINATED DATA
+  // ============================================
+
+  const paginatedOpportunities = useMemo(() => {
+    const startIndex = (currentPage - 1) * pageSize;
+
+    return opportunities.slice(startIndex, startIndex + pageSize);
+  }, [opportunities, currentPage, pageSize]);
+
+  // ============================================
+  // RENDER
+  // ============================================
+
   return (
     <section className={`w-full ${className}`}>
       <div className="w-full overflow-x-auto">
@@ -56,33 +97,33 @@ export default function EstimatesTable({
           </thead>
 
           <tbody>
-            {opportunities.length > 0 ? (
-              opportunities.map((opportunity) => (
+            {paginatedOpportunities.length > 0 ? (
+              paginatedOpportunities.map((opportunity) => (
                 <tr
                   key={opportunity.id}
                   className="border-b border-[#d9d9d9] transition-colors hover:bg-[#f8f8f8]"
                 >
-                  <td className="whitespace-nowrap px-4 py-2 text-black text-xs lg:text-sm">
+                  <td className="whitespace-nowrap px-4 py-2 text-xs text-black lg:text-sm">
                     {opportunity.serviceTitanEstimateId || "—"}
                   </td>
 
-                  <td className="whitespace-nowrap px-4 py-2 text-black text-xs lg:text-sm">
+                  <td className="whitespace-nowrap px-4 py-2 text-xs text-black lg:text-sm">
                     {opportunity.customer?.businessName || "—"}
                   </td>
 
-                  <td className="whitespace-nowrap px-4 py-2 text-black text-xs lg:text-sm">
+                  <td className="whitespace-nowrap px-4 py-2 text-xs text-black lg:text-sm">
                     {formatCurrency(opportunity.value, currency)}
                   </td>
 
-                  <td className="whitespace-nowrap px-4 py-2 text-black text-xs lg:text-sm">
+                  <td className="whitespace-nowrap px-4 py-2 text-xs text-black lg:text-sm">
                     {opportunity.assignedTo?.name || "—"}
                   </td>
 
-                  <td className="whitespace-nowrap px-4 py-2 text-black text-xs lg:text-sm">
+                  <td className="whitespace-nowrap px-4 py-2 text-xs text-black lg:text-sm">
                     {formatSource(opportunity.source)}
                   </td>
 
-                  <td className="whitespace-nowrap px-4 py-2 text-black text-xs lg:text-sm">
+                  <td className="whitespace-nowrap px-4 py-2 text-xs text-black lg:text-sm">
                     {formatCurrency(
                       opportunity.commissionEstimate || 0,
                       currency,
@@ -100,6 +141,16 @@ export default function EstimatesTable({
           </tbody>
         </table>
       </div>
+
+      {/* PAGINATION */}
+
+      <TablePagination
+        currentPage={currentPage}
+        pageSize={pageSize}
+        totalItems={totalItems}
+        onPageChange={setCurrentPage}
+        onPageSizeChange={handlePageSizeChange}
+      />
     </section>
   );
 }

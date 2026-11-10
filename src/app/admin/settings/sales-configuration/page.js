@@ -1,3 +1,4 @@
+
 import { prisma } from "@/lib/prisma";
 
 import {
@@ -6,7 +7,7 @@ import {
   getJobType,
 } from "@/lib/integrations/servicetitan";
 
-import JobCard from "@/components/settings/sales-configuration/job-card";
+import JobCardsList from "@/components/settings/sales-configuration/job-cards-list";
 
 export const dynamic = "force-dynamic";
 
@@ -278,17 +279,9 @@ export default async function SalesConfigurationPage() {
         </div>
       )}
 
-      {/* Job Cards */}
+      {/* Job Cards with Pagination */}
       {jobs.length > 0 && (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {jobs.map((job) => (
-            <JobCard
-              key={job.serviceTitanJobId}
-              job={job}
-              salesmen={salesmen}
-            />
-          ))}
-        </div>
+        <JobCardsList jobs={jobs} salesmen={salesmen} />
       )}
     </div>
   );
