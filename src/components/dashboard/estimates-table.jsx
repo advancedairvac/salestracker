@@ -63,12 +63,7 @@ export default function EstimatesTable({
                   className="border-b border-[#d9d9d9] transition-colors hover:bg-[#f8f8f8]"
                 >
                   <td className="whitespace-nowrap px-4 py-2 text-black text-xs lg:text-sm">
-                    <Link
-                      href={`/admin/opportunities/${opportunity.id}`}
-                      className="underline underline-offset-2"
-                    >
-                      {opportunity.serviceTitanEstimateId || "—"}
-                    </Link>
+                    {opportunity.serviceTitanEstimateId || "—"}
                   </td>
 
                   <td className="whitespace-nowrap px-4 py-2 text-black text-xs lg:text-sm">
@@ -80,12 +75,7 @@ export default function EstimatesTable({
                   </td>
 
                   <td className="whitespace-nowrap px-4 py-2 text-black text-xs lg:text-sm">
-                    <Link
-                      href={`/admin/opportunities/${opportunity.id}`}
-                      className="underline underline-offset-2"
-                    >
-                      {opportunity.assignedTo?.name || "—"}
-                    </Link>
+                    {opportunity.assignedTo?.name || "—"}
                   </td>
 
                   <td className="whitespace-nowrap px-4 py-2 text-black text-xs lg:text-sm">

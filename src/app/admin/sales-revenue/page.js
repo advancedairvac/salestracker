@@ -1,8 +1,8 @@
 import { prisma } from "@/lib/prisma";
+
 import {
   getAllJobs,
-  getAllAppointmentAssignments,
-  getServiceTitanCustomers,
+  getAllServiceTitanCustomers,
 } from "@/lib/integrations/servicetitan";
 
 import { getGoalConfiguration, calculateTeamGoal } from "@/lib/date/goal-utils";
@@ -18,6 +18,8 @@ export const metadata = {
   title: "Sales Revenue",
 };
 
+export const dynamic = "force-dynamic";
+
 // ============================================
 // HELPERS
 // ============================================
@@ -32,7 +34,6 @@ function formatDate(date) {
 
 function getInitialDateRange() {
   const now = new Date();
-
   const start = new Date(now.getFullYear(), now.getMonth(), 1);
 
   return {
@@ -42,10 +43,10 @@ function getInitialDateRange() {
 }
 
 function getDateRange(startDate, endDate) {
-  const start = new Date(`${startDate}T00:00:00.000`);
-  const end = new Date(`${endDate}T23:59:59.999`);
-
-  return { start, end };
+  return {
+    start: new Date(`${startDate}T00:00:00`),
+    end: new Date(`${endDate}T23:59:59.999`),
+  };
 }
 
 function isValidDateString(value) {
@@ -56,10 +57,6 @@ function isValidDateString(value) {
   const date = new Date(`${value}T00:00:00`);
 
   return !Number.isNaN(date.getTime()) && formatDate(date) === value;
-}
-
-function calculateRevenue(jobs) {
-  return jobs.reduce((total, job) => total + Number(job.total || 0), 0);
 }
 
 function getCustomerList(result) {
@@ -75,15 +72,13 @@ function getCustomerList(result) {
     return result.data;
   }
 
-  if (Array.isArray(result?.results)) {
-    return result.results;
-  }
-
   return [];
 }
 
 function getCustomerName(customer) {
-  if (!customer) return "—";
+  if (!customer) {
+    return "—";
+  }
 
   const firstName = customer.firstName?.trim() || "";
   const lastName = customer.lastName?.trim() || "";
@@ -99,6 +94,29 @@ function getCustomerName(customer) {
   );
 }
 
+function getJobValue(job) {
+  const value = Number(job.total);
+
+  return Number.isFinite(value) ? value : 0;
+}
+
+function isCompletedJob(job) {
+  return (
+    String(job.jobStatus || "").toLowerCase() === "completed" &&
+    Boolean(job.completedOn)
+  );
+}
+
+// Format database source values for display.
+function getSourceLabel(source) {
+  const sourceLabels = {
+    SELF_GENERATED: "Self Generated",
+    COMPANY_GENERATED: "Company Generated",
+  };
+
+  return sourceLabels[source] || "—";
+}
+
 // ============================================
 // SALES REVENUE PAGE
 // ============================================
@@ -106,9 +124,14 @@ function getCustomerName(customer) {
 export default async function SalesRevenuePage({ searchParams }) {
   const params = await searchParams;
 
+  // ============================================
+  // DATE FILTER
+  // ============================================
+
   const defaultRange = getInitialDateRange();
 
   const requestedStartDate = params?.startDate || defaultRange.startDate;
+
   const requestedEndDate = params?.endDate || defaultRange.endDate;
 
   const validRange =
@@ -138,10 +161,8 @@ export default async function SalesRevenuePage({ searchParams }) {
     "Q4",
   ];
 
-  const requestedPreset = params?.preset;
-
-  const selectedPreset = validPresets.includes(requestedPreset)
-    ? requestedPreset
+  const selectedPreset = validPresets.includes(params?.preset)
+    ? params.preset
     : "MTD";
 
   const { start, end } = getDateRange(selectedStartDate, selectedEndDate);
@@ -150,65 +171,36 @@ export default async function SalesRevenuePage({ searchParams }) {
   // FETCH DATA
   // ============================================
 
-  const [allJobs, customerResult, allAssignments, teamMembers] =
-    await Promise.all([
-      getAllJobs({
-        pageSize: 100,
-        maxPages: 10,
-      }),
+  const [allJobs, customerResult, teamMembers] = await Promise.all([
+    getAllJobs({
+      pageSize: 100,
+      maxPages: 100,
+    }),
 
-      getServiceTitanCustomers({
-        page: 1,
-        pageSize: 100,
-      }),
+    getAllServiceTitanCustomers({
+      pageSize: 100,
+      maxPages: 100,
+    }),
 
-      getAllAppointmentAssignments({
-        pageSize: 100,
-        maxPages: 100,
-      }),
-
-      prisma.user.findMany({
-        where: {
-          role: {
-            in: ["ADMIN", "SALESPERSON"],
-          },
-          isActive: true,
+    prisma.user.findMany({
+      where: {
+        role: {
+          in: ["ADMIN", "SALESPERSON"],
         },
-        select: {
-          monthlyGoal: true,
-          quarterlyGoal: true,
-          annualGoal: true,
-        },
-      }),
-    ]);
+        isActive: true,
+      },
+      select: {
+        monthlyGoal: true,
+        quarterlyGoal: true,
+        annualGoal: true,
+      },
+    }),
+  ]);
 
   const serviceTitanCustomers = getCustomerList(customerResult);
 
   // ============================================
-  // FILTER AND SORT COMPLETED JOBS
-  // ============================================
-
-  const jobs = allJobs
-    .filter((job) => {
-      if (job.jobStatus !== "Completed" || !job.completedOn) {
-        return false;
-      }
-
-      const completedDate = new Date(job.completedOn);
-
-      return (
-        !Number.isNaN(completedDate.getTime()) &&
-        completedDate >= start &&
-        completedDate <= end
-      );
-    })
-    .sort(
-      (a, b) =>
-        new Date(b.completedOn).getTime() - new Date(a.completedOn).getTime(),
-    );
-
-  // ============================================
-  // CREATE CUSTOMER LOOKUP MAP
+  // CUSTOMER LOOKUP
   // ============================================
 
   const customerMap = new Map(
@@ -219,42 +211,72 @@ export default async function SalesRevenuePage({ searchParams }) {
   );
 
   // ============================================
-  // CREATE TECHNICIAN LOOKUP MAP
+  // FETCH SAVED SALES ASSIGNMENTS
   // ============================================
 
-  const technicianMap = new Map();
+  // Get ServiceTitan Job IDs.
+  const serviceTitanJobIds = allJobs
+    .filter((job) => job.id !== undefined && job.id !== null)
+    .map((job) => String(job.id));
 
-  allAssignments.forEach((assignment) => {
-    if (assignment.status !== "Done") {
-      return;
-    }
+  // Fetch existing CRM assignments from PostgreSQL.
+  const savedSales = serviceTitanJobIds.length
+    ? await prisma.sale.findMany({
+        where: {
+          serviceTitanJobId: {
+            in: serviceTitanJobIds,
+          },
+        },
+        select: {
+          serviceTitanJobId: true,
+          source: true,
+          salesmanId: true,
+          salesman: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+      })
+    : [];
 
-    if (
-      assignment.active === false ||
-      !assignment.jobId ||
-      !assignment.technicianName
-    ) {
-      return;
-    }
-
-    const jobId = String(assignment.jobId);
-
-    if (!technicianMap.has(jobId)) {
-      technicianMap.set(jobId, []);
-    }
-
-    const technicians = technicianMap.get(jobId);
-
-    if (!technicians.includes(assignment.technicianName)) {
-      technicians.push(assignment.technicianName);
-    }
-  });
+  // Create lookup map using ServiceTitan Job ID.
+  const saleMap = new Map(
+    savedSales.map((sale) => [String(sale.serviceTitanJobId), sale]),
+  );
 
   // ============================================
-  // REVENUE SUMMARY AND TEAM GOAL
+  // FILTER COMPLETED JOBS
   // ============================================
 
-  const totalRevenue = calculateRevenue(jobs);
+  const jobs = allJobs
+    .filter((job) => {
+      if (!isCompletedJob(job)) {
+        return false;
+      }
+
+      const completedDate = new Date(job.completedOn);
+
+      if (Number.isNaN(completedDate.getTime())) {
+        return false;
+      }
+
+      return completedDate >= start && completedDate <= end;
+    })
+    // Only jobs with a positive value count as revenue.
+    // Zero-value jobs require verified invoice payment data.
+    .filter((job) => getJobValue(job) > 0)
+    .sort(
+      (a, b) =>
+        new Date(b.completedOn).getTime() - new Date(a.completedOn).getTime(),
+    );
+
+  // ============================================
+  // REVENUE SUMMARY
+  // ============================================
+
+  const totalRevenue = jobs.reduce((total, job) => total + getJobValue(job), 0);
 
   const goalConfiguration = getGoalConfiguration(
     selectedPreset,
@@ -269,7 +291,8 @@ export default async function SalesRevenuePage({ searchParams }) {
   // ============================================
 
   const revenueData = jobs.map((job) => {
-    const technicians = technicianMap.get(String(job.id)) || [];
+    // Match ServiceTitan Job with saved CRM Sale.
+    const savedSale = saleMap.get(String(job.id));
 
     return {
       id: job.id,
@@ -278,11 +301,13 @@ export default async function SalesRevenuePage({ searchParams }) {
 
       customerName: customerMap.get(String(job.customerId)) || "—",
 
-      saleValue: Number(job.total || 0),
+      saleValue: getJobValue(job),
 
-      source: "Company",
+      // Read Source from PostgreSQL.
+      source: getSourceLabel(savedSale?.source),
 
-      salesmanName: technicians.length > 0 ? technicians.join(", ") : "—",
+      // Read assigned Salesperson from PostgreSQL.
+      salesmanName: savedSale?.salesman?.name || "—",
 
       commissionEstimate: 0,
     };

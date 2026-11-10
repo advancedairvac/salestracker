@@ -1,4 +1,3 @@
-
 const SERVICE_TITAN_CONFIG = {
   baseUrl:
     process.env.SERVICETITAN_ENV === "production"
@@ -11,9 +10,9 @@ const SERVICE_TITAN_CONFIG = {
       : "https://auth-integration.servicetitan.io/connect/token",
 };
 
-// ---------------------------------------------
-// Environment Variables
-// ---------------------------------------------
+// ============================================
+// ENVIRONMENT VARIABLES
+// ============================================
 
 function getRequiredEnv(name) {
   const value = process.env[name];
@@ -25,9 +24,9 @@ function getRequiredEnv(name) {
   return value;
 }
 
-// ---------------------------------------------
-// OAuth Authentication
-// ---------------------------------------------
+// ============================================
+// OAUTH AUTHENTICATION
+// ============================================
 
 async function getAccessToken() {
   const clientId = getRequiredEnv("SERVICETITAN_CLIENT_ID");
@@ -48,26 +47,24 @@ async function getAccessToken() {
     cache: "no-store",
   });
 
-  const result = await response.json().catch(() => ({}));
+  const result = await response.json().catch(() => null);
 
-  if (!response.ok) {
+  if (!response.ok || !result?.access_token) {
     throw new Error(
       `ServiceTitan authentication failed (${response.status}): ${
-        result.error_description || result.error || "Authentication failed."
+        result?.error_description ||
+        result?.error ||
+        "Unable to obtain access token."
       }`,
     );
-  }
-
-  if (!result.access_token) {
-    throw new Error("ServiceTitan did not return an access token.");
   }
 
   return result.access_token;
 }
 
-// ---------------------------------------------
-// Shared ServiceTitan API Request
-// ---------------------------------------------
+// ============================================
+// SHARED API REQUEST
+// ============================================
 
 export async function serviceTitanRequest(path, params = {}) {
   const tenantId = getRequiredEnv("SERVICETITAN_TENANT_ID");
@@ -75,10 +72,7 @@ export async function serviceTitanRequest(path, params = {}) {
 
   const accessToken = await getAccessToken();
 
-  const resolvedPath = path.replace(
-    "{tenant}",
-    encodeURIComponent(tenantId),
-  );
+  const resolvedPath = path.replace("{tenant}", encodeURIComponent(tenantId));
 
   const url = new URL(`${SERVICE_TITAN_CONFIG.baseUrl}${resolvedPath}`);
 
@@ -111,9 +105,35 @@ export async function serviceTitanRequest(path, params = {}) {
   return result;
 }
 
-// ---------------------------------------------
-// Estimates
-// ---------------------------------------------
+// ============================================
+// SHARED PAGINATION HELPER
+// ============================================
+
+async function fetchAllPages(fetchPage, { pageSize = 50, maxPages = 10 } = {}) {
+  const allItems = [];
+
+  for (let page = 1; page <= maxPages; page += 1) {
+    const result = await fetchPage(page, pageSize);
+
+    const items = Array.isArray(result.data) ? result.data : [];
+
+    allItems.push(...items);
+
+    if (
+      items.length === 0 ||
+      result.hasMore === false ||
+      (result.hasMore === undefined && items.length < pageSize)
+    ) {
+      break;
+    }
+  }
+
+  return allItems;
+}
+
+// ============================================
+// ESTIMATES
+// ============================================
 
 export async function getEstimates({
   page = 1,
@@ -134,35 +154,21 @@ export async function getAllEstimates({
   maxPages = 10,
   ...filters
 } = {}) {
-  const estimates = [];
-
-  for (let page = 1; page <= maxPages; page += 1) {
-    const result = await getEstimates({
-      ...filters,
-      page,
-      pageSize,
-      includeTotal: true,
-    });
-
-    const items = Array.isArray(result.data) ? result.data : [];
-
-    estimates.push(...items);
-
-    if (
-      items.length === 0 ||
-      result.hasMore === false ||
-      (result.hasMore === undefined && items.length < pageSize)
-    ) {
-      break;
-    }
-  }
-
-  return estimates;
+  return fetchAllPages(
+    (page, size) =>
+      getEstimates({
+        ...filters,
+        page,
+        pageSize: size,
+        includeTotal: true,
+      }),
+    { pageSize, maxPages },
+  );
 }
 
-// ---------------------------------------------
-// Jobs
-// ---------------------------------------------
+// ============================================
+// JOBS / REVENUE
+// ============================================
 
 export async function getJobs({
   page = 1,
@@ -183,141 +189,44 @@ export async function getAllJobs({
   maxPages = 10,
   ...filters
 } = {}) {
-  const jobs = [];
-
-  for (let page = 1; page <= maxPages; page += 1) {
-    const result = await getJobs({
-      ...filters,
-      page,
-      pageSize,
-      includeTotal: true,
-    });
-
-    const items = Array.isArray(result.data) ? result.data : [];
-
-    jobs.push(...items);
-
-    if (
-      items.length === 0 ||
-      result.hasMore === false ||
-      (result.hasMore === undefined && items.length < pageSize)
-    ) {
-      break;
-    }
-  }
-
-  return jobs;
-}
-
-// ---------------------------------------------
-// Employees
-// ---------------------------------------------
-
-export async function getServiceTitanEmployee(employeeId) {
-  if (!employeeId) {
-    throw new Error("Employee ID is required.");
-  }
-
-  return serviceTitanRequest(
-    `/settings/v2/tenant/{tenant}/employees/${encodeURIComponent(
-      employeeId,
-    )}`,
-  );
-}
-
-// ---------------------------------------------
-// Get All Employees
-// ---------------------------------------------
-
-export async function getAllServiceTitanEmployees({
-  pageSize = 100,
-  maxPages = 100,
-  ...filters
-} = {}) {
-  const employees = [];
-
-  for (let page = 1; page <= maxPages; page += 1) {
-    const result = await serviceTitanRequest(
-      "/settings/v2/tenant/{tenant}/employees",
-      {
-        page,
-        pageSize,
+  return fetchAllPages(
+    (page, size) =>
+      getJobs({
         ...filters,
-      },
-    );
-
-    const items = Array.isArray(result.data) ? result.data : [];
-
-    employees.push(...items);
-
-    if (
-      items.length === 0 ||
-      result.hasMore === false ||
-      (result.hasMore === undefined && items.length < pageSize)
-    ) {
-      break;
-    }
-  }
-
-  return employees;
-}
-
-// ---------------------------------------------
-// Appointment Assignments
-// ---------------------------------------------
-
-export async function getAppointmentAssignments({
-  page = 1,
-  pageSize = 100,
-  ...filters
-} = {}) {
-  return serviceTitanRequest(
-    "/dispatch/v2/tenant/{tenant}/appointment-assignments",
-    {
-      page,
-      pageSize,
-      ...filters,
-    },
+        page,
+        pageSize: size,
+        includeTotal: true,
+      }),
+    { pageSize, maxPages },
   );
 }
 
-// ---------------------------------------------
-// Get All Appointment Assignments
-// ---------------------------------------------
+// ============================================
+// JOB TYPE
+// ============================================
 
-export async function getAllAppointmentAssignments({
-  pageSize = 100,
-  maxPages = 100,
-  ...filters
-} = {}) {
-  const assignments = [];
-
-  for (let page = 1; page <= maxPages; page += 1) {
-    const result = await getAppointmentAssignments({
-      ...filters,
-      page,
-      pageSize,
-    });
-
-    const items = Array.isArray(result.data) ? result.data : [];
-
-    assignments.push(...items);
-
-    if (
-      items.length === 0 ||
-      result.hasMore === false ||
-      (result.hasMore === undefined && items.length < pageSize)
-    ) {
-      break;
-    }
+export async function getJobType(jobTypeId) {
+  if (!jobTypeId) {
+    return null;
   }
 
-  return assignments;
+  try {
+    return await serviceTitanRequest(
+      "/jpm/v2/tenant/{tenant}/job-types/{jobTypeId}".replace(
+        "{jobTypeId}",
+        encodeURIComponent(String(jobTypeId)),
+      ),
+    );
+  } catch (error) {
+    console.error(`ServiceTitan Job Type Fetch Error (${jobTypeId}):`, error);
+
+    return null;
+  }
 }
 
-// ---------------------------------------------
-// Customer Contacts
-// ---------------------------------------------
+// ============================================
+// CUSTOMER CONTACTS
+// ============================================
 
 async function getCustomerContacts(customerIds) {
   if (!customerIds.length) {
@@ -337,26 +246,20 @@ async function getCustomerContacts(customerIds) {
   return Array.isArray(result.data) ? result.data : [];
 }
 
-// ---------------------------------------------
-// Format Customer Data
-// ---------------------------------------------
+// ============================================
+// FORMAT CUSTOMER DATA
+// ============================================
 
 function formatCustomer(customer, contacts) {
   const customerContacts = contacts.filter(
-    (contact) => contact.customerId === customer.id,
+    (contact) => String(contact.customerId) === String(customer.id),
   );
 
-  const phone = customerContacts.find(
-    (contact) => contact.type === "Phone",
-  );
+  const phone = customerContacts.find((contact) => contact.type === "Phone");
 
-  const email = customerContacts.find(
-    (contact) => contact.type === "Email",
-  );
+  const email = customerContacts.find((contact) => contact.type === "Email");
 
-  const fax = customerContacts.find(
-    (contact) => contact.type === "Fax",
-  );
+  const fax = customerContacts.find((contact) => contact.type === "Fax");
 
   const address = customer.address || {};
 
@@ -374,20 +277,24 @@ function formatCustomer(customer, contacts) {
   return {
     id: customer.id,
     stCustomerId: String(customer.id),
+
     pocName: customer.name || "",
+
     email: email?.value || "",
     phone: phone?.value || "",
     fax: fax?.value || "",
+
     location,
     address: customer.address || null,
+
     type: customer.type || "",
     active: customer.active ?? true,
   };
 }
 
-// ---------------------------------------------
-// Customers
-// ---------------------------------------------
+// ============================================
+// CUSTOMERS
+// ============================================
 
 export async function getServiceTitanCustomers({
   page = 1,
@@ -427,22 +334,21 @@ export async function getServiceTitanCustomers({
   };
 }
 
-// ---------------------------------------------
-// Connection Test
-// ---------------------------------------------
+// ============================================
+// GET ALL CUSTOMERS
+// ============================================
 
-export async function testServiceTitanConnection() {
-  const result = await getEstimates({
-    page: 1,
-    pageSize: 5,
-    includeTotal: true,
-  });
-
-  return {
-    success: true,
-    totalCount: result.totalCount ?? null,
-    hasMore: result.hasMore ?? null,
-    estimates: Array.isArray(result.data) ? result.data : [],
-    raw: result,
-  };
+export async function getAllServiceTitanCustomers({
+  pageSize = 100,
+  maxPages = 100,
+} = {}) {
+  return fetchAllPages(
+    async (page, size) => {
+      return getServiceTitanCustomers({
+        page,
+        pageSize: size,
+      });
+    },
+    { pageSize, maxPages },
+  );
 }

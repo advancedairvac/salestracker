@@ -40,7 +40,6 @@ export type UserSumAggregateOutputType = {
 
 export type UserMinAggregateOutputType = {
   id: string | null
-  displayId: string | null
   name: string | null
   username: string | null
   email: string | null
@@ -57,7 +56,6 @@ export type UserMinAggregateOutputType = {
 
 export type UserMaxAggregateOutputType = {
   id: string | null
-  displayId: string | null
   name: string | null
   username: string | null
   email: string | null
@@ -74,7 +72,6 @@ export type UserMaxAggregateOutputType = {
 
 export type UserCountAggregateOutputType = {
   id: number
-  displayId: number
   name: number
   username: number
   email: number
@@ -105,7 +102,6 @@ export type UserSumAggregateInputType = {
 
 export type UserMinAggregateInputType = {
   id?: true
-  displayId?: true
   name?: true
   username?: true
   email?: true
@@ -122,7 +118,6 @@ export type UserMinAggregateInputType = {
 
 export type UserMaxAggregateInputType = {
   id?: true
-  displayId?: true
   name?: true
   username?: true
   email?: true
@@ -139,7 +134,6 @@ export type UserMaxAggregateInputType = {
 
 export type UserCountAggregateInputType = {
   id?: true
-  displayId?: true
   name?: true
   username?: true
   email?: true
@@ -243,15 +237,14 @@ export type UserGroupByArgs<ExtArgs extends runtime.Types.Extensions.InternalArg
 
 export type UserGroupByOutputType = {
   id: string
-  displayId: string | null
   name: string
   username: string
   email: string
   passwordHash: string
   title: string | null
-  monthlyGoal: runtime.Decimal
-  quarterlyGoal: runtime.Decimal
-  annualGoal: runtime.Decimal
+  monthlyGoal: runtime.Decimal | null
+  quarterlyGoal: runtime.Decimal | null
+  annualGoal: runtime.Decimal | null
   role: $Enums.UserRole
   isActive: boolean
   createdAt: Date
@@ -283,15 +276,14 @@ export type UserWhereInput = {
   OR?: Prisma.UserWhereInput[]
   NOT?: Prisma.UserWhereInput | Prisma.UserWhereInput[]
   id?: Prisma.StringFilter<"User"> | string
-  displayId?: Prisma.StringNullableFilter<"User"> | string | null
   name?: Prisma.StringFilter<"User"> | string
   username?: Prisma.StringFilter<"User"> | string
   email?: Prisma.StringFilter<"User"> | string
   passwordHash?: Prisma.StringFilter<"User"> | string
   title?: Prisma.StringNullableFilter<"User"> | string | null
-  monthlyGoal?: Prisma.DecimalFilter<"User"> | runtime.Decimal | runtime.DecimalJsLike | number | string
-  quarterlyGoal?: Prisma.DecimalFilter<"User"> | runtime.Decimal | runtime.DecimalJsLike | number | string
-  annualGoal?: Prisma.DecimalFilter<"User"> | runtime.Decimal | runtime.DecimalJsLike | number | string
+  monthlyGoal?: Prisma.DecimalNullableFilter<"User"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  quarterlyGoal?: Prisma.DecimalNullableFilter<"User"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  annualGoal?: Prisma.DecimalNullableFilter<"User"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   role?: Prisma.EnumUserRoleFilter<"User"> | $Enums.UserRole
   isActive?: Prisma.BoolFilter<"User"> | boolean
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
@@ -301,20 +293,19 @@ export type UserWhereInput = {
   closedOpportunities?: Prisma.OpportunityListRelationFilter
   assignedFollowUps?: Prisma.FollowUpListRelationFilter
   activities?: Prisma.ActivityListRelationFilter
-  closedSales?: Prisma.SaleListRelationFilter
+  assignedSales?: Prisma.SaleListRelationFilter
 }
 
 export type UserOrderByWithRelationInput = {
   id?: Prisma.SortOrder
-  displayId?: Prisma.SortOrderInput | Prisma.SortOrder
   name?: Prisma.SortOrder
   username?: Prisma.SortOrder
   email?: Prisma.SortOrder
   passwordHash?: Prisma.SortOrder
   title?: Prisma.SortOrderInput | Prisma.SortOrder
-  monthlyGoal?: Prisma.SortOrder
-  quarterlyGoal?: Prisma.SortOrder
-  annualGoal?: Prisma.SortOrder
+  monthlyGoal?: Prisma.SortOrderInput | Prisma.SortOrder
+  quarterlyGoal?: Prisma.SortOrderInput | Prisma.SortOrder
+  annualGoal?: Prisma.SortOrderInput | Prisma.SortOrder
   role?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -324,12 +315,11 @@ export type UserOrderByWithRelationInput = {
   closedOpportunities?: Prisma.OpportunityOrderByRelationAggregateInput
   assignedFollowUps?: Prisma.FollowUpOrderByRelationAggregateInput
   activities?: Prisma.ActivityOrderByRelationAggregateInput
-  closedSales?: Prisma.SaleOrderByRelationAggregateInput
+  assignedSales?: Prisma.SaleOrderByRelationAggregateInput
 }
 
 export type UserWhereUniqueInput = Prisma.AtLeast<{
   id?: string
-  displayId?: string
   username?: string
   email?: string
   AND?: Prisma.UserWhereInput | Prisma.UserWhereInput[]
@@ -338,9 +328,9 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   name?: Prisma.StringFilter<"User"> | string
   passwordHash?: Prisma.StringFilter<"User"> | string
   title?: Prisma.StringNullableFilter<"User"> | string | null
-  monthlyGoal?: Prisma.DecimalFilter<"User"> | runtime.Decimal | runtime.DecimalJsLike | number | string
-  quarterlyGoal?: Prisma.DecimalFilter<"User"> | runtime.Decimal | runtime.DecimalJsLike | number | string
-  annualGoal?: Prisma.DecimalFilter<"User"> | runtime.Decimal | runtime.DecimalJsLike | number | string
+  monthlyGoal?: Prisma.DecimalNullableFilter<"User"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  quarterlyGoal?: Prisma.DecimalNullableFilter<"User"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  annualGoal?: Prisma.DecimalNullableFilter<"User"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   role?: Prisma.EnumUserRoleFilter<"User"> | $Enums.UserRole
   isActive?: Prisma.BoolFilter<"User"> | boolean
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
@@ -350,20 +340,19 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   closedOpportunities?: Prisma.OpportunityListRelationFilter
   assignedFollowUps?: Prisma.FollowUpListRelationFilter
   activities?: Prisma.ActivityListRelationFilter
-  closedSales?: Prisma.SaleListRelationFilter
-}, "id" | "displayId" | "username" | "email">
+  assignedSales?: Prisma.SaleListRelationFilter
+}, "id" | "username" | "email">
 
 export type UserOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
-  displayId?: Prisma.SortOrderInput | Prisma.SortOrder
   name?: Prisma.SortOrder
   username?: Prisma.SortOrder
   email?: Prisma.SortOrder
   passwordHash?: Prisma.SortOrder
   title?: Prisma.SortOrderInput | Prisma.SortOrder
-  monthlyGoal?: Prisma.SortOrder
-  quarterlyGoal?: Prisma.SortOrder
-  annualGoal?: Prisma.SortOrder
+  monthlyGoal?: Prisma.SortOrderInput | Prisma.SortOrder
+  quarterlyGoal?: Prisma.SortOrderInput | Prisma.SortOrder
+  annualGoal?: Prisma.SortOrderInput | Prisma.SortOrder
   role?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -380,15 +369,14 @@ export type UserScalarWhereWithAggregatesInput = {
   OR?: Prisma.UserScalarWhereWithAggregatesInput[]
   NOT?: Prisma.UserScalarWhereWithAggregatesInput | Prisma.UserScalarWhereWithAggregatesInput[]
   id?: Prisma.StringWithAggregatesFilter<"User"> | string
-  displayId?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   name?: Prisma.StringWithAggregatesFilter<"User"> | string
   username?: Prisma.StringWithAggregatesFilter<"User"> | string
   email?: Prisma.StringWithAggregatesFilter<"User"> | string
   passwordHash?: Prisma.StringWithAggregatesFilter<"User"> | string
   title?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
-  monthlyGoal?: Prisma.DecimalWithAggregatesFilter<"User"> | runtime.Decimal | runtime.DecimalJsLike | number | string
-  quarterlyGoal?: Prisma.DecimalWithAggregatesFilter<"User"> | runtime.Decimal | runtime.DecimalJsLike | number | string
-  annualGoal?: Prisma.DecimalWithAggregatesFilter<"User"> | runtime.Decimal | runtime.DecimalJsLike | number | string
+  monthlyGoal?: Prisma.DecimalNullableWithAggregatesFilter<"User"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  quarterlyGoal?: Prisma.DecimalNullableWithAggregatesFilter<"User"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  annualGoal?: Prisma.DecimalNullableWithAggregatesFilter<"User"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   role?: Prisma.EnumUserRoleWithAggregatesFilter<"User"> | $Enums.UserRole
   isActive?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
@@ -397,15 +385,14 @@ export type UserScalarWhereWithAggregatesInput = {
 
 export type UserCreateInput = {
   id?: string
-  displayId?: string | null
   name: string
   username: string
   email: string
   passwordHash: string
   title?: string | null
-  monthlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string
-  quarterlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string
-  annualGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  monthlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  quarterlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  annualGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   role?: $Enums.UserRole
   isActive?: boolean
   createdAt?: Date | string
@@ -415,20 +402,19 @@ export type UserCreateInput = {
   closedOpportunities?: Prisma.OpportunityCreateNestedManyWithoutClosedByInput
   assignedFollowUps?: Prisma.FollowUpCreateNestedManyWithoutAssignedToInput
   activities?: Prisma.ActivityCreateNestedManyWithoutUserInput
-  closedSales?: Prisma.SaleCreateNestedManyWithoutClosedByInput
+  assignedSales?: Prisma.SaleCreateNestedManyWithoutSalesmanInput
 }
 
 export type UserUncheckedCreateInput = {
   id?: string
-  displayId?: string | null
   name: string
   username: string
   email: string
   passwordHash: string
   title?: string | null
-  monthlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string
-  quarterlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string
-  annualGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  monthlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  quarterlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  annualGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   role?: $Enums.UserRole
   isActive?: boolean
   createdAt?: Date | string
@@ -438,20 +424,19 @@ export type UserUncheckedCreateInput = {
   closedOpportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutClosedByInput
   assignedFollowUps?: Prisma.FollowUpUncheckedCreateNestedManyWithoutAssignedToInput
   activities?: Prisma.ActivityUncheckedCreateNestedManyWithoutUserInput
-  closedSales?: Prisma.SaleUncheckedCreateNestedManyWithoutClosedByInput
+  assignedSales?: Prisma.SaleUncheckedCreateNestedManyWithoutSalesmanInput
 }
 
 export type UserUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  displayId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
   username?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  monthlyGoal?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  quarterlyGoal?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  annualGoal?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  monthlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  quarterlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  annualGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -461,20 +446,19 @@ export type UserUpdateInput = {
   closedOpportunities?: Prisma.OpportunityUpdateManyWithoutClosedByNestedInput
   assignedFollowUps?: Prisma.FollowUpUpdateManyWithoutAssignedToNestedInput
   activities?: Prisma.ActivityUpdateManyWithoutUserNestedInput
-  closedSales?: Prisma.SaleUpdateManyWithoutClosedByNestedInput
+  assignedSales?: Prisma.SaleUpdateManyWithoutSalesmanNestedInput
 }
 
 export type UserUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  displayId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
   username?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  monthlyGoal?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  quarterlyGoal?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  annualGoal?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  monthlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  quarterlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  annualGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -484,20 +468,19 @@ export type UserUncheckedUpdateInput = {
   closedOpportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutClosedByNestedInput
   assignedFollowUps?: Prisma.FollowUpUncheckedUpdateManyWithoutAssignedToNestedInput
   activities?: Prisma.ActivityUncheckedUpdateManyWithoutUserNestedInput
-  closedSales?: Prisma.SaleUncheckedUpdateManyWithoutClosedByNestedInput
+  assignedSales?: Prisma.SaleUncheckedUpdateManyWithoutSalesmanNestedInput
 }
 
 export type UserCreateManyInput = {
   id?: string
-  displayId?: string | null
   name: string
   username: string
   email: string
   passwordHash: string
   title?: string | null
-  monthlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string
-  quarterlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string
-  annualGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  monthlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  quarterlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  annualGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   role?: $Enums.UserRole
   isActive?: boolean
   createdAt?: Date | string
@@ -506,15 +489,14 @@ export type UserCreateManyInput = {
 
 export type UserUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  displayId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
   username?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  monthlyGoal?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  quarterlyGoal?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  annualGoal?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  monthlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  quarterlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  annualGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -523,15 +505,14 @@ export type UserUpdateManyMutationInput = {
 
 export type UserUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  displayId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
   username?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  monthlyGoal?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  quarterlyGoal?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  annualGoal?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  monthlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  quarterlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  annualGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -540,7 +521,6 @@ export type UserUncheckedUpdateManyInput = {
 
 export type UserCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  displayId?: Prisma.SortOrder
   name?: Prisma.SortOrder
   username?: Prisma.SortOrder
   email?: Prisma.SortOrder
@@ -563,7 +543,6 @@ export type UserAvgOrderByAggregateInput = {
 
 export type UserMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  displayId?: Prisma.SortOrder
   name?: Prisma.SortOrder
   username?: Prisma.SortOrder
   email?: Prisma.SortOrder
@@ -580,7 +559,6 @@ export type UserMaxOrderByAggregateInput = {
 
 export type UserMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  displayId?: Prisma.SortOrder
   name?: Prisma.SortOrder
   username?: Prisma.SortOrder
   email?: Prisma.SortOrder
@@ -601,22 +579,26 @@ export type UserSumOrderByAggregateInput = {
   annualGoal?: Prisma.SortOrder
 }
 
+export type UserNullableScalarRelationFilter = {
+  is?: Prisma.UserWhereInput | null
+  isNot?: Prisma.UserWhereInput | null
+}
+
 export type UserScalarRelationFilter = {
   is?: Prisma.UserWhereInput
   isNot?: Prisma.UserWhereInput
 }
 
-export type UserNullableScalarRelationFilter = {
-  is?: Prisma.UserWhereInput | null
-  isNot?: Prisma.UserWhereInput | null
+export type StringFieldUpdateOperationsInput = {
+  set?: string
 }
 
 export type NullableStringFieldUpdateOperationsInput = {
   set?: string | null
 }
 
-export type DecimalFieldUpdateOperationsInput = {
-  set?: runtime.Decimal | runtime.DecimalJsLike | number | string
+export type NullableDecimalFieldUpdateOperationsInput = {
+  set?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   increment?: runtime.Decimal | runtime.DecimalJsLike | number | string
   decrement?: runtime.Decimal | runtime.DecimalJsLike | number | string
   multiply?: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -629,6 +611,10 @@ export type EnumUserRoleFieldUpdateOperationsInput = {
 
 export type BoolFieldUpdateOperationsInput = {
   set?: boolean
+}
+
+export type DateTimeFieldUpdateOperationsInput = {
+  set?: Date | string
 }
 
 export type UserCreateNestedOneWithoutAssignedOpportunitiesInput = {
@@ -649,10 +635,12 @@ export type UserCreateNestedOneWithoutClosedOpportunitiesInput = {
   connect?: Prisma.UserWhereUniqueInput
 }
 
-export type UserUpdateOneRequiredWithoutAssignedOpportunitiesNestedInput = {
+export type UserUpdateOneWithoutAssignedOpportunitiesNestedInput = {
   create?: Prisma.XOR<Prisma.UserCreateWithoutAssignedOpportunitiesInput, Prisma.UserUncheckedCreateWithoutAssignedOpportunitiesInput>
   connectOrCreate?: Prisma.UserCreateOrConnectWithoutAssignedOpportunitiesInput
   upsert?: Prisma.UserUpsertWithoutAssignedOpportunitiesInput
+  disconnect?: Prisma.UserWhereInput | boolean
+  delete?: Prisma.UserWhereInput | boolean
   connect?: Prisma.UserWhereUniqueInput
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutAssignedOpportunitiesInput, Prisma.UserUpdateWithoutAssignedOpportunitiesInput>, Prisma.UserUncheckedUpdateWithoutAssignedOpportunitiesInput>
 }
@@ -681,10 +669,12 @@ export type UserCreateNestedOneWithoutAssignedFollowUpsInput = {
   connect?: Prisma.UserWhereUniqueInput
 }
 
-export type UserUpdateOneRequiredWithoutAssignedFollowUpsNestedInput = {
+export type UserUpdateOneWithoutAssignedFollowUpsNestedInput = {
   create?: Prisma.XOR<Prisma.UserCreateWithoutAssignedFollowUpsInput, Prisma.UserUncheckedCreateWithoutAssignedFollowUpsInput>
   connectOrCreate?: Prisma.UserCreateOrConnectWithoutAssignedFollowUpsInput
   upsert?: Prisma.UserUpsertWithoutAssignedFollowUpsInput
+  disconnect?: Prisma.UserWhereInput | boolean
+  delete?: Prisma.UserWhereInput | boolean
   connect?: Prisma.UserWhereUniqueInput
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutAssignedFollowUpsInput, Prisma.UserUpdateWithoutAssignedFollowUpsInput>, Prisma.UserUncheckedUpdateWithoutAssignedFollowUpsInput>
 }
@@ -703,31 +693,32 @@ export type UserUpdateOneRequiredWithoutActivitiesNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutActivitiesInput, Prisma.UserUpdateWithoutActivitiesInput>, Prisma.UserUncheckedUpdateWithoutActivitiesInput>
 }
 
-export type UserCreateNestedOneWithoutClosedSalesInput = {
-  create?: Prisma.XOR<Prisma.UserCreateWithoutClosedSalesInput, Prisma.UserUncheckedCreateWithoutClosedSalesInput>
-  connectOrCreate?: Prisma.UserCreateOrConnectWithoutClosedSalesInput
+export type UserCreateNestedOneWithoutAssignedSalesInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutAssignedSalesInput, Prisma.UserUncheckedCreateWithoutAssignedSalesInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutAssignedSalesInput
   connect?: Prisma.UserWhereUniqueInput
 }
 
-export type UserUpdateOneRequiredWithoutClosedSalesNestedInput = {
-  create?: Prisma.XOR<Prisma.UserCreateWithoutClosedSalesInput, Prisma.UserUncheckedCreateWithoutClosedSalesInput>
-  connectOrCreate?: Prisma.UserCreateOrConnectWithoutClosedSalesInput
-  upsert?: Prisma.UserUpsertWithoutClosedSalesInput
+export type UserUpdateOneWithoutAssignedSalesNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutAssignedSalesInput, Prisma.UserUncheckedCreateWithoutAssignedSalesInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutAssignedSalesInput
+  upsert?: Prisma.UserUpsertWithoutAssignedSalesInput
+  disconnect?: Prisma.UserWhereInput | boolean
+  delete?: Prisma.UserWhereInput | boolean
   connect?: Prisma.UserWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutClosedSalesInput, Prisma.UserUpdateWithoutClosedSalesInput>, Prisma.UserUncheckedUpdateWithoutClosedSalesInput>
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutAssignedSalesInput, Prisma.UserUpdateWithoutAssignedSalesInput>, Prisma.UserUncheckedUpdateWithoutAssignedSalesInput>
 }
 
 export type UserCreateWithoutAssignedOpportunitiesInput = {
   id?: string
-  displayId?: string | null
   name: string
   username: string
   email: string
   passwordHash: string
   title?: string | null
-  monthlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string
-  quarterlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string
-  annualGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  monthlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  quarterlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  annualGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   role?: $Enums.UserRole
   isActive?: boolean
   createdAt?: Date | string
@@ -736,20 +727,19 @@ export type UserCreateWithoutAssignedOpportunitiesInput = {
   closedOpportunities?: Prisma.OpportunityCreateNestedManyWithoutClosedByInput
   assignedFollowUps?: Prisma.FollowUpCreateNestedManyWithoutAssignedToInput
   activities?: Prisma.ActivityCreateNestedManyWithoutUserInput
-  closedSales?: Prisma.SaleCreateNestedManyWithoutClosedByInput
+  assignedSales?: Prisma.SaleCreateNestedManyWithoutSalesmanInput
 }
 
 export type UserUncheckedCreateWithoutAssignedOpportunitiesInput = {
   id?: string
-  displayId?: string | null
   name: string
   username: string
   email: string
   passwordHash: string
   title?: string | null
-  monthlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string
-  quarterlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string
-  annualGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  monthlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  quarterlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  annualGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   role?: $Enums.UserRole
   isActive?: boolean
   createdAt?: Date | string
@@ -758,7 +748,7 @@ export type UserUncheckedCreateWithoutAssignedOpportunitiesInput = {
   closedOpportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutClosedByInput
   assignedFollowUps?: Prisma.FollowUpUncheckedCreateNestedManyWithoutAssignedToInput
   activities?: Prisma.ActivityUncheckedCreateNestedManyWithoutUserInput
-  closedSales?: Prisma.SaleUncheckedCreateNestedManyWithoutClosedByInput
+  assignedSales?: Prisma.SaleUncheckedCreateNestedManyWithoutSalesmanInput
 }
 
 export type UserCreateOrConnectWithoutAssignedOpportunitiesInput = {
@@ -768,15 +758,14 @@ export type UserCreateOrConnectWithoutAssignedOpportunitiesInput = {
 
 export type UserCreateWithoutCreatedOpportunitiesInput = {
   id?: string
-  displayId?: string | null
   name: string
   username: string
   email: string
   passwordHash: string
   title?: string | null
-  monthlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string
-  quarterlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string
-  annualGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  monthlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  quarterlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  annualGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   role?: $Enums.UserRole
   isActive?: boolean
   createdAt?: Date | string
@@ -785,20 +774,19 @@ export type UserCreateWithoutCreatedOpportunitiesInput = {
   closedOpportunities?: Prisma.OpportunityCreateNestedManyWithoutClosedByInput
   assignedFollowUps?: Prisma.FollowUpCreateNestedManyWithoutAssignedToInput
   activities?: Prisma.ActivityCreateNestedManyWithoutUserInput
-  closedSales?: Prisma.SaleCreateNestedManyWithoutClosedByInput
+  assignedSales?: Prisma.SaleCreateNestedManyWithoutSalesmanInput
 }
 
 export type UserUncheckedCreateWithoutCreatedOpportunitiesInput = {
   id?: string
-  displayId?: string | null
   name: string
   username: string
   email: string
   passwordHash: string
   title?: string | null
-  monthlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string
-  quarterlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string
-  annualGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  monthlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  quarterlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  annualGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   role?: $Enums.UserRole
   isActive?: boolean
   createdAt?: Date | string
@@ -807,7 +795,7 @@ export type UserUncheckedCreateWithoutCreatedOpportunitiesInput = {
   closedOpportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutClosedByInput
   assignedFollowUps?: Prisma.FollowUpUncheckedCreateNestedManyWithoutAssignedToInput
   activities?: Prisma.ActivityUncheckedCreateNestedManyWithoutUserInput
-  closedSales?: Prisma.SaleUncheckedCreateNestedManyWithoutClosedByInput
+  assignedSales?: Prisma.SaleUncheckedCreateNestedManyWithoutSalesmanInput
 }
 
 export type UserCreateOrConnectWithoutCreatedOpportunitiesInput = {
@@ -817,15 +805,14 @@ export type UserCreateOrConnectWithoutCreatedOpportunitiesInput = {
 
 export type UserCreateWithoutClosedOpportunitiesInput = {
   id?: string
-  displayId?: string | null
   name: string
   username: string
   email: string
   passwordHash: string
   title?: string | null
-  monthlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string
-  quarterlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string
-  annualGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  monthlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  quarterlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  annualGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   role?: $Enums.UserRole
   isActive?: boolean
   createdAt?: Date | string
@@ -834,20 +821,19 @@ export type UserCreateWithoutClosedOpportunitiesInput = {
   createdOpportunities?: Prisma.OpportunityCreateNestedManyWithoutCreatedByInput
   assignedFollowUps?: Prisma.FollowUpCreateNestedManyWithoutAssignedToInput
   activities?: Prisma.ActivityCreateNestedManyWithoutUserInput
-  closedSales?: Prisma.SaleCreateNestedManyWithoutClosedByInput
+  assignedSales?: Prisma.SaleCreateNestedManyWithoutSalesmanInput
 }
 
 export type UserUncheckedCreateWithoutClosedOpportunitiesInput = {
   id?: string
-  displayId?: string | null
   name: string
   username: string
   email: string
   passwordHash: string
   title?: string | null
-  monthlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string
-  quarterlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string
-  annualGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  monthlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  quarterlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  annualGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   role?: $Enums.UserRole
   isActive?: boolean
   createdAt?: Date | string
@@ -856,7 +842,7 @@ export type UserUncheckedCreateWithoutClosedOpportunitiesInput = {
   createdOpportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutCreatedByInput
   assignedFollowUps?: Prisma.FollowUpUncheckedCreateNestedManyWithoutAssignedToInput
   activities?: Prisma.ActivityUncheckedCreateNestedManyWithoutUserInput
-  closedSales?: Prisma.SaleUncheckedCreateNestedManyWithoutClosedByInput
+  assignedSales?: Prisma.SaleUncheckedCreateNestedManyWithoutSalesmanInput
 }
 
 export type UserCreateOrConnectWithoutClosedOpportunitiesInput = {
@@ -877,15 +863,14 @@ export type UserUpdateToOneWithWhereWithoutAssignedOpportunitiesInput = {
 
 export type UserUpdateWithoutAssignedOpportunitiesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  displayId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
   username?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  monthlyGoal?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  quarterlyGoal?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  annualGoal?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  monthlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  quarterlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  annualGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -894,20 +879,19 @@ export type UserUpdateWithoutAssignedOpportunitiesInput = {
   closedOpportunities?: Prisma.OpportunityUpdateManyWithoutClosedByNestedInput
   assignedFollowUps?: Prisma.FollowUpUpdateManyWithoutAssignedToNestedInput
   activities?: Prisma.ActivityUpdateManyWithoutUserNestedInput
-  closedSales?: Prisma.SaleUpdateManyWithoutClosedByNestedInput
+  assignedSales?: Prisma.SaleUpdateManyWithoutSalesmanNestedInput
 }
 
 export type UserUncheckedUpdateWithoutAssignedOpportunitiesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  displayId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
   username?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  monthlyGoal?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  quarterlyGoal?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  annualGoal?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  monthlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  quarterlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  annualGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -916,7 +900,7 @@ export type UserUncheckedUpdateWithoutAssignedOpportunitiesInput = {
   closedOpportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutClosedByNestedInput
   assignedFollowUps?: Prisma.FollowUpUncheckedUpdateManyWithoutAssignedToNestedInput
   activities?: Prisma.ActivityUncheckedUpdateManyWithoutUserNestedInput
-  closedSales?: Prisma.SaleUncheckedUpdateManyWithoutClosedByNestedInput
+  assignedSales?: Prisma.SaleUncheckedUpdateManyWithoutSalesmanNestedInput
 }
 
 export type UserUpsertWithoutCreatedOpportunitiesInput = {
@@ -932,15 +916,14 @@ export type UserUpdateToOneWithWhereWithoutCreatedOpportunitiesInput = {
 
 export type UserUpdateWithoutCreatedOpportunitiesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  displayId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
   username?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  monthlyGoal?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  quarterlyGoal?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  annualGoal?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  monthlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  quarterlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  annualGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -949,20 +932,19 @@ export type UserUpdateWithoutCreatedOpportunitiesInput = {
   closedOpportunities?: Prisma.OpportunityUpdateManyWithoutClosedByNestedInput
   assignedFollowUps?: Prisma.FollowUpUpdateManyWithoutAssignedToNestedInput
   activities?: Prisma.ActivityUpdateManyWithoutUserNestedInput
-  closedSales?: Prisma.SaleUpdateManyWithoutClosedByNestedInput
+  assignedSales?: Prisma.SaleUpdateManyWithoutSalesmanNestedInput
 }
 
 export type UserUncheckedUpdateWithoutCreatedOpportunitiesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  displayId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
   username?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  monthlyGoal?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  quarterlyGoal?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  annualGoal?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  monthlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  quarterlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  annualGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -971,7 +953,7 @@ export type UserUncheckedUpdateWithoutCreatedOpportunitiesInput = {
   closedOpportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutClosedByNestedInput
   assignedFollowUps?: Prisma.FollowUpUncheckedUpdateManyWithoutAssignedToNestedInput
   activities?: Prisma.ActivityUncheckedUpdateManyWithoutUserNestedInput
-  closedSales?: Prisma.SaleUncheckedUpdateManyWithoutClosedByNestedInput
+  assignedSales?: Prisma.SaleUncheckedUpdateManyWithoutSalesmanNestedInput
 }
 
 export type UserUpsertWithoutClosedOpportunitiesInput = {
@@ -987,15 +969,14 @@ export type UserUpdateToOneWithWhereWithoutClosedOpportunitiesInput = {
 
 export type UserUpdateWithoutClosedOpportunitiesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  displayId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
   username?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  monthlyGoal?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  quarterlyGoal?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  annualGoal?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  monthlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  quarterlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  annualGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1004,20 +985,19 @@ export type UserUpdateWithoutClosedOpportunitiesInput = {
   createdOpportunities?: Prisma.OpportunityUpdateManyWithoutCreatedByNestedInput
   assignedFollowUps?: Prisma.FollowUpUpdateManyWithoutAssignedToNestedInput
   activities?: Prisma.ActivityUpdateManyWithoutUserNestedInput
-  closedSales?: Prisma.SaleUpdateManyWithoutClosedByNestedInput
+  assignedSales?: Prisma.SaleUpdateManyWithoutSalesmanNestedInput
 }
 
 export type UserUncheckedUpdateWithoutClosedOpportunitiesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  displayId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
   username?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  monthlyGoal?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  quarterlyGoal?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  annualGoal?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  monthlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  quarterlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  annualGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1026,20 +1006,19 @@ export type UserUncheckedUpdateWithoutClosedOpportunitiesInput = {
   createdOpportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutCreatedByNestedInput
   assignedFollowUps?: Prisma.FollowUpUncheckedUpdateManyWithoutAssignedToNestedInput
   activities?: Prisma.ActivityUncheckedUpdateManyWithoutUserNestedInput
-  closedSales?: Prisma.SaleUncheckedUpdateManyWithoutClosedByNestedInput
+  assignedSales?: Prisma.SaleUncheckedUpdateManyWithoutSalesmanNestedInput
 }
 
 export type UserCreateWithoutAssignedFollowUpsInput = {
   id?: string
-  displayId?: string | null
   name: string
   username: string
   email: string
   passwordHash: string
   title?: string | null
-  monthlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string
-  quarterlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string
-  annualGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  monthlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  quarterlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  annualGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   role?: $Enums.UserRole
   isActive?: boolean
   createdAt?: Date | string
@@ -1048,20 +1027,19 @@ export type UserCreateWithoutAssignedFollowUpsInput = {
   createdOpportunities?: Prisma.OpportunityCreateNestedManyWithoutCreatedByInput
   closedOpportunities?: Prisma.OpportunityCreateNestedManyWithoutClosedByInput
   activities?: Prisma.ActivityCreateNestedManyWithoutUserInput
-  closedSales?: Prisma.SaleCreateNestedManyWithoutClosedByInput
+  assignedSales?: Prisma.SaleCreateNestedManyWithoutSalesmanInput
 }
 
 export type UserUncheckedCreateWithoutAssignedFollowUpsInput = {
   id?: string
-  displayId?: string | null
   name: string
   username: string
   email: string
   passwordHash: string
   title?: string | null
-  monthlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string
-  quarterlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string
-  annualGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  monthlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  quarterlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  annualGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   role?: $Enums.UserRole
   isActive?: boolean
   createdAt?: Date | string
@@ -1070,7 +1048,7 @@ export type UserUncheckedCreateWithoutAssignedFollowUpsInput = {
   createdOpportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutCreatedByInput
   closedOpportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutClosedByInput
   activities?: Prisma.ActivityUncheckedCreateNestedManyWithoutUserInput
-  closedSales?: Prisma.SaleUncheckedCreateNestedManyWithoutClosedByInput
+  assignedSales?: Prisma.SaleUncheckedCreateNestedManyWithoutSalesmanInput
 }
 
 export type UserCreateOrConnectWithoutAssignedFollowUpsInput = {
@@ -1091,15 +1069,14 @@ export type UserUpdateToOneWithWhereWithoutAssignedFollowUpsInput = {
 
 export type UserUpdateWithoutAssignedFollowUpsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  displayId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
   username?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  monthlyGoal?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  quarterlyGoal?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  annualGoal?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  monthlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  quarterlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  annualGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1108,20 +1085,19 @@ export type UserUpdateWithoutAssignedFollowUpsInput = {
   createdOpportunities?: Prisma.OpportunityUpdateManyWithoutCreatedByNestedInput
   closedOpportunities?: Prisma.OpportunityUpdateManyWithoutClosedByNestedInput
   activities?: Prisma.ActivityUpdateManyWithoutUserNestedInput
-  closedSales?: Prisma.SaleUpdateManyWithoutClosedByNestedInput
+  assignedSales?: Prisma.SaleUpdateManyWithoutSalesmanNestedInput
 }
 
 export type UserUncheckedUpdateWithoutAssignedFollowUpsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  displayId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
   username?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  monthlyGoal?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  quarterlyGoal?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  annualGoal?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  monthlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  quarterlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  annualGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1130,20 +1106,19 @@ export type UserUncheckedUpdateWithoutAssignedFollowUpsInput = {
   createdOpportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutCreatedByNestedInput
   closedOpportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutClosedByNestedInput
   activities?: Prisma.ActivityUncheckedUpdateManyWithoutUserNestedInput
-  closedSales?: Prisma.SaleUncheckedUpdateManyWithoutClosedByNestedInput
+  assignedSales?: Prisma.SaleUncheckedUpdateManyWithoutSalesmanNestedInput
 }
 
 export type UserCreateWithoutActivitiesInput = {
   id?: string
-  displayId?: string | null
   name: string
   username: string
   email: string
   passwordHash: string
   title?: string | null
-  monthlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string
-  quarterlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string
-  annualGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  monthlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  quarterlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  annualGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   role?: $Enums.UserRole
   isActive?: boolean
   createdAt?: Date | string
@@ -1152,20 +1127,19 @@ export type UserCreateWithoutActivitiesInput = {
   createdOpportunities?: Prisma.OpportunityCreateNestedManyWithoutCreatedByInput
   closedOpportunities?: Prisma.OpportunityCreateNestedManyWithoutClosedByInput
   assignedFollowUps?: Prisma.FollowUpCreateNestedManyWithoutAssignedToInput
-  closedSales?: Prisma.SaleCreateNestedManyWithoutClosedByInput
+  assignedSales?: Prisma.SaleCreateNestedManyWithoutSalesmanInput
 }
 
 export type UserUncheckedCreateWithoutActivitiesInput = {
   id?: string
-  displayId?: string | null
   name: string
   username: string
   email: string
   passwordHash: string
   title?: string | null
-  monthlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string
-  quarterlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string
-  annualGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  monthlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  quarterlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  annualGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   role?: $Enums.UserRole
   isActive?: boolean
   createdAt?: Date | string
@@ -1174,7 +1148,7 @@ export type UserUncheckedCreateWithoutActivitiesInput = {
   createdOpportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutCreatedByInput
   closedOpportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutClosedByInput
   assignedFollowUps?: Prisma.FollowUpUncheckedCreateNestedManyWithoutAssignedToInput
-  closedSales?: Prisma.SaleUncheckedCreateNestedManyWithoutClosedByInput
+  assignedSales?: Prisma.SaleUncheckedCreateNestedManyWithoutSalesmanInput
 }
 
 export type UserCreateOrConnectWithoutActivitiesInput = {
@@ -1195,15 +1169,14 @@ export type UserUpdateToOneWithWhereWithoutActivitiesInput = {
 
 export type UserUpdateWithoutActivitiesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  displayId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
   username?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  monthlyGoal?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  quarterlyGoal?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  annualGoal?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  monthlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  quarterlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  annualGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1212,20 +1185,19 @@ export type UserUpdateWithoutActivitiesInput = {
   createdOpportunities?: Prisma.OpportunityUpdateManyWithoutCreatedByNestedInput
   closedOpportunities?: Prisma.OpportunityUpdateManyWithoutClosedByNestedInput
   assignedFollowUps?: Prisma.FollowUpUpdateManyWithoutAssignedToNestedInput
-  closedSales?: Prisma.SaleUpdateManyWithoutClosedByNestedInput
+  assignedSales?: Prisma.SaleUpdateManyWithoutSalesmanNestedInput
 }
 
 export type UserUncheckedUpdateWithoutActivitiesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  displayId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
   username?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  monthlyGoal?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  quarterlyGoal?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  annualGoal?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  monthlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  quarterlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  annualGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1234,20 +1206,19 @@ export type UserUncheckedUpdateWithoutActivitiesInput = {
   createdOpportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutCreatedByNestedInput
   closedOpportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutClosedByNestedInput
   assignedFollowUps?: Prisma.FollowUpUncheckedUpdateManyWithoutAssignedToNestedInput
-  closedSales?: Prisma.SaleUncheckedUpdateManyWithoutClosedByNestedInput
+  assignedSales?: Prisma.SaleUncheckedUpdateManyWithoutSalesmanNestedInput
 }
 
-export type UserCreateWithoutClosedSalesInput = {
+export type UserCreateWithoutAssignedSalesInput = {
   id?: string
-  displayId?: string | null
   name: string
   username: string
   email: string
   passwordHash: string
   title?: string | null
-  monthlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string
-  quarterlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string
-  annualGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  monthlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  quarterlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  annualGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   role?: $Enums.UserRole
   isActive?: boolean
   createdAt?: Date | string
@@ -1259,17 +1230,16 @@ export type UserCreateWithoutClosedSalesInput = {
   activities?: Prisma.ActivityCreateNestedManyWithoutUserInput
 }
 
-export type UserUncheckedCreateWithoutClosedSalesInput = {
+export type UserUncheckedCreateWithoutAssignedSalesInput = {
   id?: string
-  displayId?: string | null
   name: string
   username: string
   email: string
   passwordHash: string
   title?: string | null
-  monthlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string
-  quarterlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string
-  annualGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  monthlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  quarterlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  annualGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   role?: $Enums.UserRole
   isActive?: boolean
   createdAt?: Date | string
@@ -1281,33 +1251,32 @@ export type UserUncheckedCreateWithoutClosedSalesInput = {
   activities?: Prisma.ActivityUncheckedCreateNestedManyWithoutUserInput
 }
 
-export type UserCreateOrConnectWithoutClosedSalesInput = {
+export type UserCreateOrConnectWithoutAssignedSalesInput = {
   where: Prisma.UserWhereUniqueInput
-  create: Prisma.XOR<Prisma.UserCreateWithoutClosedSalesInput, Prisma.UserUncheckedCreateWithoutClosedSalesInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutAssignedSalesInput, Prisma.UserUncheckedCreateWithoutAssignedSalesInput>
 }
 
-export type UserUpsertWithoutClosedSalesInput = {
-  update: Prisma.XOR<Prisma.UserUpdateWithoutClosedSalesInput, Prisma.UserUncheckedUpdateWithoutClosedSalesInput>
-  create: Prisma.XOR<Prisma.UserCreateWithoutClosedSalesInput, Prisma.UserUncheckedCreateWithoutClosedSalesInput>
+export type UserUpsertWithoutAssignedSalesInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutAssignedSalesInput, Prisma.UserUncheckedUpdateWithoutAssignedSalesInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutAssignedSalesInput, Prisma.UserUncheckedCreateWithoutAssignedSalesInput>
   where?: Prisma.UserWhereInput
 }
 
-export type UserUpdateToOneWithWhereWithoutClosedSalesInput = {
+export type UserUpdateToOneWithWhereWithoutAssignedSalesInput = {
   where?: Prisma.UserWhereInput
-  data: Prisma.XOR<Prisma.UserUpdateWithoutClosedSalesInput, Prisma.UserUncheckedUpdateWithoutClosedSalesInput>
+  data: Prisma.XOR<Prisma.UserUpdateWithoutAssignedSalesInput, Prisma.UserUncheckedUpdateWithoutAssignedSalesInput>
 }
 
-export type UserUpdateWithoutClosedSalesInput = {
+export type UserUpdateWithoutAssignedSalesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  displayId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
   username?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  monthlyGoal?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  quarterlyGoal?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  annualGoal?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  monthlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  quarterlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  annualGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1319,17 +1288,16 @@ export type UserUpdateWithoutClosedSalesInput = {
   activities?: Prisma.ActivityUpdateManyWithoutUserNestedInput
 }
 
-export type UserUncheckedUpdateWithoutClosedSalesInput = {
+export type UserUncheckedUpdateWithoutAssignedSalesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  displayId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
   username?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  monthlyGoal?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  quarterlyGoal?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  annualGoal?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  monthlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  quarterlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  annualGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1352,7 +1320,7 @@ export type UserCountOutputType = {
   closedOpportunities: number
   assignedFollowUps: number
   activities: number
-  closedSales: number
+  assignedSales: number
 }
 
 export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1361,7 +1329,7 @@ export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.I
   closedOpportunities?: boolean | UserCountOutputTypeCountClosedOpportunitiesArgs
   assignedFollowUps?: boolean | UserCountOutputTypeCountAssignedFollowUpsArgs
   activities?: boolean | UserCountOutputTypeCountActivitiesArgs
-  closedSales?: boolean | UserCountOutputTypeCountClosedSalesArgs
+  assignedSales?: boolean | UserCountOutputTypeCountAssignedSalesArgs
 }
 
 /**
@@ -1412,14 +1380,13 @@ export type UserCountOutputTypeCountActivitiesArgs<ExtArgs extends runtime.Types
 /**
  * UserCountOutputType without action
  */
-export type UserCountOutputTypeCountClosedSalesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+export type UserCountOutputTypeCountAssignedSalesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.SaleWhereInput
 }
 
 
 export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
-  displayId?: boolean
   name?: boolean
   username?: boolean
   email?: boolean
@@ -1437,13 +1404,12 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   closedOpportunities?: boolean | Prisma.User$closedOpportunitiesArgs<ExtArgs>
   assignedFollowUps?: boolean | Prisma.User$assignedFollowUpsArgs<ExtArgs>
   activities?: boolean | Prisma.User$activitiesArgs<ExtArgs>
-  closedSales?: boolean | Prisma.User$closedSalesArgs<ExtArgs>
+  assignedSales?: boolean | Prisma.User$assignedSalesArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
 export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
-  displayId?: boolean
   name?: boolean
   username?: boolean
   email?: boolean
@@ -1460,7 +1426,6 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
 
 export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
-  displayId?: boolean
   name?: boolean
   username?: boolean
   email?: boolean
@@ -1477,7 +1442,6 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
 
 export type UserSelectScalar = {
   id?: boolean
-  displayId?: boolean
   name?: boolean
   username?: boolean
   email?: boolean
@@ -1492,14 +1456,14 @@ export type UserSelectScalar = {
   updatedAt?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "displayId" | "name" | "username" | "email" | "passwordHash" | "title" | "monthlyGoal" | "quarterlyGoal" | "annualGoal" | "role" | "isActive" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "username" | "email" | "passwordHash" | "title" | "monthlyGoal" | "quarterlyGoal" | "annualGoal" | "role" | "isActive" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   assignedOpportunities?: boolean | Prisma.User$assignedOpportunitiesArgs<ExtArgs>
   createdOpportunities?: boolean | Prisma.User$createdOpportunitiesArgs<ExtArgs>
   closedOpportunities?: boolean | Prisma.User$closedOpportunitiesArgs<ExtArgs>
   assignedFollowUps?: boolean | Prisma.User$assignedFollowUpsArgs<ExtArgs>
   activities?: boolean | Prisma.User$activitiesArgs<ExtArgs>
-  closedSales?: boolean | Prisma.User$closedSalesArgs<ExtArgs>
+  assignedSales?: boolean | Prisma.User$assignedSalesArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -1513,19 +1477,18 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     closedOpportunities: Prisma.$OpportunityPayload<ExtArgs>[]
     assignedFollowUps: Prisma.$FollowUpPayload<ExtArgs>[]
     activities: Prisma.$ActivityPayload<ExtArgs>[]
-    closedSales: Prisma.$SalePayload<ExtArgs>[]
+    assignedSales: Prisma.$SalePayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
-    displayId: string | null
     name: string
     username: string
     email: string
     passwordHash: string
     title: string | null
-    monthlyGoal: runtime.Decimal
-    quarterlyGoal: runtime.Decimal
-    annualGoal: runtime.Decimal
+    monthlyGoal: runtime.Decimal | null
+    quarterlyGoal: runtime.Decimal | null
+    annualGoal: runtime.Decimal | null
     role: $Enums.UserRole
     isActive: boolean
     createdAt: Date
@@ -1929,7 +1892,7 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   closedOpportunities<T extends Prisma.User$closedOpportunitiesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$closedOpportunitiesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$OpportunityPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   assignedFollowUps<T extends Prisma.User$assignedFollowUpsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$assignedFollowUpsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$FollowUpPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   activities<T extends Prisma.User$activitiesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$activitiesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ActivityPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-  closedSales<T extends Prisma.User$closedSalesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$closedSalesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$SalePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  assignedSales<T extends Prisma.User$assignedSalesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$assignedSalesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$SalePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1960,7 +1923,6 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
  */
 export interface UserFieldRefs {
   readonly id: Prisma.FieldRef<"User", 'String'>
-  readonly displayId: Prisma.FieldRef<"User", 'String'>
   readonly name: Prisma.FieldRef<"User", 'String'>
   readonly username: Prisma.FieldRef<"User", 'String'>
   readonly email: Prisma.FieldRef<"User", 'String'>
@@ -2486,9 +2448,9 @@ export type User$activitiesArgs<ExtArgs extends runtime.Types.Extensions.Interna
 }
 
 /**
- * User.closedSales
+ * User.assignedSales
  */
-export type User$closedSalesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+export type User$assignedSalesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   /**
    * Select specific fields to fetch from the Sale
    */

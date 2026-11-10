@@ -1,5 +1,10 @@
 import { prisma } from "@/lib/prisma";
 
+import {
+  getAllEstimates,
+  getAllServiceTitanCustomers,
+} from "@/lib/integrations/servicetitan";
+
 import PageTagline from "@/components/ui/page-tagline";
 import Breadcrumbs from "@/components/ui/breadcrumbs";
 
@@ -47,7 +52,6 @@ function getFollowUpDateRange(filter) {
 
   if (filter === "NEXT_MONTH") {
     const start = new Date(today.getFullYear(), today.getMonth() + 1, 1);
-
     const end = new Date(today.getFullYear(), today.getMonth() + 2, 1);
 
     return {
@@ -129,19 +133,24 @@ export default async function PipelinePage({ searchParams }) {
   const selectedFilter = getSelectedFilter(requestedFilter, users);
 
   const isUserFilter = selectedFilter.startsWith("USER:");
-
   const selectedUserId = isUserFilter ? selectedFilter.slice(5) : null;
 
   // Follow-up query
   const followUpWhere = {
     status: "PENDING",
+    isActive: true,
   };
 
   if (selectedUserId) {
     followUpWhere.assignedToId = selectedUserId;
   }
 
-  if (!isUserFilter) {
+  // ALL shows only upcoming follow-ups
+  if (selectedFilter === "ALL") {
+    followUpWhere.dueAt = {
+      gte: new Date(),
+    };
+  } else if (!isUserFilter) {
     const dateRange = getFollowUpDateRange(selectedFilter);
 
     if (dateRange) {
@@ -149,59 +158,127 @@ export default async function PipelinePage({ searchParams }) {
     }
   }
 
-  // Open estimates query
-  const estimateWhere = {
-    status: "OPEN",
-  };
-
-  if (selectedUserId) {
-    estimateWhere.assignedToId = selectedUserId;
-  }
-
-  // Fetch Follow-ups and Estimates
-  const [followUps, opportunities] = await Promise.all([
-    prisma.followUp.findMany({
-      where: followUpWhere,
-      include: {
-        opportunity: {
-          include: {
-            customer: {
-              select: {
-                businessName: true,
+  // Fetch Follow-ups, ServiceTitan Estimates and Customers
+  const [followUps, serviceTitanEstimates, serviceTitanCustomers] =
+    await Promise.all([
+      prisma.followUp.findMany({
+        where: followUpWhere,
+        include: {
+          opportunity: {
+            include: {
+              customer: {
+                select: {
+                  businessName: true,
+                  pocName: true,
+                },
               },
             },
           },
-        },
-        assignedTo: {
-          select: {
-            name: true,
+          assignedTo: {
+            select: {
+              id: true,
+              name: true,
+            },
           },
         },
-      },
-      orderBy: {
-        dueAt: "asc",
-      },
-    }),
+        orderBy: {
+          dueAt: "asc",
+        },
+      }),
 
-    prisma.opportunity.findMany({
-      where: estimateWhere,
-      include: {
-        customer: {
-          select: {
-            businessName: true,
+      getAllEstimates({
+        pageSize: 100,
+        maxPages: 10,
+      }),
+
+      getAllServiceTitanCustomers({
+        pageSize: 100,
+        maxPages: 100,
+      }),
+    ]);
+
+  // Get ServiceTitan Estimate IDs
+  const estimateIds = [
+    ...new Set(
+      serviceTitanEstimates
+        .map((estimate) => estimate.id)
+        .filter((id) => id !== undefined && id !== null)
+        .map(String),
+    ),
+  ];
+
+  // Find CRM assignments matching ServiceTitan Estimate IDs
+  const crmAssignments = estimateIds.length
+    ? await prisma.opportunity.findMany({
+        where: {
+          serviceTitanEstimateId: {
+            in: estimateIds,
           },
         },
-        assignedTo: {
-          select: {
-            name: true,
+        select: {
+          serviceTitanEstimateId: true,
+          source: true,
+          assignedToId: true,
+          assignedTo: {
+            select: {
+              name: true,
+            },
           },
         },
+      })
+    : [];
+
+  // Map CRM assignments by ServiceTitan Estimate ID
+  const assignmentMap = new Map(
+    crmAssignments.map((assignment) => [
+      String(assignment.serviceTitanEstimateId),
+      assignment,
+    ]),
+  );
+
+  // Map ServiceTitan Customers by Customer ID
+  const customerMap = new Map(
+    serviceTitanCustomers
+      .filter((customer) => customer.stCustomerId)
+      .map((customer) => [String(customer.stCustomerId), customer]),
+  );
+
+  // Format ServiceTitan Estimates
+  const estimates = serviceTitanEstimates.map((estimate) => {
+    const estimateId = String(estimate.id);
+
+    const assignment = assignmentMap.get(estimateId);
+
+    const customer = customerMap.get(String(estimate.customerId));
+
+    return {
+      id: estimateId,
+
+      serviceTitanEstimateId:
+        estimate.number || estimate.estimateNumber || estimate.id,
+
+      customer: {
+        businessName: customer?.pocName || estimate.customerName || "—",
       },
-      orderBy: {
-        opportunityDate: "desc",
-      },
-    }),
-  ]);
+
+      value: estimate.total ?? estimate.subtotal ?? estimate.amount ?? 0,
+
+      assignedTo: assignment?.assignedTo || null,
+
+      source: assignment?.source || null,
+
+      commissionEstimate: 0,
+    };
+  });
+
+  // Apply Salesperson Filter
+  const filteredEstimates = selectedUserId
+    ? estimates.filter((estimate) => {
+        const assignment = assignmentMap.get(estimate.id);
+
+        return assignment?.assignedToId === selectedUserId;
+      })
+    : estimates;
 
   return (
     <div className="w-full">
@@ -226,23 +303,21 @@ export default async function PipelinePage({ searchParams }) {
       {/* First Progress Separator */}
       <div className="my-8 flex w-full items-center">
         <div className="h-[4px] w-8 shrink-0 rounded-full bg-black" />
-
         <div className="h-[4px] flex-1 rounded-full bg-[#eeeeee]" />
       </div>
 
-      {/* Estimates */}
+      {/* ServiceTitan Estimates */}
       <section className="w-full">
         <h2 className="mb-5 px-1 text-sm font-bold uppercase text-black sm:text-base">
           Estimates
         </h2>
 
-        <EstimatesTable opportunities={opportunities} />
+        <EstimatesTable opportunities={filteredEstimates} />
       </section>
 
       {/* Second Progress Separator */}
       <div className="my-8 flex w-full items-center">
         <div className="h-[4px] w-8 shrink-0 rounded-full bg-black" />
-
         <div className="h-[4px] flex-1 rounded-full bg-[#eeeeee]" />
       </div>
 

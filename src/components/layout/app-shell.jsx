@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { createContext, useCallback, useContext, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import AppHeader from "@/components/layout/app-header";
@@ -14,6 +14,14 @@ import {
   PageTaglineDisplay,
 } from "@/components/ui/page-tagline";
 
+const MobileEditActionContext = createContext({
+  setMobileEditHref: () => {},
+});
+
+export function useMobileEditAction() {
+  return useContext(MobileEditActionContext);
+}
+
 export default function AppShell({
   children,
   role = "salesperson",
@@ -23,6 +31,7 @@ export default function AppShell({
   const [loggingOut, setLoggingOut] = useState(false);
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [tagline, setTagline] = useState(null);
+  const [mobileEditHref, setMobileEditHref] = useState(null);
 
   const router = useRouter();
 
@@ -67,65 +76,68 @@ export default function AppShell({
   }, [closeMenu, loggingOut, router]);
 
   return (
-    <div className="flex min-h-screen w-full bg-white text-neutral-950">
-      {/* Desktop sidebar */}
-      <AppSidebar
-        role={role}
-        isAuthenticated={isAuthenticated}
-        onLogout={handleLogout}
-        onLoginRequired={openLoginModal}
-      />
-
-      {/* Main content */}
-      <div className="flex min-h-screen min-w-0 flex-1 flex-col">
-        <AppHeader
-          onMenuClick={menuOpen ? closeMenu : openMenu}
-          menuOpen={menuOpen}
+    <MobileEditActionContext.Provider value={{ setMobileEditHref }}>
+      <div className="flex min-h-screen w-full bg-white text-neutral-950">
+        {/* Desktop sidebar */}
+        <AppSidebar
+          role={role}
+          isAuthenticated={isAuthenticated}
+          onLogout={handleLogout}
+          onLoginRequired={openLoginModal}
         />
 
-        <PageTaglineProvider value={{ tagline, setTagline }}>
-          <main className="flex flex-1 flex-col bg-white px-5 pt-4 lg:px-23 lg:pt-10">
-            {children}
-          </main>
+        {/* Main content */}
+        <div className="flex min-h-screen min-w-0 flex-1 flex-col">
+          <AppHeader
+            onMenuClick={menuOpen ? closeMenu : openMenu}
+            menuOpen={menuOpen}
+            editHref={mobileEditHref}
+          />
 
-          {/* Shared page tagline position */}
-          <div className="px-5 lg:px-23">
-            <PageTaglineDisplay />
-          </div>
-        </PageTaglineProvider>
+          <PageTaglineProvider value={{ tagline, setTagline }}>
+            <main className="flex flex-1 flex-col bg-white px-5 pt-4 lg:px-23 lg:pt-10">
+              {children}
+            </main>
 
-        {/* Copyright footer */}
-        <AppFooter />
-      </div>
+            {/* Shared page tagline position */}
+            <div className="px-5 lg:px-23">
+              <PageTaglineDisplay />
+            </div>
+          </PageTaglineProvider>
 
-      {/* Mobile navigation drawer */}
-      <MobileNavigation
-        open={menuOpen}
-        onClose={closeMenu}
-        role={role}
-        isAuthenticated={isAuthenticated}
-        onLogout={handleLogout}
-        onLoginRequired={openLoginModal}
-      />
-
-      {/* Shared login-required modal */}
-      <Modal
-        open={loginModalOpen}
-        onClose={closeLoginModal}
-        title="Login Required"
-        description="Please log in to access this feature."
-        size="sm"
-      >
-        <div className="flex justify-end">
-          <button
-            type="button"
-            onClick={closeLoginModal}
-            className="border border-black bg-black px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-neutral-700"
-          >
-            Close
-          </button>
+          {/* Copyright footer */}
+          <AppFooter />
         </div>
-      </Modal>
-    </div>
+
+        {/* Mobile navigation drawer */}
+        <MobileNavigation
+          open={menuOpen}
+          onClose={closeMenu}
+          role={role}
+          isAuthenticated={isAuthenticated}
+          onLogout={handleLogout}
+          onLoginRequired={openLoginModal}
+        />
+
+        {/* Shared login-required modal */}
+        <Modal
+          open={loginModalOpen}
+          onClose={closeLoginModal}
+          title="Login Required"
+          description="Please log in to access this feature."
+          size="sm"
+        >
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={closeLoginModal}
+              className="border border-black bg-black px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-neutral-700"
+            >
+              Close
+            </button>
+          </div>
+        </Modal>
+      </div>
+    </MobileEditActionContext.Provider>
   );
 }

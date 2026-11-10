@@ -1,9 +1,11 @@
 
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
 
 import OpportunityActions from "@/components/dashboard/opportunity-actions";
+import { useMobileEditAction } from "@/components/layout/app-shell";
 
 // ============================================
 // HELPERS
@@ -20,6 +22,16 @@ function formatDate(date) {
   });
 }
 
+function formatTime(date) {
+  if (!date) return "";
+
+  return new Date(date).toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+}
+
 function formatCurrency(value) {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
@@ -28,11 +40,40 @@ function formatCurrency(value) {
   }).format(Number(value || 0));
 }
 
+function getNextFollowUp(followUps = []) {
+  return [...followUps]
+    .filter(
+      (item) =>
+        item.isActive &&
+        item.status === "PENDING" &&
+        item.dueAt,
+    )
+    .sort(
+      (a, b) =>
+        new Date(a.dueAt).getTime() - new Date(b.dueAt).getTime(),
+    )[0]?.dueAt || null;
+}
+
 // ============================================
 // OPPORTUNITY DETAILS
 // ============================================
 
 export default function OpportunityDetails({ opportunity, schedule }) {
+  const { setMobileEditHref } = useMobileEditAction();
+
+  const editHref = `/admin/opportunities/${opportunity.id}/edit`;
+  const canEdit = opportunity.status === "OPEN";
+
+  const nextFollowUpAt = getNextFollowUp(opportunity.followUps || []);
+
+  useEffect(() => {
+    setMobileEditHref(canEdit ? editHref : null);
+
+    return () => {
+      setMobileEditHref(null);
+    };
+  }, [setMobileEditHref, canEdit, editHref]);
+
   return (
     <section className="w-full max-w-3xl text-black">
       {/* HEADER */}
@@ -48,29 +89,13 @@ export default function OpportunityDetails({ opportunity, schedule }) {
           </p>
         </div>
 
-        {/* EDIT BUTTON */}
+        {/* DESKTOP EDIT BUTTON */}
 
-        {opportunity.status === "OPEN" && (
+        {canEdit && (
           <Link
-            href={`/admin/opportunities/${opportunity.id}/edit`}
-            className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-neutral-300 bg-white px-4 text-sm font-semibold text-neutral-800 transition-colors hover:border-black hover:bg-neutral-50"
+            href={editHref}
+            className="hidden h-10 items-center justify-center rounded-md border border-neutral-300 bg-white px-4 text-sm font-semibold text-neutral-800 transition-colors hover:border-black hover:bg-neutral-50 md:inline-flex"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
-              <path d="M12 20h9" />
-              <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4Z" />
-            </svg>
-
             Edit Opportunity
           </Link>
         )}
@@ -106,10 +131,19 @@ export default function OpportunityDetails({ opportunity, schedule }) {
         )}
       </div>
 
+      {/* NEXT FOLLOW-UP DATE AND TIME */}
+
+      {nextFollowUpAt && (
+        <div className="mt-3 space-y-1 text-sm leading-5 text-neutral-900">
+          <p>{formatDate(nextFollowUpAt)}</p>
+          <p>{formatTime(nextFollowUpAt)}</p>
+        </div>
+      )}
+
       {/* OPPORTUNITY MESSAGE */}
 
       {opportunity.textMessage && (
-        <p className="mt-6 max-w-2xl whitespace-pre-wrap text-sm leading-6 text-neutral-700">
+        <p className="mt-3 max-w-2xl whitespace-pre-wrap text-sm leading-6 text-neutral-700">
           {opportunity.textMessage}
         </p>
       )}

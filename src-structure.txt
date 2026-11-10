@@ -1,0 +1,248 @@
+Folder PATH listing
+Volume serial number is B0B6-FCE3
+D:\PROJECT\ADVANCED-SALES-TRACKER\SRC
++---app
+|   |   favicon.ico
+|   |   globals.css
+|   |   layout.js
+|   |   page.js
+|   |   
+|   +---admin
+|   |   |   layout.js
+|   |   |   page.js
+|   |   |   
+|   |   +---opportunities
+|   |   |   |   page.js
+|   |   |   |   
+|   |   |   +---new
+|   |   |   |       actions.js
+|   |   |   |       page.js
+|   |   |   |       
+|   |   |   \---[id]
+|   |   |       |   actions.js
+|   |   |       |   page.js
+|   |   |       |   
+|   |   |       \---edit
+|   |   |               page.js
+|   |   |               
+|   |   +---pipeline
+|   |   |       page.js
+|   |   |       
+|   |   +---profile
+|   |   |       page.js
+|   |   |       
+|   |   +---quickbooks
+|   |   |       page.js
+|   |   |       
+|   |   +---reports
+|   |   |       page.js
+|   |   |       
+|   |   +---sales-revenue
+|   |   |       page.js
+|   |   |       
+|   |   +---salesmen
+|   |   |   |   page.js
+|   |   |   |   
+|   |   |   +---new
+|   |   |   |       page.js
+|   |   |   |       
+|   |   |   \---[id]
+|   |   |       |   page.js
+|   |   |       |   
+|   |   |       \---edit
+|   |   |               page.js
+|   |   |               
+|   |   +---servicetitan
+|   |   |       page.js
+|   |   |       
+|   |   \---settings
+|   |           page.js
+|   |           
+|   +---api
+|   |   +---auth
+|   |   |   +---login
+|   |   |   |       route.js
+|   |   |   |       
+|   |   |   \---logout
+|   |   |           route.js
+|   |   |           
+|   |   +---db-test
+|   |   |       route.js
+|   |   |       
+|   |   +---quickbooks
+|   |   |   +---callback
+|   |   |   |       route.js
+|   |   |   |       
+|   |   |   +---company
+|   |   |   |       route.js
+|   |   |   |       
+|   |   |   +---connect
+|   |   |   |       route.js
+|   |   |   |       
+|   |   |   +---data
+|   |   |   |   \---[resource]
+|   |   |   |           route.js
+|   |   |   |           
+|   |   |   \---disconnect
+|   |   |           route.js
+|   |   |           
+|   |   \---servicetitan
+|   |       +---auth-test
+|   |       |       route.js
+|   |       |       
+|   |       +---customers
+|   |       |       route.js
+|   |       |       
+|   |       +---employees
+|   |       |       route.js
+|   |       |       
+|   |       +---estimates
+|   |       |       route.js
+|   |       |       
+|   |       +---jobs
+|   |       |       route.js
+|   |       |       
+|   |       +---test-appointment
+|   |       |       route.js
+|   |       |       
+|   |       +---test-employee
+|   |       |       route.js
+|   |       |       
+|   |       \---test-job-origin
+|   |               route.js
+|   |               
+|   +---forgot-password
+|   |       page.js
+|   |       
+|   +---license-agreement
+|   |       page.js
+|   |       
+|   +---login
+|   |       page.js
+|   |       
+|   +---privacy-policy
+|   |       page.js
+|   |       
+|   \---salesperson
+|       |   layout.js
+|       |   page.js
+|       |   
+|       +---opportunities
+|       |   |   page.js
+|       |   |   
+|       |   +---edit
+|       |   |       page.js
+|       |   |       
+|       |   \---new
+|       |           page.js
+|       |           
+|       +---pipeline
+|       |       page.js
+|       |       
+|       +---profile
+|       |       page.js
+|       |       
+|       +---reports
+|       |       page.js
+|       |       
+|       +---sales-revenue
+|       |       page.js
+|       |       
+|       +---salesmen
+|       |       page.js
+|       |       
+|       \---settings
+|               page.js
+|               
++---components
+|   +---dashboard
+|   |       estimates-table.jsx
+|   |       followUps-preview.jsx
+|   |       followUps-table.jsx
+|   |       generateReport-form.jsx
+|   |       newEdit-opportunity.jsx
+|   |       newEdit-salesman.jsx
+|   |       opportunity-actions.jsx
+|   |       opportunity-card.jsx
+|   |       opportunity-details.jsx
+|   |       opportunity-preview.jsx
+|   |       pipeline-card.jsx
+|   |       pipeline-filter.jsx
+|   |       recent-activities.jsx
+|   |       revenue-card.jsx
+|   |       revenue-date-filter.jsx
+|   |       revenue-overview.jsx
+|   |       revenue-summary.jsx
+|   |       revenue-table.jsx
+|   |       salesman-card.jsx
+|   |       stat-card.jsx
+|   |       
+|   +---icons
+|   |       svg-icons.jsx
+|   |       
+|   +---layout
+|   |       app-footer.jsx
+|   |       app-header.jsx
+|   |       app-shell.jsx
+|   |       app-sidebar.jsx
+|   |       mobile-navigation.jsx
+|   |       
+|   +---login
+|   +---quickbooks-testing
+|   |       quickbooks-tabs.jsx
+|   |       resource-data-tab.jsx
+|   |       
+|   \---ui
+|           breadcrumbs.jsx
+|           customer-search.jsx
+|           data-table.jsx
+|           date-selector.jsx
+|           empty-state.jsx
+|           error-state.jsx
+|           input.jsx
+|           modal.jsx
+|           page-tagline.jsx
+|           salesman-selector.jsx
+|           select.jsx
+|           skeleton.jsx
+|           type-selector.jsx
+|           
++---config
+|       navigation.js
+|       
++---generated
+|   \---prisma
+|       |   browser.ts
+|       |   client.ts
+|       |   commonInputTypes.ts
+|       |   enums.ts
+|       |   models.ts
+|       |   
+|       +---internal
+|       |       class.ts
+|       |       prismaNamespace.ts
+|       |       prismaNamespaceBrowser.ts
+|       |       
+|       \---models
+|               Activity.ts
+|               Customer.ts
+|               FollowUp.ts
+|               FollowUpSchedule.ts
+|               IdCounter.ts
+|               Opportunity.ts
+|               QuickBooksConnection.ts
+|               Sale.ts
+|               User.ts
+|               
+\---lib
+    |   auth.js
+    |   prisma.js
+    |   
+    +---date
+    |       date-utils.js
+    |       goal-utils.js
+    |       
+    \---integrations
+            quickbooks.js
+            servicetitan.js
+            

@@ -38,7 +38,6 @@ export type FollowUpSumAggregateOutputType = {
 
 export type FollowUpMinAggregateOutputType = {
   id: string | null
-  displayId: string | null
   opportunityId: string | null
   scheduleId: string | null
   assignedToId: string | null
@@ -58,7 +57,6 @@ export type FollowUpMinAggregateOutputType = {
 
 export type FollowUpMaxAggregateOutputType = {
   id: string | null
-  displayId: string | null
   opportunityId: string | null
   scheduleId: string | null
   assignedToId: string | null
@@ -78,7 +76,6 @@ export type FollowUpMaxAggregateOutputType = {
 
 export type FollowUpCountAggregateOutputType = {
   id: number
-  displayId: number
   opportunityId: number
   scheduleId: number
   assignedToId: number
@@ -110,7 +107,6 @@ export type FollowUpSumAggregateInputType = {
 
 export type FollowUpMinAggregateInputType = {
   id?: true
-  displayId?: true
   opportunityId?: true
   scheduleId?: true
   assignedToId?: true
@@ -130,7 +126,6 @@ export type FollowUpMinAggregateInputType = {
 
 export type FollowUpMaxAggregateInputType = {
   id?: true
-  displayId?: true
   opportunityId?: true
   scheduleId?: true
   assignedToId?: true
@@ -150,7 +145,6 @@ export type FollowUpMaxAggregateInputType = {
 
 export type FollowUpCountAggregateInputType = {
   id?: true
-  displayId?: true
   opportunityId?: true
   scheduleId?: true
   assignedToId?: true
@@ -257,15 +251,14 @@ export type FollowUpGroupByArgs<ExtArgs extends runtime.Types.Extensions.Interna
 
 export type FollowUpGroupByOutputType = {
   id: string
-  displayId: string | null
   opportunityId: string
   scheduleId: string | null
-  assignedToId: string
+  assignedToId: string | null
   dueAt: Date | null
   status: $Enums.FollowUpStatus
   type: $Enums.FollowUpType | null
   scheduleType: $Enums.FollowUpScheduleType
-  sequence: number | null
+  sequence: number
   isActive: boolean
   notes: string | null
   completedAt: Date | null
@@ -300,15 +293,14 @@ export type FollowUpWhereInput = {
   OR?: Prisma.FollowUpWhereInput[]
   NOT?: Prisma.FollowUpWhereInput | Prisma.FollowUpWhereInput[]
   id?: Prisma.StringFilter<"FollowUp"> | string
-  displayId?: Prisma.StringNullableFilter<"FollowUp"> | string | null
   opportunityId?: Prisma.StringFilter<"FollowUp"> | string
   scheduleId?: Prisma.StringNullableFilter<"FollowUp"> | string | null
-  assignedToId?: Prisma.StringFilter<"FollowUp"> | string
+  assignedToId?: Prisma.StringNullableFilter<"FollowUp"> | string | null
   dueAt?: Prisma.DateTimeNullableFilter<"FollowUp"> | Date | string | null
   status?: Prisma.EnumFollowUpStatusFilter<"FollowUp"> | $Enums.FollowUpStatus
   type?: Prisma.EnumFollowUpTypeNullableFilter<"FollowUp"> | $Enums.FollowUpType | null
   scheduleType?: Prisma.EnumFollowUpScheduleTypeFilter<"FollowUp"> | $Enums.FollowUpScheduleType
-  sequence?: Prisma.IntNullableFilter<"FollowUp"> | number | null
+  sequence?: Prisma.IntFilter<"FollowUp"> | number
   isActive?: Prisma.BoolFilter<"FollowUp"> | boolean
   notes?: Prisma.StringNullableFilter<"FollowUp"> | string | null
   completedAt?: Prisma.DateTimeNullableFilter<"FollowUp"> | Date | string | null
@@ -318,20 +310,19 @@ export type FollowUpWhereInput = {
   updatedAt?: Prisma.DateTimeFilter<"FollowUp"> | Date | string
   opportunity?: Prisma.XOR<Prisma.OpportunityScalarRelationFilter, Prisma.OpportunityWhereInput>
   schedule?: Prisma.XOR<Prisma.FollowUpScheduleNullableScalarRelationFilter, Prisma.FollowUpScheduleWhereInput> | null
-  assignedTo?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
+  assignedTo?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
 }
 
 export type FollowUpOrderByWithRelationInput = {
   id?: Prisma.SortOrder
-  displayId?: Prisma.SortOrderInput | Prisma.SortOrder
   opportunityId?: Prisma.SortOrder
   scheduleId?: Prisma.SortOrderInput | Prisma.SortOrder
-  assignedToId?: Prisma.SortOrder
+  assignedToId?: Prisma.SortOrderInput | Prisma.SortOrder
   dueAt?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
   type?: Prisma.SortOrderInput | Prisma.SortOrder
   scheduleType?: Prisma.SortOrder
-  sequence?: Prisma.SortOrderInput | Prisma.SortOrder
+  sequence?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   notes?: Prisma.SortOrderInput | Prisma.SortOrder
   completedAt?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -346,18 +337,17 @@ export type FollowUpOrderByWithRelationInput = {
 
 export type FollowUpWhereUniqueInput = Prisma.AtLeast<{
   id?: string
-  displayId?: string
   AND?: Prisma.FollowUpWhereInput | Prisma.FollowUpWhereInput[]
   OR?: Prisma.FollowUpWhereInput[]
   NOT?: Prisma.FollowUpWhereInput | Prisma.FollowUpWhereInput[]
   opportunityId?: Prisma.StringFilter<"FollowUp"> | string
   scheduleId?: Prisma.StringNullableFilter<"FollowUp"> | string | null
-  assignedToId?: Prisma.StringFilter<"FollowUp"> | string
+  assignedToId?: Prisma.StringNullableFilter<"FollowUp"> | string | null
   dueAt?: Prisma.DateTimeNullableFilter<"FollowUp"> | Date | string | null
   status?: Prisma.EnumFollowUpStatusFilter<"FollowUp"> | $Enums.FollowUpStatus
   type?: Prisma.EnumFollowUpTypeNullableFilter<"FollowUp"> | $Enums.FollowUpType | null
   scheduleType?: Prisma.EnumFollowUpScheduleTypeFilter<"FollowUp"> | $Enums.FollowUpScheduleType
-  sequence?: Prisma.IntNullableFilter<"FollowUp"> | number | null
+  sequence?: Prisma.IntFilter<"FollowUp"> | number
   isActive?: Prisma.BoolFilter<"FollowUp"> | boolean
   notes?: Prisma.StringNullableFilter<"FollowUp"> | string | null
   completedAt?: Prisma.DateTimeNullableFilter<"FollowUp"> | Date | string | null
@@ -367,20 +357,19 @@ export type FollowUpWhereUniqueInput = Prisma.AtLeast<{
   updatedAt?: Prisma.DateTimeFilter<"FollowUp"> | Date | string
   opportunity?: Prisma.XOR<Prisma.OpportunityScalarRelationFilter, Prisma.OpportunityWhereInput>
   schedule?: Prisma.XOR<Prisma.FollowUpScheduleNullableScalarRelationFilter, Prisma.FollowUpScheduleWhereInput> | null
-  assignedTo?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
-}, "id" | "displayId">
+  assignedTo?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
+}, "id">
 
 export type FollowUpOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
-  displayId?: Prisma.SortOrderInput | Prisma.SortOrder
   opportunityId?: Prisma.SortOrder
   scheduleId?: Prisma.SortOrderInput | Prisma.SortOrder
-  assignedToId?: Prisma.SortOrder
+  assignedToId?: Prisma.SortOrderInput | Prisma.SortOrder
   dueAt?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
   type?: Prisma.SortOrderInput | Prisma.SortOrder
   scheduleType?: Prisma.SortOrder
-  sequence?: Prisma.SortOrderInput | Prisma.SortOrder
+  sequence?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   notes?: Prisma.SortOrderInput | Prisma.SortOrder
   completedAt?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -400,15 +389,14 @@ export type FollowUpScalarWhereWithAggregatesInput = {
   OR?: Prisma.FollowUpScalarWhereWithAggregatesInput[]
   NOT?: Prisma.FollowUpScalarWhereWithAggregatesInput | Prisma.FollowUpScalarWhereWithAggregatesInput[]
   id?: Prisma.StringWithAggregatesFilter<"FollowUp"> | string
-  displayId?: Prisma.StringNullableWithAggregatesFilter<"FollowUp"> | string | null
   opportunityId?: Prisma.StringWithAggregatesFilter<"FollowUp"> | string
   scheduleId?: Prisma.StringNullableWithAggregatesFilter<"FollowUp"> | string | null
-  assignedToId?: Prisma.StringWithAggregatesFilter<"FollowUp"> | string
+  assignedToId?: Prisma.StringNullableWithAggregatesFilter<"FollowUp"> | string | null
   dueAt?: Prisma.DateTimeNullableWithAggregatesFilter<"FollowUp"> | Date | string | null
   status?: Prisma.EnumFollowUpStatusWithAggregatesFilter<"FollowUp"> | $Enums.FollowUpStatus
   type?: Prisma.EnumFollowUpTypeNullableWithAggregatesFilter<"FollowUp"> | $Enums.FollowUpType | null
   scheduleType?: Prisma.EnumFollowUpScheduleTypeWithAggregatesFilter<"FollowUp"> | $Enums.FollowUpScheduleType
-  sequence?: Prisma.IntNullableWithAggregatesFilter<"FollowUp"> | number | null
+  sequence?: Prisma.IntWithAggregatesFilter<"FollowUp"> | number
   isActive?: Prisma.BoolWithAggregatesFilter<"FollowUp"> | boolean
   notes?: Prisma.StringNullableWithAggregatesFilter<"FollowUp"> | string | null
   completedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"FollowUp"> | Date | string | null
@@ -420,12 +408,11 @@ export type FollowUpScalarWhereWithAggregatesInput = {
 
 export type FollowUpCreateInput = {
   id?: string
-  displayId?: string | null
   dueAt?: Date | string | null
   status?: $Enums.FollowUpStatus
   type?: $Enums.FollowUpType | null
   scheduleType?: $Enums.FollowUpScheduleType
-  sequence?: number | null
+  sequence?: number
   isActive?: boolean
   notes?: string | null
   completedAt?: Date | string | null
@@ -435,20 +422,19 @@ export type FollowUpCreateInput = {
   updatedAt?: Date | string
   opportunity: Prisma.OpportunityCreateNestedOneWithoutFollowUpsInput
   schedule?: Prisma.FollowUpScheduleCreateNestedOneWithoutFollowUpsInput
-  assignedTo: Prisma.UserCreateNestedOneWithoutAssignedFollowUpsInput
+  assignedTo?: Prisma.UserCreateNestedOneWithoutAssignedFollowUpsInput
 }
 
 export type FollowUpUncheckedCreateInput = {
   id?: string
-  displayId?: string | null
   opportunityId: string
   scheduleId?: string | null
-  assignedToId: string
+  assignedToId?: string | null
   dueAt?: Date | string | null
   status?: $Enums.FollowUpStatus
   type?: $Enums.FollowUpType | null
   scheduleType?: $Enums.FollowUpScheduleType
-  sequence?: number | null
+  sequence?: number
   isActive?: boolean
   notes?: string | null
   completedAt?: Date | string | null
@@ -460,12 +446,11 @@ export type FollowUpUncheckedCreateInput = {
 
 export type FollowUpUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  displayId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   dueAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.EnumFollowUpStatusFieldUpdateOperationsInput | $Enums.FollowUpStatus
   type?: Prisma.NullableEnumFollowUpTypeFieldUpdateOperationsInput | $Enums.FollowUpType | null
   scheduleType?: Prisma.EnumFollowUpScheduleTypeFieldUpdateOperationsInput | $Enums.FollowUpScheduleType
-  sequence?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  sequence?: Prisma.IntFieldUpdateOperationsInput | number
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -475,20 +460,19 @@ export type FollowUpUpdateInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   opportunity?: Prisma.OpportunityUpdateOneRequiredWithoutFollowUpsNestedInput
   schedule?: Prisma.FollowUpScheduleUpdateOneWithoutFollowUpsNestedInput
-  assignedTo?: Prisma.UserUpdateOneRequiredWithoutAssignedFollowUpsNestedInput
+  assignedTo?: Prisma.UserUpdateOneWithoutAssignedFollowUpsNestedInput
 }
 
 export type FollowUpUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  displayId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   opportunityId?: Prisma.StringFieldUpdateOperationsInput | string
   scheduleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  assignedToId?: Prisma.StringFieldUpdateOperationsInput | string
+  assignedToId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   dueAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.EnumFollowUpStatusFieldUpdateOperationsInput | $Enums.FollowUpStatus
   type?: Prisma.NullableEnumFollowUpTypeFieldUpdateOperationsInput | $Enums.FollowUpType | null
   scheduleType?: Prisma.EnumFollowUpScheduleTypeFieldUpdateOperationsInput | $Enums.FollowUpScheduleType
-  sequence?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  sequence?: Prisma.IntFieldUpdateOperationsInput | number
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -500,15 +484,14 @@ export type FollowUpUncheckedUpdateInput = {
 
 export type FollowUpCreateManyInput = {
   id?: string
-  displayId?: string | null
   opportunityId: string
   scheduleId?: string | null
-  assignedToId: string
+  assignedToId?: string | null
   dueAt?: Date | string | null
   status?: $Enums.FollowUpStatus
   type?: $Enums.FollowUpType | null
   scheduleType?: $Enums.FollowUpScheduleType
-  sequence?: number | null
+  sequence?: number
   isActive?: boolean
   notes?: string | null
   completedAt?: Date | string | null
@@ -520,12 +503,11 @@ export type FollowUpCreateManyInput = {
 
 export type FollowUpUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  displayId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   dueAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.EnumFollowUpStatusFieldUpdateOperationsInput | $Enums.FollowUpStatus
   type?: Prisma.NullableEnumFollowUpTypeFieldUpdateOperationsInput | $Enums.FollowUpType | null
   scheduleType?: Prisma.EnumFollowUpScheduleTypeFieldUpdateOperationsInput | $Enums.FollowUpScheduleType
-  sequence?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  sequence?: Prisma.IntFieldUpdateOperationsInput | number
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -537,15 +519,14 @@ export type FollowUpUpdateManyMutationInput = {
 
 export type FollowUpUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  displayId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   opportunityId?: Prisma.StringFieldUpdateOperationsInput | string
   scheduleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  assignedToId?: Prisma.StringFieldUpdateOperationsInput | string
+  assignedToId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   dueAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.EnumFollowUpStatusFieldUpdateOperationsInput | $Enums.FollowUpStatus
   type?: Prisma.NullableEnumFollowUpTypeFieldUpdateOperationsInput | $Enums.FollowUpType | null
   scheduleType?: Prisma.EnumFollowUpScheduleTypeFieldUpdateOperationsInput | $Enums.FollowUpScheduleType
-  sequence?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  sequence?: Prisma.IntFieldUpdateOperationsInput | number
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -567,7 +548,6 @@ export type FollowUpOrderByRelationAggregateInput = {
 
 export type FollowUpCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  displayId?: Prisma.SortOrder
   opportunityId?: Prisma.SortOrder
   scheduleId?: Prisma.SortOrder
   assignedToId?: Prisma.SortOrder
@@ -592,7 +572,6 @@ export type FollowUpAvgOrderByAggregateInput = {
 
 export type FollowUpMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  displayId?: Prisma.SortOrder
   opportunityId?: Prisma.SortOrder
   scheduleId?: Prisma.SortOrder
   assignedToId?: Prisma.SortOrder
@@ -612,7 +591,6 @@ export type FollowUpMaxOrderByAggregateInput = {
 
 export type FollowUpMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  displayId?: Prisma.SortOrder
   opportunityId?: Prisma.SortOrder
   scheduleId?: Prisma.SortOrder
   assignedToId?: Prisma.SortOrder
@@ -769,8 +747,8 @@ export type NullableEnumFollowUpTypeFieldUpdateOperationsInput = {
   set?: $Enums.FollowUpType | null
 }
 
-export type NullableIntFieldUpdateOperationsInput = {
-  set?: number | null
+export type IntFieldUpdateOperationsInput = {
+  set?: number
   increment?: number
   decrement?: number
   multiply?: number
@@ -779,12 +757,11 @@ export type NullableIntFieldUpdateOperationsInput = {
 
 export type FollowUpCreateWithoutAssignedToInput = {
   id?: string
-  displayId?: string | null
   dueAt?: Date | string | null
   status?: $Enums.FollowUpStatus
   type?: $Enums.FollowUpType | null
   scheduleType?: $Enums.FollowUpScheduleType
-  sequence?: number | null
+  sequence?: number
   isActive?: boolean
   notes?: string | null
   completedAt?: Date | string | null
@@ -798,14 +775,13 @@ export type FollowUpCreateWithoutAssignedToInput = {
 
 export type FollowUpUncheckedCreateWithoutAssignedToInput = {
   id?: string
-  displayId?: string | null
   opportunityId: string
   scheduleId?: string | null
   dueAt?: Date | string | null
   status?: $Enums.FollowUpStatus
   type?: $Enums.FollowUpType | null
   scheduleType?: $Enums.FollowUpScheduleType
-  sequence?: number | null
+  sequence?: number
   isActive?: boolean
   notes?: string | null
   completedAt?: Date | string | null
@@ -846,15 +822,14 @@ export type FollowUpScalarWhereInput = {
   OR?: Prisma.FollowUpScalarWhereInput[]
   NOT?: Prisma.FollowUpScalarWhereInput | Prisma.FollowUpScalarWhereInput[]
   id?: Prisma.StringFilter<"FollowUp"> | string
-  displayId?: Prisma.StringNullableFilter<"FollowUp"> | string | null
   opportunityId?: Prisma.StringFilter<"FollowUp"> | string
   scheduleId?: Prisma.StringNullableFilter<"FollowUp"> | string | null
-  assignedToId?: Prisma.StringFilter<"FollowUp"> | string
+  assignedToId?: Prisma.StringNullableFilter<"FollowUp"> | string | null
   dueAt?: Prisma.DateTimeNullableFilter<"FollowUp"> | Date | string | null
   status?: Prisma.EnumFollowUpStatusFilter<"FollowUp"> | $Enums.FollowUpStatus
   type?: Prisma.EnumFollowUpTypeNullableFilter<"FollowUp"> | $Enums.FollowUpType | null
   scheduleType?: Prisma.EnumFollowUpScheduleTypeFilter<"FollowUp"> | $Enums.FollowUpScheduleType
-  sequence?: Prisma.IntNullableFilter<"FollowUp"> | number | null
+  sequence?: Prisma.IntFilter<"FollowUp"> | number
   isActive?: Prisma.BoolFilter<"FollowUp"> | boolean
   notes?: Prisma.StringNullableFilter<"FollowUp"> | string | null
   completedAt?: Prisma.DateTimeNullableFilter<"FollowUp"> | Date | string | null
@@ -866,12 +841,11 @@ export type FollowUpScalarWhereInput = {
 
 export type FollowUpCreateWithoutOpportunityInput = {
   id?: string
-  displayId?: string | null
   dueAt?: Date | string | null
   status?: $Enums.FollowUpStatus
   type?: $Enums.FollowUpType | null
   scheduleType?: $Enums.FollowUpScheduleType
-  sequence?: number | null
+  sequence?: number
   isActive?: boolean
   notes?: string | null
   completedAt?: Date | string | null
@@ -880,19 +854,18 @@ export type FollowUpCreateWithoutOpportunityInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   schedule?: Prisma.FollowUpScheduleCreateNestedOneWithoutFollowUpsInput
-  assignedTo: Prisma.UserCreateNestedOneWithoutAssignedFollowUpsInput
+  assignedTo?: Prisma.UserCreateNestedOneWithoutAssignedFollowUpsInput
 }
 
 export type FollowUpUncheckedCreateWithoutOpportunityInput = {
   id?: string
-  displayId?: string | null
   scheduleId?: string | null
-  assignedToId: string
+  assignedToId?: string | null
   dueAt?: Date | string | null
   status?: $Enums.FollowUpStatus
   type?: $Enums.FollowUpType | null
   scheduleType?: $Enums.FollowUpScheduleType
-  sequence?: number | null
+  sequence?: number
   isActive?: boolean
   notes?: string | null
   completedAt?: Date | string | null
@@ -930,12 +903,11 @@ export type FollowUpUpdateManyWithWhereWithoutOpportunityInput = {
 
 export type FollowUpCreateWithoutScheduleInput = {
   id?: string
-  displayId?: string | null
   dueAt?: Date | string | null
   status?: $Enums.FollowUpStatus
   type?: $Enums.FollowUpType | null
   scheduleType?: $Enums.FollowUpScheduleType
-  sequence?: number | null
+  sequence?: number
   isActive?: boolean
   notes?: string | null
   completedAt?: Date | string | null
@@ -944,19 +916,18 @@ export type FollowUpCreateWithoutScheduleInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   opportunity: Prisma.OpportunityCreateNestedOneWithoutFollowUpsInput
-  assignedTo: Prisma.UserCreateNestedOneWithoutAssignedFollowUpsInput
+  assignedTo?: Prisma.UserCreateNestedOneWithoutAssignedFollowUpsInput
 }
 
 export type FollowUpUncheckedCreateWithoutScheduleInput = {
   id?: string
-  displayId?: string | null
   opportunityId: string
-  assignedToId: string
+  assignedToId?: string | null
   dueAt?: Date | string | null
   status?: $Enums.FollowUpStatus
   type?: $Enums.FollowUpType | null
   scheduleType?: $Enums.FollowUpScheduleType
-  sequence?: number | null
+  sequence?: number
   isActive?: boolean
   notes?: string | null
   completedAt?: Date | string | null
@@ -994,14 +965,13 @@ export type FollowUpUpdateManyWithWhereWithoutScheduleInput = {
 
 export type FollowUpCreateManyAssignedToInput = {
   id?: string
-  displayId?: string | null
   opportunityId: string
   scheduleId?: string | null
   dueAt?: Date | string | null
   status?: $Enums.FollowUpStatus
   type?: $Enums.FollowUpType | null
   scheduleType?: $Enums.FollowUpScheduleType
-  sequence?: number | null
+  sequence?: number
   isActive?: boolean
   notes?: string | null
   completedAt?: Date | string | null
@@ -1013,12 +983,11 @@ export type FollowUpCreateManyAssignedToInput = {
 
 export type FollowUpUpdateWithoutAssignedToInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  displayId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   dueAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.EnumFollowUpStatusFieldUpdateOperationsInput | $Enums.FollowUpStatus
   type?: Prisma.NullableEnumFollowUpTypeFieldUpdateOperationsInput | $Enums.FollowUpType | null
   scheduleType?: Prisma.EnumFollowUpScheduleTypeFieldUpdateOperationsInput | $Enums.FollowUpScheduleType
-  sequence?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  sequence?: Prisma.IntFieldUpdateOperationsInput | number
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1032,14 +1001,13 @@ export type FollowUpUpdateWithoutAssignedToInput = {
 
 export type FollowUpUncheckedUpdateWithoutAssignedToInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  displayId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   opportunityId?: Prisma.StringFieldUpdateOperationsInput | string
   scheduleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   dueAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.EnumFollowUpStatusFieldUpdateOperationsInput | $Enums.FollowUpStatus
   type?: Prisma.NullableEnumFollowUpTypeFieldUpdateOperationsInput | $Enums.FollowUpType | null
   scheduleType?: Prisma.EnumFollowUpScheduleTypeFieldUpdateOperationsInput | $Enums.FollowUpScheduleType
-  sequence?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  sequence?: Prisma.IntFieldUpdateOperationsInput | number
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1051,14 +1019,13 @@ export type FollowUpUncheckedUpdateWithoutAssignedToInput = {
 
 export type FollowUpUncheckedUpdateManyWithoutAssignedToInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  displayId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   opportunityId?: Prisma.StringFieldUpdateOperationsInput | string
   scheduleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   dueAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.EnumFollowUpStatusFieldUpdateOperationsInput | $Enums.FollowUpStatus
   type?: Prisma.NullableEnumFollowUpTypeFieldUpdateOperationsInput | $Enums.FollowUpType | null
   scheduleType?: Prisma.EnumFollowUpScheduleTypeFieldUpdateOperationsInput | $Enums.FollowUpScheduleType
-  sequence?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  sequence?: Prisma.IntFieldUpdateOperationsInput | number
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1070,14 +1037,13 @@ export type FollowUpUncheckedUpdateManyWithoutAssignedToInput = {
 
 export type FollowUpCreateManyOpportunityInput = {
   id?: string
-  displayId?: string | null
   scheduleId?: string | null
-  assignedToId: string
+  assignedToId?: string | null
   dueAt?: Date | string | null
   status?: $Enums.FollowUpStatus
   type?: $Enums.FollowUpType | null
   scheduleType?: $Enums.FollowUpScheduleType
-  sequence?: number | null
+  sequence?: number
   isActive?: boolean
   notes?: string | null
   completedAt?: Date | string | null
@@ -1089,12 +1055,11 @@ export type FollowUpCreateManyOpportunityInput = {
 
 export type FollowUpUpdateWithoutOpportunityInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  displayId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   dueAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.EnumFollowUpStatusFieldUpdateOperationsInput | $Enums.FollowUpStatus
   type?: Prisma.NullableEnumFollowUpTypeFieldUpdateOperationsInput | $Enums.FollowUpType | null
   scheduleType?: Prisma.EnumFollowUpScheduleTypeFieldUpdateOperationsInput | $Enums.FollowUpScheduleType
-  sequence?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  sequence?: Prisma.IntFieldUpdateOperationsInput | number
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1103,19 +1068,18 @@ export type FollowUpUpdateWithoutOpportunityInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   schedule?: Prisma.FollowUpScheduleUpdateOneWithoutFollowUpsNestedInput
-  assignedTo?: Prisma.UserUpdateOneRequiredWithoutAssignedFollowUpsNestedInput
+  assignedTo?: Prisma.UserUpdateOneWithoutAssignedFollowUpsNestedInput
 }
 
 export type FollowUpUncheckedUpdateWithoutOpportunityInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  displayId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   scheduleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  assignedToId?: Prisma.StringFieldUpdateOperationsInput | string
+  assignedToId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   dueAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.EnumFollowUpStatusFieldUpdateOperationsInput | $Enums.FollowUpStatus
   type?: Prisma.NullableEnumFollowUpTypeFieldUpdateOperationsInput | $Enums.FollowUpType | null
   scheduleType?: Prisma.EnumFollowUpScheduleTypeFieldUpdateOperationsInput | $Enums.FollowUpScheduleType
-  sequence?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  sequence?: Prisma.IntFieldUpdateOperationsInput | number
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1127,14 +1091,13 @@ export type FollowUpUncheckedUpdateWithoutOpportunityInput = {
 
 export type FollowUpUncheckedUpdateManyWithoutOpportunityInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  displayId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   scheduleId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  assignedToId?: Prisma.StringFieldUpdateOperationsInput | string
+  assignedToId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   dueAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.EnumFollowUpStatusFieldUpdateOperationsInput | $Enums.FollowUpStatus
   type?: Prisma.NullableEnumFollowUpTypeFieldUpdateOperationsInput | $Enums.FollowUpType | null
   scheduleType?: Prisma.EnumFollowUpScheduleTypeFieldUpdateOperationsInput | $Enums.FollowUpScheduleType
-  sequence?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  sequence?: Prisma.IntFieldUpdateOperationsInput | number
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1146,14 +1109,13 @@ export type FollowUpUncheckedUpdateManyWithoutOpportunityInput = {
 
 export type FollowUpCreateManyScheduleInput = {
   id?: string
-  displayId?: string | null
   opportunityId: string
-  assignedToId: string
+  assignedToId?: string | null
   dueAt?: Date | string | null
   status?: $Enums.FollowUpStatus
   type?: $Enums.FollowUpType | null
   scheduleType?: $Enums.FollowUpScheduleType
-  sequence?: number | null
+  sequence?: number
   isActive?: boolean
   notes?: string | null
   completedAt?: Date | string | null
@@ -1165,12 +1127,11 @@ export type FollowUpCreateManyScheduleInput = {
 
 export type FollowUpUpdateWithoutScheduleInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  displayId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   dueAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.EnumFollowUpStatusFieldUpdateOperationsInput | $Enums.FollowUpStatus
   type?: Prisma.NullableEnumFollowUpTypeFieldUpdateOperationsInput | $Enums.FollowUpType | null
   scheduleType?: Prisma.EnumFollowUpScheduleTypeFieldUpdateOperationsInput | $Enums.FollowUpScheduleType
-  sequence?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  sequence?: Prisma.IntFieldUpdateOperationsInput | number
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1179,19 +1140,18 @@ export type FollowUpUpdateWithoutScheduleInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   opportunity?: Prisma.OpportunityUpdateOneRequiredWithoutFollowUpsNestedInput
-  assignedTo?: Prisma.UserUpdateOneRequiredWithoutAssignedFollowUpsNestedInput
+  assignedTo?: Prisma.UserUpdateOneWithoutAssignedFollowUpsNestedInput
 }
 
 export type FollowUpUncheckedUpdateWithoutScheduleInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  displayId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   opportunityId?: Prisma.StringFieldUpdateOperationsInput | string
-  assignedToId?: Prisma.StringFieldUpdateOperationsInput | string
+  assignedToId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   dueAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.EnumFollowUpStatusFieldUpdateOperationsInput | $Enums.FollowUpStatus
   type?: Prisma.NullableEnumFollowUpTypeFieldUpdateOperationsInput | $Enums.FollowUpType | null
   scheduleType?: Prisma.EnumFollowUpScheduleTypeFieldUpdateOperationsInput | $Enums.FollowUpScheduleType
-  sequence?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  sequence?: Prisma.IntFieldUpdateOperationsInput | number
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1203,14 +1163,13 @@ export type FollowUpUncheckedUpdateWithoutScheduleInput = {
 
 export type FollowUpUncheckedUpdateManyWithoutScheduleInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  displayId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   opportunityId?: Prisma.StringFieldUpdateOperationsInput | string
-  assignedToId?: Prisma.StringFieldUpdateOperationsInput | string
+  assignedToId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   dueAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.EnumFollowUpStatusFieldUpdateOperationsInput | $Enums.FollowUpStatus
   type?: Prisma.NullableEnumFollowUpTypeFieldUpdateOperationsInput | $Enums.FollowUpType | null
   scheduleType?: Prisma.EnumFollowUpScheduleTypeFieldUpdateOperationsInput | $Enums.FollowUpScheduleType
-  sequence?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  sequence?: Prisma.IntFieldUpdateOperationsInput | number
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1224,7 +1183,6 @@ export type FollowUpUncheckedUpdateManyWithoutScheduleInput = {
 
 export type FollowUpSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
-  displayId?: boolean
   opportunityId?: boolean
   scheduleId?: boolean
   assignedToId?: boolean
@@ -1242,12 +1200,11 @@ export type FollowUpSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   updatedAt?: boolean
   opportunity?: boolean | Prisma.OpportunityDefaultArgs<ExtArgs>
   schedule?: boolean | Prisma.FollowUp$scheduleArgs<ExtArgs>
-  assignedTo?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  assignedTo?: boolean | Prisma.FollowUp$assignedToArgs<ExtArgs>
 }, ExtArgs["result"]["followUp"]>
 
 export type FollowUpSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
-  displayId?: boolean
   opportunityId?: boolean
   scheduleId?: boolean
   assignedToId?: boolean
@@ -1265,12 +1222,11 @@ export type FollowUpSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exte
   updatedAt?: boolean
   opportunity?: boolean | Prisma.OpportunityDefaultArgs<ExtArgs>
   schedule?: boolean | Prisma.FollowUp$scheduleArgs<ExtArgs>
-  assignedTo?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  assignedTo?: boolean | Prisma.FollowUp$assignedToArgs<ExtArgs>
 }, ExtArgs["result"]["followUp"]>
 
 export type FollowUpSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
-  displayId?: boolean
   opportunityId?: boolean
   scheduleId?: boolean
   assignedToId?: boolean
@@ -1288,12 +1244,11 @@ export type FollowUpSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exte
   updatedAt?: boolean
   opportunity?: boolean | Prisma.OpportunityDefaultArgs<ExtArgs>
   schedule?: boolean | Prisma.FollowUp$scheduleArgs<ExtArgs>
-  assignedTo?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  assignedTo?: boolean | Prisma.FollowUp$assignedToArgs<ExtArgs>
 }, ExtArgs["result"]["followUp"]>
 
 export type FollowUpSelectScalar = {
   id?: boolean
-  displayId?: boolean
   opportunityId?: boolean
   scheduleId?: boolean
   assignedToId?: boolean
@@ -1311,21 +1266,21 @@ export type FollowUpSelectScalar = {
   updatedAt?: boolean
 }
 
-export type FollowUpOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "displayId" | "opportunityId" | "scheduleId" | "assignedToId" | "dueAt" | "status" | "type" | "scheduleType" | "sequence" | "isActive" | "notes" | "completedAt" | "notificationSentAt" | "notificationAttempts" | "createdAt" | "updatedAt", ExtArgs["result"]["followUp"]>
+export type FollowUpOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "opportunityId" | "scheduleId" | "assignedToId" | "dueAt" | "status" | "type" | "scheduleType" | "sequence" | "isActive" | "notes" | "completedAt" | "notificationSentAt" | "notificationAttempts" | "createdAt" | "updatedAt", ExtArgs["result"]["followUp"]>
 export type FollowUpInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   opportunity?: boolean | Prisma.OpportunityDefaultArgs<ExtArgs>
   schedule?: boolean | Prisma.FollowUp$scheduleArgs<ExtArgs>
-  assignedTo?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  assignedTo?: boolean | Prisma.FollowUp$assignedToArgs<ExtArgs>
 }
 export type FollowUpIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   opportunity?: boolean | Prisma.OpportunityDefaultArgs<ExtArgs>
   schedule?: boolean | Prisma.FollowUp$scheduleArgs<ExtArgs>
-  assignedTo?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  assignedTo?: boolean | Prisma.FollowUp$assignedToArgs<ExtArgs>
 }
 export type FollowUpIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   opportunity?: boolean | Prisma.OpportunityDefaultArgs<ExtArgs>
   schedule?: boolean | Prisma.FollowUp$scheduleArgs<ExtArgs>
-  assignedTo?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  assignedTo?: boolean | Prisma.FollowUp$assignedToArgs<ExtArgs>
 }
 
 export type $FollowUpPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1333,19 +1288,18 @@ export type $FollowUpPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
   objects: {
     opportunity: Prisma.$OpportunityPayload<ExtArgs>
     schedule: Prisma.$FollowUpSchedulePayload<ExtArgs> | null
-    assignedTo: Prisma.$UserPayload<ExtArgs>
+    assignedTo: Prisma.$UserPayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
-    displayId: string | null
     opportunityId: string
     scheduleId: string | null
-    assignedToId: string
+    assignedToId: string | null
     dueAt: Date | null
     status: $Enums.FollowUpStatus
     type: $Enums.FollowUpType | null
     scheduleType: $Enums.FollowUpScheduleType
-    sequence: number | null
+    sequence: number
     isActive: boolean
     notes: string | null
     completedAt: Date | null
@@ -1749,7 +1703,7 @@ export interface Prisma__FollowUpClient<T, Null = never, ExtArgs extends runtime
   readonly [Symbol.toStringTag]: "PrismaPromise"
   opportunity<T extends Prisma.OpportunityDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.OpportunityDefaultArgs<ExtArgs>>): Prisma.Prisma__OpportunityClient<runtime.Types.Result.GetResult<Prisma.$OpportunityPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   schedule<T extends Prisma.FollowUp$scheduleArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.FollowUp$scheduleArgs<ExtArgs>>): Prisma.Prisma__FollowUpScheduleClient<runtime.Types.Result.GetResult<Prisma.$FollowUpSchedulePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
-  assignedTo<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  assignedTo<T extends Prisma.FollowUp$assignedToArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.FollowUp$assignedToArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1780,7 +1734,6 @@ export interface Prisma__FollowUpClient<T, Null = never, ExtArgs extends runtime
  */
 export interface FollowUpFieldRefs {
   readonly id: Prisma.FieldRef<"FollowUp", 'String'>
-  readonly displayId: Prisma.FieldRef<"FollowUp", 'String'>
   readonly opportunityId: Prisma.FieldRef<"FollowUp", 'String'>
   readonly scheduleId: Prisma.FieldRef<"FollowUp", 'String'>
   readonly assignedToId: Prisma.FieldRef<"FollowUp", 'String'>
@@ -2213,6 +2166,25 @@ export type FollowUp$scheduleArgs<ExtArgs extends runtime.Types.Extensions.Inter
    */
   include?: Prisma.FollowUpScheduleInclude<ExtArgs> | null
   where?: Prisma.FollowUpScheduleWhereInput
+}
+
+/**
+ * FollowUp.assignedTo
+ */
+export type FollowUp$assignedToArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the User
+   */
+  select?: Prisma.UserSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the User
+   */
+  omit?: Prisma.UserOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.UserInclude<ExtArgs> | null
+  where?: Prisma.UserWhereInput
 }
 
 /**

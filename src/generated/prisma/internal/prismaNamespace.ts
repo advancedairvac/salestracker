@@ -397,9 +397,7 @@ type FieldRefInputType<Model, FieldType> = Model extends never ? never : FieldRe
 
 
 export const ModelName = {
-  IdCounter: 'IdCounter',
   User: 'User',
-  QuickBooksConnection: 'QuickBooksConnection',
   Customer: 'Customer',
   Opportunity: 'Opportunity',
   FollowUpSchedule: 'FollowUpSchedule',
@@ -421,84 +419,10 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "idCounter" | "user" | "quickBooksConnection" | "customer" | "opportunity" | "followUpSchedule" | "followUp" | "activity" | "sale"
+    modelProps: "user" | "customer" | "opportunity" | "followUpSchedule" | "followUp" | "activity" | "sale"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
-    IdCounter: {
-      payload: Prisma.$IdCounterPayload<ExtArgs>
-      fields: Prisma.IdCounterFieldRefs
-      operations: {
-        findUnique: {
-          args: Prisma.IdCounterFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdCounterPayload> | null
-        }
-        findUniqueOrThrow: {
-          args: Prisma.IdCounterFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdCounterPayload>
-        }
-        findFirst: {
-          args: Prisma.IdCounterFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdCounterPayload> | null
-        }
-        findFirstOrThrow: {
-          args: Prisma.IdCounterFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdCounterPayload>
-        }
-        findMany: {
-          args: Prisma.IdCounterFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdCounterPayload>[]
-        }
-        create: {
-          args: Prisma.IdCounterCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdCounterPayload>
-        }
-        createMany: {
-          args: Prisma.IdCounterCreateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        createManyAndReturn: {
-          args: Prisma.IdCounterCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdCounterPayload>[]
-        }
-        delete: {
-          args: Prisma.IdCounterDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdCounterPayload>
-        }
-        update: {
-          args: Prisma.IdCounterUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdCounterPayload>
-        }
-        deleteMany: {
-          args: Prisma.IdCounterDeleteManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateMany: {
-          args: Prisma.IdCounterUpdateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateManyAndReturn: {
-          args: Prisma.IdCounterUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdCounterPayload>[]
-        }
-        upsert: {
-          args: Prisma.IdCounterUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdCounterPayload>
-        }
-        aggregate: {
-          args: Prisma.IdCounterAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateIdCounter>
-        }
-        groupBy: {
-          args: Prisma.IdCounterGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.IdCounterGroupByOutputType>[]
-        }
-        count: {
-          args: Prisma.IdCounterCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.IdCounterCountAggregateOutputType> | number
-        }
-      }
-    }
     User: {
       payload: Prisma.$UserPayload<ExtArgs>
       fields: Prisma.UserFieldRefs
@@ -570,80 +494,6 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.UserCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.UserCountAggregateOutputType> | number
-        }
-      }
-    }
-    QuickBooksConnection: {
-      payload: Prisma.$QuickBooksConnectionPayload<ExtArgs>
-      fields: Prisma.QuickBooksConnectionFieldRefs
-      operations: {
-        findUnique: {
-          args: Prisma.QuickBooksConnectionFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$QuickBooksConnectionPayload> | null
-        }
-        findUniqueOrThrow: {
-          args: Prisma.QuickBooksConnectionFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$QuickBooksConnectionPayload>
-        }
-        findFirst: {
-          args: Prisma.QuickBooksConnectionFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$QuickBooksConnectionPayload> | null
-        }
-        findFirstOrThrow: {
-          args: Prisma.QuickBooksConnectionFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$QuickBooksConnectionPayload>
-        }
-        findMany: {
-          args: Prisma.QuickBooksConnectionFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$QuickBooksConnectionPayload>[]
-        }
-        create: {
-          args: Prisma.QuickBooksConnectionCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$QuickBooksConnectionPayload>
-        }
-        createMany: {
-          args: Prisma.QuickBooksConnectionCreateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        createManyAndReturn: {
-          args: Prisma.QuickBooksConnectionCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$QuickBooksConnectionPayload>[]
-        }
-        delete: {
-          args: Prisma.QuickBooksConnectionDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$QuickBooksConnectionPayload>
-        }
-        update: {
-          args: Prisma.QuickBooksConnectionUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$QuickBooksConnectionPayload>
-        }
-        deleteMany: {
-          args: Prisma.QuickBooksConnectionDeleteManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateMany: {
-          args: Prisma.QuickBooksConnectionUpdateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateManyAndReturn: {
-          args: Prisma.QuickBooksConnectionUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$QuickBooksConnectionPayload>[]
-        }
-        upsert: {
-          args: Prisma.QuickBooksConnectionUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$QuickBooksConnectionPayload>
-        }
-        aggregate: {
-          args: Prisma.QuickBooksConnectionAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateQuickBooksConnection>
-        }
-        groupBy: {
-          args: Prisma.QuickBooksConnectionGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.QuickBooksConnectionGroupByOutputType>[]
-        }
-        count: {
-          args: Prisma.QuickBooksConnectionCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.QuickBooksConnectionCountAggregateOutputType> | number
         }
       }
     }
@@ -1130,18 +980,8 @@ export const TransactionIsolationLevel = runtime.makeStrictEnum({
 export type TransactionIsolationLevel = (typeof TransactionIsolationLevel)[keyof typeof TransactionIsolationLevel]
 
 
-export const IdCounterScalarFieldEnum = {
-  prefix: 'prefix',
-  nextValue: 'nextValue',
-  updatedAt: 'updatedAt'
-} as const
-
-export type IdCounterScalarFieldEnum = (typeof IdCounterScalarFieldEnum)[keyof typeof IdCounterScalarFieldEnum]
-
-
 export const UserScalarFieldEnum = {
   id: 'id',
-  displayId: 'displayId',
   name: 'name',
   username: 'username',
   email: 'email',
@@ -1159,26 +999,9 @@ export const UserScalarFieldEnum = {
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
 
 
-export const QuickBooksConnectionScalarFieldEnum = {
-  id: 'id',
-  realmId: 'realmId',
-  environment: 'environment',
-  accessTokenEncrypted: 'accessTokenEncrypted',
-  refreshTokenEncrypted: 'refreshTokenEncrypted',
-  accessTokenExpiresAt: 'accessTokenExpiresAt',
-  refreshTokenExpiresAt: 'refreshTokenExpiresAt',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
-} as const
-
-export type QuickBooksConnectionScalarFieldEnum = (typeof QuickBooksConnectionScalarFieldEnum)[keyof typeof QuickBooksConnectionScalarFieldEnum]
-
-
 export const CustomerScalarFieldEnum = {
   id: 'id',
-  displayId: 'displayId',
   stCustomerId: 'stCustomerId',
-  qbCustomerId: 'qbCustomerId',
   pocName: 'pocName',
   businessName: 'businessName',
   phone: 'phone',
@@ -1193,7 +1016,6 @@ export type CustomerScalarFieldEnum = (typeof CustomerScalarFieldEnum)[keyof typ
 
 export const OpportunityScalarFieldEnum = {
   id: 'id',
-  displayId: 'displayId',
   serviceTitanEstimateId: 'serviceTitanEstimateId',
   customerId: 'customerId',
   title: 'title',
@@ -1232,7 +1054,6 @@ export type FollowUpScheduleScalarFieldEnum = (typeof FollowUpScheduleScalarFiel
 
 export const FollowUpScalarFieldEnum = {
   id: 'id',
-  displayId: 'displayId',
   opportunityId: 'opportunityId',
   scheduleId: 'scheduleId',
   assignedToId: 'assignedToId',
@@ -1268,14 +1089,14 @@ export type ActivityScalarFieldEnum = (typeof ActivityScalarFieldEnum)[keyof typ
 
 export const SaleScalarFieldEnum = {
   id: 'id',
-  displayId: 'displayId',
-  opportunityId: 'opportunityId',
-  closedById: 'closedById',
+  serviceTitanJobId: 'serviceTitanJobId',
+  serviceTitanJobNumber: 'serviceTitanJobNumber',
+  customerId: 'customerId',
+  customerName: 'customerName',
   saleValue: 'saleValue',
   source: 'source',
-  serviceTitanJobId: 'serviceTitanJobId',
-  notes: 'notes',
-  closedAt: 'closedAt',
+  salesmanId: 'salesmanId',
+  completedAt: 'completedAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -1328,34 +1149,6 @@ export type ListStringFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaMod
 
 
 /**
- * Reference to a field of type 'Int'
- */
-export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
-    
-
-
-/**
- * Reference to a field of type 'Int[]'
- */
-export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
-    
-
-
-/**
- * Reference to a field of type 'DateTime'
- */
-export type DateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime'>
-    
-
-
-/**
- * Reference to a field of type 'DateTime[]'
- */
-export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime[]'>
-    
-
-
-/**
  * Reference to a field of type 'Decimal'
  */
 export type DecimalFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Decimal'>
@@ -1387,6 +1180,20 @@ export type ListEnumUserRoleFieldRefInput<$PrismaModel> = FieldRefInputType<$Pri
  * Reference to a field of type 'Boolean'
  */
 export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
+    
+
+
+/**
+ * Reference to a field of type 'DateTime'
+ */
+export type DateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime'>
+    
+
+
+/**
+ * Reference to a field of type 'DateTime[]'
+ */
+export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime[]'>
     
 
 
@@ -1457,6 +1264,20 @@ export type EnumFollowUpTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$Pri
  * Reference to a field of type 'FollowUpType[]'
  */
 export type ListEnumFollowUpTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'FollowUpType[]'>
+    
+
+
+/**
+ * Reference to a field of type 'Int'
+ */
+export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
+    
+
+
+/**
+ * Reference to a field of type 'Int[]'
+ */
+export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
     
 
 
@@ -1638,9 +1459,7 @@ export interface PrismaClientOptionsWithAdapter extends PrismaClientBaseOptions 
  */
 export type PrismaClientOptions = PrismaClientOptionsWithAccelerateUrl | PrismaClientOptionsWithAdapter
 export type GlobalOmitConfig = {
-  idCounter?: Prisma.IdCounterOmit
   user?: Prisma.UserOmit
-  quickBooksConnection?: Prisma.QuickBooksConnectionOmit
   customer?: Prisma.CustomerOmit
   opportunity?: Prisma.OpportunityOmit
   followUpSchedule?: Prisma.FollowUpScheduleOmit

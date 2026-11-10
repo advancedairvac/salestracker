@@ -3,14 +3,7 @@ import { redirect, notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth";
 
-import {
-  getAllJobs,
-  getAllAppointmentAssignments,
-  getServiceTitanCustomers,
-} from "@/lib/integrations/servicetitan";
-
 import { PRESETS, getInitialRange } from "@/lib/date/date-utils";
-
 import { getGoalConfiguration, calculateTeamGoal } from "@/lib/date/goal-utils";
 
 import RevenueDateFilter from "@/components/dashboard/revenue-date-filter";
@@ -36,7 +29,6 @@ function isValidDateString(value) {
   }
 
   const [year, month, day] = value.split("-").map(Number);
-
   const date = new Date(year, month - 1, day);
 
   return (
@@ -49,7 +41,6 @@ function isValidDateString(value) {
 
 function getDateRange(startDate, endDate) {
   const [startYear, startMonth, startDay] = startDate.split("-").map(Number);
-
   const [endYear, endMonth, endDay] = endDate.split("-").map(Number);
 
   return {
@@ -58,53 +49,17 @@ function getDateRange(startDate, endDate) {
   };
 }
 
-function isWithinRange(dateValue, start, endExclusive) {
-  if (!dateValue) return false;
+function getLeadSourceLabel(source) {
+  switch (source) {
+    case "SELF_GENERATED":
+      return "Self-generated";
 
-  const date = new Date(dateValue);
+    case "COMPANY_GENERATED":
+      return "Company-generated";
 
-  return !Number.isNaN(date.getTime()) && date >= start && date < endExclusive;
-}
-
-function normalizeName(name) {
-  return String(name || "")
-    .trim()
-    .toLowerCase();
-}
-
-function getList(response, possibleKeys = []) {
-  if (Array.isArray(response)) {
-    return response;
+    default:
+      return "—";
   }
-
-  if (!response || typeof response !== "object") {
-    return [];
-  }
-
-  for (const key of possibleKeys) {
-    if (Array.isArray(response[key])) {
-      return response[key];
-    }
-  }
-
-  if (Array.isArray(response.data)) {
-    return response.data;
-  }
-
-  return [];
-}
-
-function getCustomerName(customer) {
-  if (!customer) return "—";
-
-  if (customer.name) {
-    return customer.name;
-  }
-
-  const firstName = customer.firstName || "";
-  const lastName = customer.lastName || "";
-
-  return `${firstName} ${lastName}`.trim() || "—";
 }
 
 // ============================================
@@ -162,7 +117,7 @@ export default async function SalesmanDetailsPage({ params, searchParams }) {
   const { start, endExclusive } = getDateRange(startDate, endDate);
 
   // ============================================
-  // SALESMAN INFORMATION
+  // SALESPERSON INFORMATION
   // ============================================
 
   const salesman = await prisma.user.findFirst({
@@ -202,33 +157,42 @@ export default async function SalesmanDetailsPage({ params, searchParams }) {
   );
 
   // ============================================
-  // FETCH DATA
+  // FETCH DATA FROM POSTGRESQL
   // ============================================
 
-  const [
-    allJobsResponse,
-    assignmentsResponse,
-    customersResponse,
-    opportunities,
-    followUps,
-  ] = await Promise.all([
-    // ServiceTitan Jobs
-    getAllJobs({
-      pageSize: 100,
-      maxPages: 10,
+  const [sales, opportunities, followUps] = await Promise.all([
+    // Sales assigned to this salesperson
+    prisma.sale.findMany({
+      where: {
+        salesmanId: salesman.id,
+        saleValue: {
+          gt: 0,
+        },
+        completedAt: {
+          gte: start,
+          lt: endExclusive,
+        },
+      },
+      orderBy: {
+        completedAt: "desc",
+      },
+      select: {
+        id: true,
+        serviceTitanJobId: true,
+        serviceTitanJobNumber: true,
+        customerName: true,
+        saleValue: true,
+        source: true,
+        completedAt: true,
+        customer: {
+          select: {
+            businessName: true,
+          },
+        },
+      },
     }),
 
-    // ServiceTitan Appointment Assignments
-    getAllAppointmentAssignments({
-      pageSize: 100,
-      maxPages: 100,
-    }),
-
-    // ServiceTitan Customers
-    getServiceTitanCustomers(),
-
-    // Open opportunities assigned to this salesman
-    // within the selected date range
+    // Open opportunities assigned to this salesperson
     prisma.opportunity.findMany({
       where: {
         assignedToId: salesman.id,
@@ -289,80 +253,12 @@ export default async function SalesmanDetailsPage({ params, searchParams }) {
     }),
   ]);
 
-  const allJobs = getList(allJobsResponse, ["jobs", "data", "items"]);
-
-  const allAssignments = getList(assignmentsResponse, [
-    "appointmentAssignments",
-    "data",
-    "items",
-  ]);
-
-  const customers = getList(customersResponse, ["customers", "data", "items"]);
-
-  // ============================================
-  // CUSTOMER LOOKUP
-  // ============================================
-
-  const customerMap = new Map(
-    customers.map((customer) => [
-      String(customer.id),
-      getCustomerName(customer),
-    ]),
-  );
-
-  // ============================================
-  // ASSIGNMENTS BY JOB
-  // ============================================
-
-  const assignmentsByJob = new Map();
-
-  for (const assignment of allAssignments) {
-    if (
-      assignment.status !== "Done" ||
-      assignment.active === false ||
-      !assignment.jobId ||
-      !assignment.technicianName
-    ) {
-      continue;
-    }
-
-    const jobId = String(assignment.jobId);
-
-    if (!assignmentsByJob.has(jobId)) {
-      assignmentsByJob.set(jobId, []);
-    }
-
-    const technicianNames = assignmentsByJob.get(jobId);
-
-    if (!technicianNames.includes(assignment.technicianName)) {
-      technicianNames.push(assignment.technicianName);
-    }
-  }
-
-  // ============================================
-  // FILTER COMPLETED JOBS BY DATE
-  // ============================================
-
-  const selectedPeriodJobs = allJobs.filter(
-    (job) =>
-      job.jobStatus === "Completed" &&
-      isWithinRange(job.completedOn, start, endExclusive),
-  );
-
   // ============================================
   // SALESMAN REVENUE
   // ============================================
 
-  const revenueJobs = selectedPeriodJobs.filter((job) => {
-    const technicianNames = assignmentsByJob.get(String(job.id)) || [];
-
-    return technicianNames.some(
-      (name) => normalizeName(name) === normalizeName(salesman.name),
-    );
-  });
-
-  const totalRevenue = revenueJobs.reduce(
-    (total, job) => total + Number(job.total || 0),
+  const totalRevenue = sales.reduce(
+    (total, sale) => total + Number(sale.saleValue || 0),
     0,
   );
 
@@ -370,19 +266,14 @@ export default async function SalesmanDetailsPage({ params, searchParams }) {
   // REVENUE TABLE DATA
   // ============================================
 
-  const revenueData = revenueJobs
-    .sort(
-      (a, b) =>
-        new Date(b.completedOn).getTime() - new Date(a.completedOn).getTime(),
-    )
-    .map((job) => ({
-      id: job.id,
-      serviceTitanJobId: job.jobNumber || job.id,
-      customerName: customerMap.get(String(job.customerId)) || "—",
-      saleValue: Number(job.total || 0),
-      source: "Company",
-      salesmanName: salesman.name,
-    }));
+  const revenueData = sales.map((sale) => ({
+    id: sale.id,
+    serviceTitanJobId: sale.serviceTitanJobNumber || sale.serviceTitanJobId,
+    customerName: sale.customerName || sale.customer?.businessName || "—",
+    saleValue: Number(sale.saleValue || 0),
+    source: getLeadSourceLabel(sale.source),
+    salesmanName: salesman.name,
+  }));
 
   // ============================================
   // REVENUE SUMMARY
@@ -390,15 +281,16 @@ export default async function SalesmanDetailsPage({ params, searchParams }) {
 
   const commissionRate = 5;
 
+  // This is an estimated commission, not an actual payroll calculation.
   const estimatedCommission = (totalRevenue * commissionRate) / 100;
 
   // ============================================
   // CLOSE RATE
   // ============================================
 
-  // Your current Opportunity enum does not contain
-  // WON or LOST. Therefore, an accurate close rate
-  // cannot be calculated from the current schema.
+  // The current Opportunity enum does not contain
+  // WON or LOST statuses, so an accurate close rate
+  // cannot currently be calculated.
   const closeRate = 0;
 
   // ============================================

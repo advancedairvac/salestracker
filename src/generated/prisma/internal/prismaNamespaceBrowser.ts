@@ -51,9 +51,7 @@ export const AnyNull = runtime.AnyNull
 
 
 export const ModelName = {
-  IdCounter: 'IdCounter',
   User: 'User',
-  QuickBooksConnection: 'QuickBooksConnection',
   Customer: 'Customer',
   Opportunity: 'Opportunity',
   FollowUpSchedule: 'FollowUpSchedule',
@@ -78,18 +76,8 @@ export const TransactionIsolationLevel = runtime.makeStrictEnum({
 export type TransactionIsolationLevel = (typeof TransactionIsolationLevel)[keyof typeof TransactionIsolationLevel]
 
 
-export const IdCounterScalarFieldEnum = {
-  prefix: 'prefix',
-  nextValue: 'nextValue',
-  updatedAt: 'updatedAt'
-} as const
-
-export type IdCounterScalarFieldEnum = (typeof IdCounterScalarFieldEnum)[keyof typeof IdCounterScalarFieldEnum]
-
-
 export const UserScalarFieldEnum = {
   id: 'id',
-  displayId: 'displayId',
   name: 'name',
   username: 'username',
   email: 'email',
@@ -107,26 +95,9 @@ export const UserScalarFieldEnum = {
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
 
 
-export const QuickBooksConnectionScalarFieldEnum = {
-  id: 'id',
-  realmId: 'realmId',
-  environment: 'environment',
-  accessTokenEncrypted: 'accessTokenEncrypted',
-  refreshTokenEncrypted: 'refreshTokenEncrypted',
-  accessTokenExpiresAt: 'accessTokenExpiresAt',
-  refreshTokenExpiresAt: 'refreshTokenExpiresAt',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
-} as const
-
-export type QuickBooksConnectionScalarFieldEnum = (typeof QuickBooksConnectionScalarFieldEnum)[keyof typeof QuickBooksConnectionScalarFieldEnum]
-
-
 export const CustomerScalarFieldEnum = {
   id: 'id',
-  displayId: 'displayId',
   stCustomerId: 'stCustomerId',
-  qbCustomerId: 'qbCustomerId',
   pocName: 'pocName',
   businessName: 'businessName',
   phone: 'phone',
@@ -141,7 +112,6 @@ export type CustomerScalarFieldEnum = (typeof CustomerScalarFieldEnum)[keyof typ
 
 export const OpportunityScalarFieldEnum = {
   id: 'id',
-  displayId: 'displayId',
   serviceTitanEstimateId: 'serviceTitanEstimateId',
   customerId: 'customerId',
   title: 'title',
@@ -180,7 +150,6 @@ export type FollowUpScheduleScalarFieldEnum = (typeof FollowUpScheduleScalarFiel
 
 export const FollowUpScalarFieldEnum = {
   id: 'id',
-  displayId: 'displayId',
   opportunityId: 'opportunityId',
   scheduleId: 'scheduleId',
   assignedToId: 'assignedToId',
@@ -216,14 +185,14 @@ export type ActivityScalarFieldEnum = (typeof ActivityScalarFieldEnum)[keyof typ
 
 export const SaleScalarFieldEnum = {
   id: 'id',
-  displayId: 'displayId',
-  opportunityId: 'opportunityId',
-  closedById: 'closedById',
+  serviceTitanJobId: 'serviceTitanJobId',
+  serviceTitanJobNumber: 'serviceTitanJobNumber',
+  customerId: 'customerId',
+  customerName: 'customerName',
   saleValue: 'saleValue',
   source: 'source',
-  serviceTitanJobId: 'serviceTitanJobId',
-  notes: 'notes',
-  closedAt: 'closedAt',
+  salesmanId: 'salesmanId',
+  completedAt: 'completedAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

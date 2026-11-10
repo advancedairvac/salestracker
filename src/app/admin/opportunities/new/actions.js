@@ -141,32 +141,6 @@ function getStandardFollowUps(opportunityDate) {
 }
 
 // --------------------------------------------
-// READABLE ID GENERATOR
-// --------------------------------------------
-
-async function generateDisplayId(tx, prefix) {
-  const counter = await tx.idCounter.upsert({
-    where: {
-      prefix,
-    },
-    create: {
-      prefix,
-      nextValue: 1,
-    },
-    update: {
-      nextValue: {
-        increment: 1,
-      },
-    },
-    select: {
-      nextValue: true,
-    },
-  });
-
-  return `${prefix}-${counter.nextValue}`;
-}
-
-// --------------------------------------------
 // CUSTOMER SEARCH
 // --------------------------------------------
 
@@ -202,7 +176,6 @@ export async function searchCustomers(query) {
     },
     select: {
       id: true,
-      displayId: true,
       stCustomerId: true,
       businessName: true,
       pocName: true,
@@ -331,15 +304,6 @@ export async function createOpportunity(previousState, formData) {
   // OPPORTUNITY SOURCE
   // ------------------------------------------
 
-  // Admin creates for themselves:
-  // SELF_GENERATED
-  //
-  // Admin assigns to another team member:
-  // COMPANY_GENERATED
-  //
-  // Salesperson creates for themselves:
-  // SELF_GENERATED
-
   const source =
     assignedToId === user.id ? "SELF_GENERATED" : "COMPANY_GENERATED";
 
@@ -382,7 +346,6 @@ export async function createOpportunity(previousState, formData) {
       }
 
       // 3. Fallback matching for manually entered customers.
-      // Do not search using empty Business Name.
       if (!customer && (businessName || pocName)) {
         const customerConditions = [];
 
@@ -433,11 +396,8 @@ export async function createOpportunity(previousState, formData) {
           },
         });
       } else {
-        const customerDisplayId = await generateDisplayId(tx, "CM");
-
         customer = await tx.customer.create({
           data: {
-            displayId: customerDisplayId,
             stCustomerId: stCustomerId || null,
             businessName: businessName || null,
             pocName,
@@ -452,15 +412,12 @@ export async function createOpportunity(previousState, formData) {
       // OPPORTUNITY CREATE
       // --------------------------------------
 
-      const opportunityDisplayId = await generateDisplayId(tx, "EST");
-
       const opportunityTitle = [businessName || pocName, jobType]
         .filter(Boolean)
         .join(" - ");
 
       const opportunity = await tx.opportunity.create({
         data: {
-          displayId: opportunityDisplayId,
           title: opportunityTitle,
           customerId: customer.id,
           opportunityDate,
@@ -488,23 +445,12 @@ export async function createOpportunity(previousState, formData) {
       });
 
       // --------------------------------------
-      // GENERATE FOLLOW-UP IDS
-      // --------------------------------------
-
-      const followUpIds = [];
-
-      for (let index = 0; index < 6; index++) {
-        followUpIds.push(await generateDisplayId(tx, "FLW"));
-      }
-
-      // --------------------------------------
       // CREATE FIVE STANDARD FOLLOW-UPS
       // --------------------------------------
 
       const standardFollowUps = getStandardFollowUps(opportunityDate);
 
-      const followUpRecords = standardFollowUps.map((followUp, index) => ({
-        displayId: followUpIds[index],
+      const followUpRecords = standardFollowUps.map((followUp) => ({
         opportunityId: opportunity.id,
         scheduleId: schedule.id,
         assignedToId,
@@ -521,14 +467,13 @@ export async function createOpportunity(previousState, formData) {
       // --------------------------------------
 
       followUpRecords.push({
-        displayId: followUpIds[5],
         opportunityId: opportunity.id,
         scheduleId: schedule.id,
         assignedToId,
         dueAt: manualFollowUpDate,
         status: "PENDING",
         scheduleType: "MANUAL",
-        sequence: null,
+        sequence: 0,
         isActive: hasManualFollowUp,
         notes: hasManualFollowUp
           ? "Manual follow-up scheduled during opportunity creation."

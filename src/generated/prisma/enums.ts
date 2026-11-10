@@ -27,8 +27,6 @@ export type LeadSource = (typeof LeadSource)[keyof typeof LeadSource]
 
 export const OpportunityStatus = {
   OPEN: 'OPEN',
-  WON: 'WON',
-  LOST: 'LOST',
   PERMANENTLY_CLOSED: 'PERMANENTLY_CLOSED',
   TEMPORARILY_CLOSED: 'TEMPORARILY_CLOSED',
   SCHEDULED_TO_REOPEN: 'SCHEDULED_TO_REOPEN'

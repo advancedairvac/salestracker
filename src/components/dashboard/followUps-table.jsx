@@ -19,13 +19,7 @@ function formatDueDate(date) {
 
   const day = value.getDate();
 
-  const time = new Intl.DateTimeFormat("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  }).format(value);
-
-  return `${weekday} / ${month} ${day}\n${time}`;
+  return `${weekday} / ${month} ${day}\n7:30 AM`;
 }
 
 function getFollowUpStatus(dueAt) {
@@ -117,44 +111,66 @@ export default function FollowUpsTable({
             {followUps.length > 0 ? (
               followUps.map((followUp) => {
                 const opportunity = followUp.opportunity;
+                const customer = opportunity?.customer;
+
+                const customerName =
+                  customer?.businessName?.trim() ||
+                  customer?.pocName?.trim() ||
+                  "—";
+
+                const jobType = opportunity?.jobType?.trim();
+
+                const salesman = followUp.assignedTo;
 
                 return (
                   <tr
                     key={followUp.id}
                     className="border-b border-[#d9d9d9] transition-colors hover:bg-[#f8f8f8]"
                   >
+                    {/* Date */}
                     <td className="whitespace-pre-line px-3 py-2 leading-tight text-[#333] text-xs lg:text-sm">
                       {formatDueDate(followUp.dueAt)}
                     </td>
 
-                    <td className="px-3 py-2  leading-tight text-black text-xs lg:text-sm">
+                    {/* Customer / Opportunity */}
+                    <td className="px-3 py-2 leading-tight text-black text-xs lg:text-sm">
                       <Link
                         href={`/admin/opportunities/${opportunity.id}`}
                         className="underline underline-offset-2"
                       >
-                        {opportunity.customer?.businessName || "—"}
+                        <span className="font-bold">{customerName}</span>
+
                         <br />
-                        {opportunity.title}
+
+                        <span className="font-normal">{jobType}</span>
                       </Link>
                     </td>
 
+                    {/* Salesman */}
                     <td className="whitespace-nowrap px-3 py-2 text-black text-xs lg:text-sm">
-                      <Link
-                        href={`/admin/opportunities/${opportunity.id}`}
-                        className="underline underline-offset-2"
-                      >
-                        {followUp.assignedTo?.name || "—"}
-                      </Link>
+                      {salesman?.id ? (
+                        <Link
+                          href={`/admin/salesmen/${salesman.id}`}
+                          className="underline underline-offset-2"
+                        >
+                          {salesman.name}
+                        </Link>
+                      ) : (
+                        "—"
+                      )}
                     </td>
 
+                    {/* Status */}
                     <td className="whitespace-nowrap px-3 py-2 text-black text-xs lg:text-sm">
                       {getFollowUpStatus(followUp.dueAt)}
                     </td>
 
+                    {/* Type */}
                     <td className="whitespace-nowrap px-3 py-2 text-black text-xs lg:text-sm">
                       {formatType(followUp.type)}
                     </td>
 
+                    {/* Commission Estimate */}
                     <td className="whitespace-nowrap px-3 py-2 text-black text-xs lg:text-sm">
                       {formatCurrency(
                         followUp.commissionEstimate || 0,
