@@ -66,9 +66,9 @@ enum ActivityType {
 model User {
   id           String   @id @default(cuid())
   name         String
-  username     String   @unique
+  username     String?  @unique
   email        String   @unique
-  passwordHash String
+  passwordHash String?
   title        String?
 
   monthlyGoal   Decimal? @db.Decimal(12, 2)

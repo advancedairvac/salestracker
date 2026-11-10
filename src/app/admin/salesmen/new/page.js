@@ -1,7 +1,7 @@
-
 import { redirect } from "next/navigation";
 
 import { getAuthenticatedUser } from "@/lib/auth";
+import { createSalesman } from "./actions";
 
 import Breadcrumbs from "@/components/ui/breadcrumbs";
 import PageTagline from "@/components/ui/page-tagline";
@@ -48,7 +48,7 @@ export default async function NewSalesmanPage() {
 
       {/* New Salesman Form */}
       <section className="mt-5 flex w-full flex-1 flex-col sm:mt-6">
-        <NewEditSalesman />
+        <NewEditSalesman onSubmit={createSalesman} />
       </section>
 
       {/* Page Tagline */}

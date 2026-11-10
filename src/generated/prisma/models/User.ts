@@ -238,9 +238,9 @@ export type UserGroupByArgs<ExtArgs extends runtime.Types.Extensions.InternalArg
 export type UserGroupByOutputType = {
   id: string
   name: string
-  username: string
+  username: string | null
   email: string
-  passwordHash: string
+  passwordHash: string | null
   title: string | null
   monthlyGoal: runtime.Decimal | null
   quarterlyGoal: runtime.Decimal | null
@@ -277,9 +277,9 @@ export type UserWhereInput = {
   NOT?: Prisma.UserWhereInput | Prisma.UserWhereInput[]
   id?: Prisma.StringFilter<"User"> | string
   name?: Prisma.StringFilter<"User"> | string
-  username?: Prisma.StringFilter<"User"> | string
+  username?: Prisma.StringNullableFilter<"User"> | string | null
   email?: Prisma.StringFilter<"User"> | string
-  passwordHash?: Prisma.StringFilter<"User"> | string
+  passwordHash?: Prisma.StringNullableFilter<"User"> | string | null
   title?: Prisma.StringNullableFilter<"User"> | string | null
   monthlyGoal?: Prisma.DecimalNullableFilter<"User"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   quarterlyGoal?: Prisma.DecimalNullableFilter<"User"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
@@ -299,9 +299,9 @@ export type UserWhereInput = {
 export type UserOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
-  username?: Prisma.SortOrder
+  username?: Prisma.SortOrderInput | Prisma.SortOrder
   email?: Prisma.SortOrder
-  passwordHash?: Prisma.SortOrder
+  passwordHash?: Prisma.SortOrderInput | Prisma.SortOrder
   title?: Prisma.SortOrderInput | Prisma.SortOrder
   monthlyGoal?: Prisma.SortOrderInput | Prisma.SortOrder
   quarterlyGoal?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -326,7 +326,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   OR?: Prisma.UserWhereInput[]
   NOT?: Prisma.UserWhereInput | Prisma.UserWhereInput[]
   name?: Prisma.StringFilter<"User"> | string
-  passwordHash?: Prisma.StringFilter<"User"> | string
+  passwordHash?: Prisma.StringNullableFilter<"User"> | string | null
   title?: Prisma.StringNullableFilter<"User"> | string | null
   monthlyGoal?: Prisma.DecimalNullableFilter<"User"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   quarterlyGoal?: Prisma.DecimalNullableFilter<"User"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
@@ -346,9 +346,9 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
 export type UserOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
-  username?: Prisma.SortOrder
+  username?: Prisma.SortOrderInput | Prisma.SortOrder
   email?: Prisma.SortOrder
-  passwordHash?: Prisma.SortOrder
+  passwordHash?: Prisma.SortOrderInput | Prisma.SortOrder
   title?: Prisma.SortOrderInput | Prisma.SortOrder
   monthlyGoal?: Prisma.SortOrderInput | Prisma.SortOrder
   quarterlyGoal?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -370,9 +370,9 @@ export type UserScalarWhereWithAggregatesInput = {
   NOT?: Prisma.UserScalarWhereWithAggregatesInput | Prisma.UserScalarWhereWithAggregatesInput[]
   id?: Prisma.StringWithAggregatesFilter<"User"> | string
   name?: Prisma.StringWithAggregatesFilter<"User"> | string
-  username?: Prisma.StringWithAggregatesFilter<"User"> | string
+  username?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   email?: Prisma.StringWithAggregatesFilter<"User"> | string
-  passwordHash?: Prisma.StringWithAggregatesFilter<"User"> | string
+  passwordHash?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   title?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   monthlyGoal?: Prisma.DecimalNullableWithAggregatesFilter<"User"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   quarterlyGoal?: Prisma.DecimalNullableWithAggregatesFilter<"User"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
@@ -386,9 +386,9 @@ export type UserScalarWhereWithAggregatesInput = {
 export type UserCreateInput = {
   id?: string
   name: string
-  username: string
+  username?: string | null
   email: string
-  passwordHash: string
+  passwordHash?: string | null
   title?: string | null
   monthlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   quarterlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
@@ -408,9 +408,9 @@ export type UserCreateInput = {
 export type UserUncheckedCreateInput = {
   id?: string
   name: string
-  username: string
+  username?: string | null
   email: string
-  passwordHash: string
+  passwordHash?: string | null
   title?: string | null
   monthlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   quarterlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
@@ -430,9 +430,9 @@ export type UserUncheckedCreateInput = {
 export type UserUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  username?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.StringFieldUpdateOperationsInput | string
-  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   monthlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   quarterlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
@@ -452,9 +452,9 @@ export type UserUpdateInput = {
 export type UserUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  username?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.StringFieldUpdateOperationsInput | string
-  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   monthlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   quarterlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
@@ -474,9 +474,9 @@ export type UserUncheckedUpdateInput = {
 export type UserCreateManyInput = {
   id?: string
   name: string
-  username: string
+  username?: string | null
   email: string
-  passwordHash: string
+  passwordHash?: string | null
   title?: string | null
   monthlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   quarterlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
@@ -490,9 +490,9 @@ export type UserCreateManyInput = {
 export type UserUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  username?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.StringFieldUpdateOperationsInput | string
-  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   monthlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   quarterlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
@@ -506,9 +506,9 @@ export type UserUpdateManyMutationInput = {
 export type UserUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  username?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.StringFieldUpdateOperationsInput | string
-  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   monthlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   quarterlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
@@ -712,9 +712,9 @@ export type UserUpdateOneWithoutAssignedSalesNestedInput = {
 export type UserCreateWithoutAssignedOpportunitiesInput = {
   id?: string
   name: string
-  username: string
+  username?: string | null
   email: string
-  passwordHash: string
+  passwordHash?: string | null
   title?: string | null
   monthlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   quarterlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
@@ -733,9 +733,9 @@ export type UserCreateWithoutAssignedOpportunitiesInput = {
 export type UserUncheckedCreateWithoutAssignedOpportunitiesInput = {
   id?: string
   name: string
-  username: string
+  username?: string | null
   email: string
-  passwordHash: string
+  passwordHash?: string | null
   title?: string | null
   monthlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   quarterlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
@@ -759,9 +759,9 @@ export type UserCreateOrConnectWithoutAssignedOpportunitiesInput = {
 export type UserCreateWithoutCreatedOpportunitiesInput = {
   id?: string
   name: string
-  username: string
+  username?: string | null
   email: string
-  passwordHash: string
+  passwordHash?: string | null
   title?: string | null
   monthlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   quarterlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
@@ -780,9 +780,9 @@ export type UserCreateWithoutCreatedOpportunitiesInput = {
 export type UserUncheckedCreateWithoutCreatedOpportunitiesInput = {
   id?: string
   name: string
-  username: string
+  username?: string | null
   email: string
-  passwordHash: string
+  passwordHash?: string | null
   title?: string | null
   monthlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   quarterlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
@@ -806,9 +806,9 @@ export type UserCreateOrConnectWithoutCreatedOpportunitiesInput = {
 export type UserCreateWithoutClosedOpportunitiesInput = {
   id?: string
   name: string
-  username: string
+  username?: string | null
   email: string
-  passwordHash: string
+  passwordHash?: string | null
   title?: string | null
   monthlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   quarterlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
@@ -827,9 +827,9 @@ export type UserCreateWithoutClosedOpportunitiesInput = {
 export type UserUncheckedCreateWithoutClosedOpportunitiesInput = {
   id?: string
   name: string
-  username: string
+  username?: string | null
   email: string
-  passwordHash: string
+  passwordHash?: string | null
   title?: string | null
   monthlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   quarterlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
@@ -864,9 +864,9 @@ export type UserUpdateToOneWithWhereWithoutAssignedOpportunitiesInput = {
 export type UserUpdateWithoutAssignedOpportunitiesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  username?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.StringFieldUpdateOperationsInput | string
-  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   monthlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   quarterlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
@@ -885,9 +885,9 @@ export type UserUpdateWithoutAssignedOpportunitiesInput = {
 export type UserUncheckedUpdateWithoutAssignedOpportunitiesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  username?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.StringFieldUpdateOperationsInput | string
-  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   monthlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   quarterlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
@@ -917,9 +917,9 @@ export type UserUpdateToOneWithWhereWithoutCreatedOpportunitiesInput = {
 export type UserUpdateWithoutCreatedOpportunitiesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  username?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.StringFieldUpdateOperationsInput | string
-  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   monthlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   quarterlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
@@ -938,9 +938,9 @@ export type UserUpdateWithoutCreatedOpportunitiesInput = {
 export type UserUncheckedUpdateWithoutCreatedOpportunitiesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  username?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.StringFieldUpdateOperationsInput | string
-  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   monthlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   quarterlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
@@ -970,9 +970,9 @@ export type UserUpdateToOneWithWhereWithoutClosedOpportunitiesInput = {
 export type UserUpdateWithoutClosedOpportunitiesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  username?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.StringFieldUpdateOperationsInput | string
-  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   monthlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   quarterlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
@@ -991,9 +991,9 @@ export type UserUpdateWithoutClosedOpportunitiesInput = {
 export type UserUncheckedUpdateWithoutClosedOpportunitiesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  username?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.StringFieldUpdateOperationsInput | string
-  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   monthlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   quarterlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
@@ -1012,9 +1012,9 @@ export type UserUncheckedUpdateWithoutClosedOpportunitiesInput = {
 export type UserCreateWithoutAssignedFollowUpsInput = {
   id?: string
   name: string
-  username: string
+  username?: string | null
   email: string
-  passwordHash: string
+  passwordHash?: string | null
   title?: string | null
   monthlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   quarterlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
@@ -1033,9 +1033,9 @@ export type UserCreateWithoutAssignedFollowUpsInput = {
 export type UserUncheckedCreateWithoutAssignedFollowUpsInput = {
   id?: string
   name: string
-  username: string
+  username?: string | null
   email: string
-  passwordHash: string
+  passwordHash?: string | null
   title?: string | null
   monthlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   quarterlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
@@ -1070,9 +1070,9 @@ export type UserUpdateToOneWithWhereWithoutAssignedFollowUpsInput = {
 export type UserUpdateWithoutAssignedFollowUpsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  username?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.StringFieldUpdateOperationsInput | string
-  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   monthlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   quarterlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
@@ -1091,9 +1091,9 @@ export type UserUpdateWithoutAssignedFollowUpsInput = {
 export type UserUncheckedUpdateWithoutAssignedFollowUpsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  username?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.StringFieldUpdateOperationsInput | string
-  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   monthlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   quarterlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
@@ -1112,9 +1112,9 @@ export type UserUncheckedUpdateWithoutAssignedFollowUpsInput = {
 export type UserCreateWithoutActivitiesInput = {
   id?: string
   name: string
-  username: string
+  username?: string | null
   email: string
-  passwordHash: string
+  passwordHash?: string | null
   title?: string | null
   monthlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   quarterlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
@@ -1133,9 +1133,9 @@ export type UserCreateWithoutActivitiesInput = {
 export type UserUncheckedCreateWithoutActivitiesInput = {
   id?: string
   name: string
-  username: string
+  username?: string | null
   email: string
-  passwordHash: string
+  passwordHash?: string | null
   title?: string | null
   monthlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   quarterlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
@@ -1170,9 +1170,9 @@ export type UserUpdateToOneWithWhereWithoutActivitiesInput = {
 export type UserUpdateWithoutActivitiesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  username?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.StringFieldUpdateOperationsInput | string
-  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   monthlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   quarterlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
@@ -1191,9 +1191,9 @@ export type UserUpdateWithoutActivitiesInput = {
 export type UserUncheckedUpdateWithoutActivitiesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  username?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.StringFieldUpdateOperationsInput | string
-  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   monthlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   quarterlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
@@ -1212,9 +1212,9 @@ export type UserUncheckedUpdateWithoutActivitiesInput = {
 export type UserCreateWithoutAssignedSalesInput = {
   id?: string
   name: string
-  username: string
+  username?: string | null
   email: string
-  passwordHash: string
+  passwordHash?: string | null
   title?: string | null
   monthlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   quarterlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
@@ -1233,9 +1233,9 @@ export type UserCreateWithoutAssignedSalesInput = {
 export type UserUncheckedCreateWithoutAssignedSalesInput = {
   id?: string
   name: string
-  username: string
+  username?: string | null
   email: string
-  passwordHash: string
+  passwordHash?: string | null
   title?: string | null
   monthlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   quarterlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
@@ -1270,9 +1270,9 @@ export type UserUpdateToOneWithWhereWithoutAssignedSalesInput = {
 export type UserUpdateWithoutAssignedSalesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  username?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.StringFieldUpdateOperationsInput | string
-  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   monthlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   quarterlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
@@ -1291,9 +1291,9 @@ export type UserUpdateWithoutAssignedSalesInput = {
 export type UserUncheckedUpdateWithoutAssignedSalesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  username?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.StringFieldUpdateOperationsInput | string
-  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   monthlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   quarterlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
@@ -1482,9 +1482,9 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     name: string
-    username: string
+    username: string | null
     email: string
-    passwordHash: string
+    passwordHash: string | null
     title: string | null
     monthlyGoal: runtime.Decimal | null
     quarterlyGoal: runtime.Decimal | null
