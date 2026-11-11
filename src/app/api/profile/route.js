@@ -1,4 +1,3 @@
-
 import { NextResponse } from "next/server";
 import { compare, hash } from "bcryptjs";
 
@@ -16,7 +15,7 @@ export async function PATCH(request) {
       );
     }
 
-    if (authenticatedUser.role !== "ADMIN") {
+    if (!["ADMIN", "SALESPERSON"].includes(authenticatedUser.role)) {
       return NextResponse.json(
         { error: "You are not authorized to update this profile." },
         { status: 403 },
@@ -44,7 +43,6 @@ export async function PATCH(request) {
       confirmPassword,
     } = body;
 
-    // Validate profile fields.
     if (
       typeof name !== "string" ||
       typeof title !== "string" ||
@@ -92,14 +90,10 @@ export async function PATCH(request) {
       );
     }
 
-    // Check whether another user already uses this email or username.
     const existingUser = await prisma.user.findFirst({
       where: {
         id: { not: authenticatedUser.id },
-        OR: [
-          { username: cleanUsername },
-          { email: cleanEmail },
-        ],
+        OR: [{ username: cleanUsername }, { email: cleanEmail }],
       },
       select: {
         username: true,
@@ -121,7 +115,6 @@ export async function PATCH(request) {
       );
     }
 
-    // Fetch the current password hash only on the server.
     const currentUser = await prisma.user.findUnique({
       where: { id: authenticatedUser.id },
       select: {
@@ -138,12 +131,7 @@ export async function PATCH(request) {
       );
     }
 
-    // Password fields are optional as a group.
-    const passwordValues = [
-      oldPassword,
-      newPassword,
-      confirmPassword,
-    ];
+    const passwordValues = [oldPassword, newPassword, confirmPassword];
 
     const hasAnyPasswordValue = passwordValues.some(
       (value) => typeof value === "string" && value.length > 0,
