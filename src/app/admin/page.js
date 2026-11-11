@@ -1,10 +1,26 @@
-import { prisma } from "@/lib/prisma";
 
-import { getAllJobs, getAllEstimates } from "@/lib/integrations/servicetitan";
+import {
+  getRevenueDateRanges,
+} from "@/lib/date/date-utils";
 
-import { PRESETS, getInitialRange } from "@/lib/date/date-utils";
+import {
+  getGoalConfiguration,
+} from "@/lib/date/goal-utils";
 
-import { getGoalConfiguration, calculateTeamGoal } from "@/lib/date/goal-utils";
+import {
+  resolveSelectedDateRange,
+} from "@/lib/dashboard/date-range-helpers";
+
+import {
+  getAdminDashboardData,
+} from "@/lib/dashboard/dashboard-data";
+
+import {
+  getRevenueMetrics,
+  getEstimateMetrics,
+  getPipelineMetrics,
+  getTeamMetrics,
+} from "@/lib/dashboard/dashboard-metrics";
 
 import RevenueDateFilter from "@/components/dashboard/revenue-date-filter";
 import Breadcrumbs from "@/components/ui/breadcrumbs";
@@ -19,78 +35,6 @@ export const metadata = {
 };
 
 // ============================================
-// DATE HELPERS
-// ============================================
-
-function isValidDateString(value) {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value || "")) {
-    return false;
-  }
-
-  const [year, month, day] = value.split("-").map(Number);
-
-  const date = new Date(year, month - 1, day);
-
-  return (
-    !Number.isNaN(date.getTime()) &&
-    date.getFullYear() === year &&
-    date.getMonth() === month - 1 &&
-    date.getDate() === day
-  );
-}
-
-function getDateRange(startDate, endDate) {
-  const [startYear, startMonth, startDay] = startDate.split("-").map(Number);
-  const [endYear, endMonth, endDay] = endDate.split("-").map(Number);
-
-  return {
-    start: new Date(startYear, startMonth - 1, startDay),
-    endExclusive: new Date(endYear, endMonth - 1, endDay + 1),
-  };
-}
-
-function isWithinRange(dateValue, start, endExclusive) {
-  if (!dateValue) {
-    return false;
-  }
-
-  const date = new Date(dateValue);
-
-  return !Number.isNaN(date.getTime()) && date >= start && date < endExclusive;
-}
-
-// ============================================
-// SERVICETITAN JOB HELPERS
-// ============================================
-
-function getJobValue(job) {
-  const value = Number(job.total);
-
-  return Number.isFinite(value) ? value : 0;
-}
-
-function isCompletedJob(job) {
-  return (
-    String(job.jobStatus || "").toLowerCase() === "completed" &&
-    Boolean(job.completedOn)
-  );
-}
-
-function calculateJobRevenue(jobs) {
-  return jobs.reduce((total, job) => total + getJobValue(job), 0);
-}
-
-// ============================================
-// DATABASE SALE HELPERS
-// ============================================
-
-function getSaleValue(sale) {
-  const value = Number(sale.saleValue || 0);
-
-  return Number.isFinite(value) ? value : 0;
-}
-
-// ============================================
 // ADMIN DASHBOARD
 // ============================================
 
@@ -101,61 +45,20 @@ export default async function AdminDashboardPage({ searchParams }) {
   // SELECTED DATE RANGE
   // ============================================
 
-  const defaultRange = getInitialRange();
-
-  const requestedStartDate =
-    typeof params?.startDate === "string"
-      ? params.startDate
-      : defaultRange.startDate;
-
-  const requestedEndDate =
-    typeof params?.endDate === "string" ? params.endDate : defaultRange.endDate;
-
-  const validRange =
-    isValidDateString(requestedStartDate) &&
-    isValidDateString(requestedEndDate) &&
-    requestedStartDate <= requestedEndDate;
-
-  const selectedStartDate = validRange
-    ? requestedStartDate
-    : defaultRange.startDate;
-
-  const selectedEndDate = validRange ? requestedEndDate : defaultRange.endDate;
-
-  const requestedPreset =
-    typeof params?.preset === "string" ? params.preset : "MTD";
-
-  const selectedPreset = PRESETS.includes(requestedPreset)
-    ? requestedPreset
-    : "MTD";
-
-  const { start, endExclusive } = getDateRange(
+  const {
     selectedStartDate,
     selectedEndDate,
-  );
+    selectedPreset,
+    start,
+    endExclusive,
+  } = resolveSelectedDateRange(params);
 
   // ============================================
   // REVENUE CARD DATE RANGES
   // Independent of DateSelector
   // ============================================
 
-  const now = new Date();
-
-  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
-  const tomorrowStart = new Date(
-    now.getFullYear(),
-    now.getMonth(),
-    now.getDate() + 1,
-  );
-
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-
-  const nextMonthStart = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-
-  const yearStart = new Date(now.getFullYear(), 0, 1);
-
-  const nextYearStart = new Date(now.getFullYear() + 1, 0, 1);
+  const revenueDateRanges = getRevenueDateRanges();
 
   // ============================================
   // GOAL CONFIGURATION
@@ -171,217 +74,61 @@ export default async function AdminDashboardPage({ searchParams }) {
   // FETCH DATA
   // ============================================
 
-  const [allJobs, allEstimates, opportunities, revenueSales, teamMembers] =
-    await Promise.all([
-      // Company Revenue from ServiceTitan Jobs API
-      getAllJobs({
-        pageSize: 100,
-        maxPages: 100,
-      }),
-
-      // ServiceTitan Estimates
-      getAllEstimates({
-        pageSize: 100,
-        maxPages: 10,
-      }),
-
-      // CRM Opportunities
-      prisma.opportunity.findMany({
-        where: {
-          opportunityDate: {
-            gte: start,
-            lt: endExclusive,
-          },
-        },
-
-        select: {
-          id: true,
-          assignedToId: true,
-          value: true,
-          status: true,
-        },
-      }),
-
-      // Assigned Sales Revenue from PostgreSQL
-      // Used only for individual team performance
-      prisma.sale.findMany({
-        where: {
-          saleValue: {
-            gt: 0,
-          },
-
-          completedAt: {
-            gte: start,
-            lt: endExclusive,
-          },
-
-          salesmanId: {
-            not: null,
-          },
-        },
-
-        select: {
-          id: true,
-          saleValue: true,
-          completedAt: true,
-          salesmanId: true,
-        },
-      }),
-
-      // Active Admins and Salespersons
-      prisma.user.findMany({
-        where: {
-          role: {
-            in: ["ADMIN", "SALESPERSON"],
-          },
-
-          isActive: true,
-        },
-
-        select: {
-          id: true,
-          name: true,
-          title: true,
-          role: true,
-          monthlyGoal: true,
-          quarterlyGoal: true,
-          annualGoal: true,
-        },
-
-        orderBy: {
-          name: "asc",
-        },
-      }),
-    ]);
-
-  // ============================================
-  // FILTER COMPLETED SERVICETITAN JOBS
-  // ============================================
-
-  const completedJobs = allJobs.filter((job) => {
-    return isCompletedJob(job) && getJobValue(job) > 0;
+  const {
+    jobs,
+    estimates,
+    opportunities,
+    revenueSales,
+    teamMembers,
+  } = await getAdminDashboardData({
+    start,
+    endExclusive,
   });
 
   // ============================================
-  // SALES REVENUE CARD
-  // Data from ServiceTitan Jobs API
+  // SALES REVENUE METRICS
+  // ServiceTitan Jobs API
   // ============================================
 
-  const todayJobs = completedJobs.filter((job) =>
-    isWithinRange(job.completedOn, todayStart, tomorrowStart),
-  );
-
-  const monthJobs = completedJobs.filter((job) =>
-    isWithinRange(job.completedOn, monthStart, nextMonthStart),
-  );
-
-  const yearJobs = completedJobs.filter((job) =>
-    isWithinRange(job.completedOn, yearStart, nextYearStart),
-  );
-
-  const todayRevenue = calculateJobRevenue(todayJobs);
-  const monthRevenue = calculateJobRevenue(monthJobs);
-  const yearRevenue = calculateJobRevenue(yearJobs);
-
-  // ============================================
-  // FILTER ESTIMATES BY CREATED DATE
-  // ============================================
-
-  const selectedPeriodEstimates = allEstimates.filter((estimate) =>
-    isWithinRange(estimate.createdOn, start, endExclusive),
-  );
-
-  const totalEstimates = selectedPeriodEstimates.length;
-
-  // ============================================
-  // PIPELINE CALCULATIONS
-  // ============================================
-
-  const openOpportunities = opportunities.filter(
-    (opportunity) => opportunity.status === "OPEN",
-  );
-
-  const totalOpportunities = opportunities.length;
-
-  const pipelineValue = openOpportunities.reduce(
-    (total, opportunity) => total + Number(opportunity.value || 0),
-    0,
-  );
-
-  // ============================================
-  // SALES REVENUE BY SALESPERSON
-  // Data from PostgreSQL Sale Model
-  // ============================================
-
-  const revenueByMember = new Map();
-
-  for (const sale of revenueSales) {
-    if (!sale.salesmanId) {
-      continue;
-    }
-
-    const currentRevenue = revenueByMember.get(sale.salesmanId) || 0;
-
-    revenueByMember.set(sale.salesmanId, currentRevenue + getSaleValue(sale));
-  }
-
-  // ============================================
-  // OPPORTUNITY COUNT BY TEAM MEMBER
-  // ============================================
-
-  const opportunityCountByMember = new Map();
-
-  for (const opportunity of opportunities) {
-    if (!opportunity.assignedToId) {
-      continue;
-    }
-
-    const memberId = opportunity.assignedToId;
-
-    const currentCount = opportunityCountByMember.get(memberId) || 0;
-
-    opportunityCountByMember.set(memberId, currentCount + 1);
-  }
-
-  // ============================================
-  // SORT TEAM MEMBERS
-  // ============================================
-
-  const sortedTeamMembers = [...teamMembers].sort((a, b) => {
-    if (a.role === "ADMIN" && b.role !== "ADMIN") {
-      return -1;
-    }
-
-    if (a.role !== "ADMIN" && b.role === "ADMIN") {
-      return 1;
-    }
-
-    return a.name.localeCompare(b.name);
+  const {
+    todayRevenue,
+    monthRevenue,
+    yearRevenue,
+  } = getRevenueMetrics({
+    jobs,
+    dateRanges: revenueDateRanges,
   });
 
   // ============================================
-  // TEAM PERFORMANCE DATA
+  // ESTIMATE METRICS
   // ============================================
 
-  const teamData = sortedTeamMembers.map((member) => {
-    const memberGoal = calculateTeamGoal([member], goalConfiguration.goalType);
+  const {
+    totalEstimates,
+  } = getEstimateMetrics({
+    estimates,
+    start,
+    endExclusive,
+  });
 
-    return {
-      id: member.id,
-      name: member.name,
-      title: member.title || "",
-      role: member.role,
+  // ============================================
+  // PIPELINE METRICS
+  // ============================================
 
-      monthlyGoal: memberGoal,
+  const {
+    totalOpportunities,
+    pipelineValue,
+  } = getPipelineMetrics(opportunities);
 
-      revenue: revenueByMember.get(member.id) || 0,
+  // ============================================
+  // TEAM PERFORMANCE METRICS
+  // ============================================
 
-      commission: 0,
-
-      opportunities: opportunityCountByMember.get(member.id) || 0,
-
-      closeRate: 0,
-    };
+  const teamData = getTeamMetrics({
+    teamMembers,
+    goalType: goalConfiguration.goalType,
+    revenueSales,
+    opportunities,
   });
 
   // ============================================

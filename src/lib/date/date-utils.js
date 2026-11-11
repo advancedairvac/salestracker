@@ -1,4 +1,3 @@
-
 // ============================================
 // DATE PRESETS
 // ============================================
@@ -32,6 +31,26 @@ export function toInputDate(date) {
 }
 
 // ============================================
+// VALIDATE DATE STRING
+// ============================================
+
+export function isValidDateString(value) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value || "")) {
+    return false;
+  }
+
+  const [year, month, day] = value.split("-").map(Number);
+  const date = new Date(year, month - 1, day);
+
+  return (
+    !Number.isNaN(date.getTime()) &&
+    date.getFullYear() === year &&
+    date.getMonth() === month - 1 &&
+    date.getDate() === day
+  );
+}
+
+// ============================================
 // FORMAT DATE
 // ============================================
 
@@ -56,7 +75,7 @@ export function getInitialRange() {
 }
 
 // ============================================
-// GET DATE RANGE
+// GET DATE RANGE BY PRESET
 // ============================================
 
 export function getDateRange(preset) {
@@ -150,5 +169,72 @@ export function getDateRange(preset) {
   return {
     startDate: toInputDate(start),
     endDate: toInputDate(end),
+  };
+}
+
+// ============================================
+// GET DATABASE DATE BOUNDS
+// Inclusive start, exclusive end
+// ============================================
+
+export function getDateBounds(startDate, endDate) {
+  if (
+    !isValidDateString(startDate) ||
+    !isValidDateString(endDate) ||
+    startDate > endDate
+  ) {
+    throw new Error("Invalid date range.");
+  }
+
+  const [startYear, startMonth, startDay] = startDate.split("-").map(Number);
+
+  const [endYear, endMonth, endDay] = endDate.split("-").map(Number);
+
+  return {
+    start: new Date(startYear, startMonth - 1, startDay),
+    endExclusive: new Date(endYear, endMonth - 1, endDay + 1),
+  };
+}
+
+// ============================================
+// CHECK DATE WITHIN RANGE
+// ============================================
+
+export function isWithinRange(dateValue, start, endExclusive) {
+  if (!dateValue) {
+    return false;
+  }
+
+  const date = new Date(dateValue);
+
+  return !Number.isNaN(date.getTime()) && date >= start && date < endExclusive;
+}
+
+// ============================================
+// GET REVENUE CARD DATE RANGES
+// Today, MTD and YTD
+// ============================================
+
+export function getRevenueDateRanges(referenceDate = new Date()) {
+  const year = referenceDate.getFullYear();
+  const month = referenceDate.getMonth();
+  const day = referenceDate.getDate();
+
+  const todayStart = new Date(year, month, day);
+  const tomorrowStart = new Date(year, month, day + 1);
+
+  const monthStart = new Date(year, month, 1);
+  const nextMonthStart = new Date(year, month + 1, 1);
+
+  const yearStart = new Date(year, 0, 1);
+  const nextYearStart = new Date(year + 1, 0, 1);
+
+  return {
+    todayStart,
+    tomorrowStart,
+    monthStart,
+    nextMonthStart,
+    yearStart,
+    nextYearStart,
   };
 }
