@@ -3,11 +3,6 @@
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
-import {
-  updateFollowUpMode,
-  updateOpportunityStatus,
-} from "@/app/admin/opportunities/[id]/actions";
-
 // ============================================
 // HELPERS
 // ============================================
@@ -46,7 +41,7 @@ function getLocalDateValue(date = new Date()) {
 }
 
 // Convert selected date into local 7:30 AM.
-function getManualFollowUpDateTime(date) {
+function getLocalDateTimeAt730(date) {
   if (!date) return null;
 
   const value = new Date(`${date}T07:30:00`);
@@ -71,17 +66,6 @@ function getEarliestFollowUpDate() {
   }
 
   return getLocalDateValue(now);
-}
-
-// Set reopening time to 7:30 AM in the browser's local timezone.
-function getReopenDateTime(date) {
-  if (!date) return null;
-
-  const value = new Date(`${date}T07:30:00`);
-
-  if (Number.isNaN(value.getTime())) return null;
-
-  return value;
 }
 
 function isOverdue(date) {
@@ -137,7 +121,12 @@ function Toggle({ checked, onChange, disabled }) {
 // OPPORTUNITY ACTIONS
 // ============================================
 
-export default function OpportunityActions({ opportunity, schedule }) {
+export default function OpportunityActions({
+  opportunity,
+  schedule,
+  updateFollowUpModeAction,
+  updateOpportunityStatusAction,
+}) {
   const router = useRouter();
 
   // ============================================
@@ -234,38 +223,47 @@ export default function OpportunityActions({ opportunity, schedule }) {
     const nextMode = isStandard ? "MANUAL" : "STANDARD";
 
     startTransition(async () => {
-      const result = await updateFollowUpMode(opportunity.id, nextMode);
+      try {
+        const result = await updateFollowUpModeAction(opportunity.id, nextMode);
 
-      if (!result?.success) {
-        setError(result?.error || "Unable to update the follow-up schedule.");
-        return;
-      }
+        if (!result?.success) {
+          setError(result?.error || "Unable to update the follow-up schedule.");
+          return;
+        }
 
-      if (nextMode === "STANDARD") {
-        setMode("STANDARD");
-        setShowEditor(false);
+        if (nextMode === "STANDARD") {
+          setMode("STANDARD");
+          setShowEditor(false);
+          setNextFollowUpAt(result.nextFollowUpAt || null);
+          setSuccess("Standard follow-up intervals activated.");
+
+          router.refresh();
+          return;
+        }
+
+        setMode("MANUAL");
+
+        if (result.needsDate) {
+          setSavedManualDateTime(null);
+          setManualDate(getLocalDateValue());
+          setNextFollowUpAt(null);
+          setShowEditor(true);
+          return;
+        }
+
+        const savedDateTime = result.manualDateTime || result.nextFollowUpAt;
+
+        setSavedManualDateTime(savedDateTime);
+        setManualDate(getLocalDateValue(savedDateTime));
         setNextFollowUpAt(result.nextFollowUpAt || null);
-        setSuccess("Standard follow-up intervals activated.");
-        return;
+        setShowEditor(false);
+        setSuccess("Saved manual follow-up activated.");
+
+        router.refresh();
+      } catch (error) {
+        console.error("Follow-up toggle failed:", error);
+        setError("Something went wrong. Please try again.");
       }
-
-      setMode("MANUAL");
-
-      if (result.needsDate) {
-        setSavedManualDateTime(null);
-        setManualDate(getLocalDateValue());
-        setNextFollowUpAt(null);
-        setShowEditor(true);
-        return;
-      }
-
-      const savedDateTime = result.manualDateTime || result.nextFollowUpAt;
-
-      setSavedManualDateTime(savedDateTime);
-      setManualDate(getLocalDateValue(savedDateTime));
-      setNextFollowUpAt(result.nextFollowUpAt || null);
-      setShowEditor(false);
-      setSuccess("Saved manual follow-up activated.");
     });
   }
 
@@ -296,7 +294,7 @@ export default function OpportunityActions({ opportunity, schedule }) {
       return;
     }
 
-    const selectedDate = getManualFollowUpDateTime(manualDate);
+    const selectedDate = getLocalDateTimeAt730(manualDate);
 
     if (!selectedDate) {
       setError("Please select a valid follow-up date.");
@@ -316,27 +314,34 @@ export default function OpportunityActions({ opportunity, schedule }) {
     const selectedDateISO = selectedDate.toISOString();
 
     startTransition(async () => {
-      const result = await updateFollowUpMode(
-        opportunity.id,
-        "MANUAL",
-        selectedDateISO,
-      );
+      try {
+        const result = await updateFollowUpModeAction(
+          opportunity.id,
+          "MANUAL",
+          selectedDateISO,
+        );
 
-      if (!result?.success) {
-        setError(result?.error || "Unable to save the manual follow-up.");
-        return;
+        if (!result?.success) {
+          setError(result?.error || "Unable to save the manual follow-up.");
+          return;
+        }
+
+        setMode("MANUAL");
+
+        const savedDateTime = result.manualDateTime || selectedDateISO;
+
+        setSavedManualDateTime(savedDateTime);
+        setManualDate(getLocalDateValue(savedDateTime));
+        setNextFollowUpAt(result.nextFollowUpAt || selectedDateISO);
+
+        setShowEditor(false);
+        setSuccess("Manual follow-up date saved. Time: 7:30 AM.");
+
+        router.refresh();
+      } catch (error) {
+        console.error("Manual follow-up save failed:", error);
+        setError("Something went wrong. Please try again.");
       }
-
-      setMode("MANUAL");
-
-      const savedDateTime = result.manualDateTime || selectedDateISO;
-
-      setSavedManualDateTime(savedDateTime);
-      setManualDate(getLocalDateValue(savedDateTime));
-      setNextFollowUpAt(result.nextFollowUpAt || selectedDateISO);
-
-      setShowEditor(false);
-      setSuccess("Manual follow-up date saved. Time: 7:30 AM.");
     });
   }
 
@@ -410,7 +415,7 @@ export default function OpportunityActions({ opportunity, schedule }) {
         return;
       }
 
-      const selectedDate = getReopenDateTime(reopenDate);
+      const selectedDate = getLocalDateTimeAt730(reopenDate);
 
       if (!selectedDate) {
         setStatusError("Please select a valid reopening date.");
@@ -428,33 +433,38 @@ export default function OpportunityActions({ opportunity, schedule }) {
     }
 
     startStatusTransition(async () => {
-      const result = await updateOpportunityStatus(
-        opportunity.id,
-        "CLOSE",
-        payload,
-      );
-
-      if (!result?.success) {
-        setStatusError(
-          result?.error || "Unable to update the opportunity status.",
+      try {
+        const result = await updateOpportunityStatusAction(
+          opportunity.id,
+          "CLOSE",
+          payload,
         );
-        return;
+
+        if (!result?.success) {
+          setStatusError(
+            result?.error || "Unable to update the opportunity status.",
+          );
+          return;
+        }
+
+        const nextStatus =
+          closeType === "TEMPORARY"
+            ? "TEMPORARILY_CLOSED"
+            : "SCHEDULED_TO_REOPEN";
+
+        setCurrentStatus(nextStatus);
+        setShowCloseForm(false);
+        setCloseType("");
+
+        setStatusSuccess(
+          result.message || "Opportunity status updated successfully.",
+        );
+
+        router.refresh();
+      } catch (error) {
+        console.error("Close opportunity failed:", error);
+        setStatusError("Something went wrong. Please try again.");
       }
-
-      const nextStatus =
-        closeType === "TEMPORARY"
-          ? "TEMPORARILY_CLOSED"
-          : "SCHEDULED_TO_REOPEN";
-
-      setCurrentStatus(nextStatus);
-      setShowCloseForm(false);
-      setCloseType("");
-
-      setStatusSuccess(
-        result.message || "Opportunity status updated successfully.",
-      );
-
-      router.refresh();
     });
   }
 

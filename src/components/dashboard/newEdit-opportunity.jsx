@@ -2,9 +2,6 @@
 
 import { useActionState, useEffect, useState } from "react";
 
-
-import { updateOpportunity } from "@/app/admin/opportunities/[id]/actions";
-
 import Input from "@/components/ui/input";
 import CustomerSearch from "@/components/ui/customer-search";
 
@@ -192,6 +189,7 @@ export default function NewEditOpportunity({
   users = [],
   today,
   createAction,
+  updateAction,
   mode = "new",
   opportunityId = "",
   initialValues = {},
@@ -199,9 +197,13 @@ export default function NewEditOpportunity({
   const isEdit = mode === "edit";
   const isAdmin = user?.role === "ADMIN";
 
- const action = isEdit ? updateOpportunity : createAction;
+  // Select action based on form mode
+  const action = isEdit ? updateAction : createAction;
 
-  const [state, formAction, pending] = useActionState(action, initialState);
+  const [state, formAction, pending] = useActionState(
+    action || (() => Promise.resolve(initialState)),
+    initialState,
+  );
 
   const [values, setValues] = useState(() =>
     prepareInitialValues(today, initialValues, user),
@@ -277,14 +279,24 @@ export default function NewEditOpportunity({
     value: "Please enter a valid dollar value.",
     email: "Please enter a valid email address.",
     date: "Please select a valid opportunity date.",
-    followup: "Please select a valid follow-up date.",
-    assignee: "Please select a valid team member.",
+
+    followUpDate: "Please select a valid follow-up date.",
+    followUpDatePast: "Follow-up date must be in the future.",
+
+    assignment: "Please select a valid team member.",
+
     create: "Unable to create opportunity. Please try again.",
     update: "Unable to update opportunity. Please try again.",
+
     opportunity: "Opportunity not found.",
     status: "This opportunity can no longer be edited.",
+
     permission: "You do not have permission to perform this action.",
   };
+
+  /* -------------------------------------------------------
+     RENDER
+  ------------------------------------------------------- */
 
   return (
     <section className="w-full max-w-[700px]">
@@ -353,13 +365,19 @@ export default function NewEditOpportunity({
           onChange={handleChange}
         >
           <option value="EQUIPMENT ONLY">EQUIPMENT ONLY</option>
+
           <option value="INSTALL">INSTALL</option>
+
           <option value="SERVICE">SERVICE</option>
+
           <option value="PREVENTATIVE MAINTENANCE">
             PREVENTATIVE MAINTENANCE
           </option>
+
           <option value="AUTOMOTIVE">AUTOMOTIVE</option>
+
           <option value="HVACR">HVACR</option>
+
           <option value="OTHER">OTHER</option>
         </FloatingSelect>
 
@@ -427,7 +445,7 @@ export default function NewEditOpportunity({
           />
         )}
 
-        {/* ASSIGNED TO - ALWAYS AT THE END */}
+        {/* ASSIGNED TO */}
 
         {isAdmin ? (
           <FloatingSelect

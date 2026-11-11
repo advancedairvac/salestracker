@@ -1,13 +1,22 @@
 
-export async function findOrCreateOpportunityCustomer(tx, {
-  customerId,
-  stCustomerId,
-  businessName,
-  pocName,
-  phone,
-  email,
-  location,
-}) {
+export async function findOrCreateOpportunityCustomer(
+  tx,
+  values,
+  {
+    nameMatch = "any",
+    updateMode = "preserve",
+  } = {},
+) {
+  const {
+    customerId,
+    stCustomerId,
+    businessName,
+    pocName,
+    phone,
+    email,
+    location,
+  } = values;
+
   let customer = null;
 
   // 1. Match by ServiceTitan Customer ID.
@@ -28,7 +37,7 @@ export async function findOrCreateOpportunityCustomer(tx, {
     });
   }
 
-  // 3. Fallback matching for manually entered customers.
+  // 3. Fallback matching by customer names.
   if (!customer && (businessName || pocName)) {
     const customerConditions = [];
 
@@ -50,29 +59,62 @@ export async function findOrCreateOpportunityCustomer(tx, {
       });
     }
 
-    customer = await tx.customer.findFirst({
-      where: {
+    let nameWhere = null;
+
+    if (nameMatch === "both") {
+      // Match only when both names are provided and match.
+      if (businessName && pocName) {
+        nameWhere = {
+          AND: customerConditions,
+        };
+      }
+    } else {
+      // Match when either provided name matches.
+      nameWhere = {
         OR: customerConditions,
-      },
-      orderBy: {
-        createdAt: "asc",
-      },
-    });
+      };
+    }
+
+    if (nameWhere) {
+      customer = await tx.customer.findFirst({
+        where: nameWhere,
+        orderBy: {
+          createdAt: "asc",
+        },
+      });
+    }
   }
 
   // 4. Update existing customer.
   if (customer) {
+    const preserveExistingValues = updateMode === "preserve";
+
     return tx.customer.update({
       where: {
         id: customer.id,
       },
       data: {
-        businessName: businessName || customer.businessName || null,
-        pocName,
-        phone: phone || customer.phone,
-        email: email || customer.email,
-        location: location || customer.location,
-        ...(stCustomerId ? { stCustomerId } : {}),
+        stCustomerId: stCustomerId || customer.stCustomerId || null,
+
+        businessName: preserveExistingValues
+          ? businessName || customer.businessName || null
+          : businessName || null,
+
+        pocName: preserveExistingValues
+          ? pocName || customer.pocName || null
+          : pocName || null,
+
+        phone: preserveExistingValues
+          ? phone || customer.phone || null
+          : phone || null,
+
+        email: preserveExistingValues
+          ? email || customer.email || null
+          : email || null,
+
+        location: preserveExistingValues
+          ? location || customer.location || null
+          : location || null,
       },
     });
   }
@@ -82,7 +124,7 @@ export async function findOrCreateOpportunityCustomer(tx, {
     data: {
       stCustomerId: stCustomerId || null,
       businessName: businessName || null,
-      pocName,
+      pocName: pocName || null,
       phone: phone || null,
       email: email || null,
       location: location || null,

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect } from "react";
@@ -6,6 +5,18 @@ import Link from "next/link";
 
 import OpportunityActions from "@/components/dashboard/opportunity-actions";
 import { useMobileEditAction } from "@/components/layout/app-shell";
+
+// Admin Server Actions
+import {
+  updateFollowUpMode as updateAdminFollowUpMode,
+  updateOpportunityStatus as updateAdminOpportunityStatus,
+} from "@/app/admin/opportunities/[id]/actions";
+
+// Salesperson Server Actions
+import {
+  updateFollowUpMode as updateSalespersonFollowUpMode,
+  updateOpportunityStatus as updateSalespersonOpportunityStatus,
+} from "@/app/salesperson/opportunities/[id]/actions";
 
 // ============================================
 // HELPERS
@@ -41,30 +52,63 @@ function formatCurrency(value) {
 }
 
 function getNextFollowUp(followUps = []) {
-  return [...followUps]
-    .filter(
-      (item) =>
-        item.isActive &&
-        item.status === "PENDING" &&
-        item.dueAt,
-    )
-    .sort(
-      (a, b) =>
-        new Date(a.dueAt).getTime() - new Date(b.dueAt).getTime(),
-    )[0]?.dueAt || null;
+  return (
+    [...followUps]
+      .filter(
+        (item) => item.isActive && item.status === "PENDING" && item.dueAt,
+      )
+      .sort(
+        (a, b) => new Date(a.dueAt).getTime() - new Date(b.dueAt).getTime(),
+      )[0]?.dueAt || null
+  );
 }
 
 // ============================================
 // OPPORTUNITY DETAILS
 // ============================================
 
-export default function OpportunityDetails({ opportunity, schedule }) {
+export default function OpportunityDetails({
+  opportunity,
+  schedule,
+  role = "ADMIN",
+}) {
   const { setMobileEditHref } = useMobileEditAction();
 
-  const editHref = `/admin/opportunities/${opportunity.id}/edit`;
+  const isSalesperson = role === "SALESPERSON";
+
+  // ============================================
+  // ROLE-BASED ROUTES
+  // ============================================
+
+  const basePath = isSalesperson
+    ? "/salesperson/opportunities"
+    : "/admin/opportunities";
+
+  const editHref = `${basePath}/${opportunity.id}/edit`;
+
+  // ============================================
+  // ROLE-BASED SERVER ACTIONS
+  // ============================================
+
+  const updateFollowUpModeAction = isSalesperson
+    ? updateSalespersonFollowUpMode
+    : updateAdminFollowUpMode;
+
+  const updateOpportunityStatusAction = isSalesperson
+    ? updateSalespersonOpportunityStatus
+    : updateAdminOpportunityStatus;
+
+  // ============================================
+  // OPPORTUNITY STATE
+  // ============================================
+
   const canEdit = opportunity.status === "OPEN";
 
   const nextFollowUpAt = getNextFollowUp(opportunity.followUps || []);
+
+  // ============================================
+  // MOBILE EDIT ACTION
+  // ============================================
 
   useEffect(() => {
     setMobileEditHref(canEdit ? editHref : null);
@@ -73,6 +117,10 @@ export default function OpportunityDetails({ opportunity, schedule }) {
       setMobileEditHref(null);
     };
   }, [setMobileEditHref, canEdit, editHref]);
+
+  // ============================================
+  // RENDER
+  // ============================================
 
   return (
     <section className="w-full max-w-3xl text-black">
@@ -118,9 +166,7 @@ export default function OpportunityDetails({ opportunity, schedule }) {
           </p>
         )}
 
-        {opportunity.customer?.phone && (
-          <p>{opportunity.customer.phone}</p>
-        )}
+        {opportunity.customer?.phone && <p>{opportunity.customer.phone}</p>}
 
         {opportunity.customer?.email && (
           <p className="break-all">{opportunity.customer.email}</p>
@@ -153,6 +199,8 @@ export default function OpportunityDetails({ opportunity, schedule }) {
       <OpportunityActions
         opportunity={opportunity}
         schedule={schedule}
+        updateFollowUpModeAction={updateFollowUpModeAction}
+        updateOpportunityStatusAction={updateOpportunityStatusAction}
       />
     </section>
   );

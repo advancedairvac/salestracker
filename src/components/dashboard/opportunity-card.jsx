@@ -1,5 +1,9 @@
 import Link from "next/link";
 
+// ============================================
+// HELPERS
+// ============================================
+
 function formatCurrency(value) {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
@@ -53,16 +57,28 @@ function getSourceLabel(source) {
   return labels[source] || source || "—";
 }
 
-export default function OpportunityCard({ opportunity }) {
+// ============================================
+// OPPORTUNITY CARD
+// ============================================
+
+export default function OpportunityCard({ opportunity, role = "ADMIN" }) {
   const customer = opportunity.customer;
   const assignedTo = opportunity.assignedTo;
 
+  const basePath =
+    role === "SALESPERSON"
+      ? "/salesperson/opportunities"
+      : "/admin/opportunities";
+
+  const detailsHref = `${basePath}/${opportunity.id}`;
+
   return (
     <Link
-      href={`/admin/opportunities/${opportunity.id}`}
+      href={detailsHref}
       className="group block w-full border border-[#d5d5d5] bg-white p-4 text-left transition-colors hover:border-[#777] sm:p-[18px]"
     >
       {/* Name and Status */}
+
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h3 className="truncate text-[19px] font-extrabold uppercase leading-tight tracking-[-0.4px] text-black sm:text-xl">
@@ -86,24 +102,29 @@ export default function OpportunityCard({ opportunity }) {
       </div>
 
       {/* Estimate Value */}
+
       <div className="mt-4">
         <strong className="text-xl font-extrabold tracking-tight text-black sm:text-2xl">
           {formatCurrency(opportunity.value)}
         </strong>
+
         <p className="mt-0.5 text-xs uppercase tracking-wide text-[#777]">
           Estimated Value
         </p>
       </div>
 
       {/* Divider */}
+
       <div className="my-4 border-t border-[#e5e5e5]" />
 
       {/* Opportunity Details */}
+
       <div className="grid grid-cols-2 gap-x-4 gap-y-3">
         <div className="min-w-0">
           <p className="text-[10px] font-semibold uppercase tracking-wider text-[#888]">
             Customer
           </p>
+
           <p className="mt-1 truncate text-sm font-semibold text-black">
             {customer?.pocName || "—"}
           </p>
@@ -113,6 +134,7 @@ export default function OpportunityCard({ opportunity }) {
           <p className="text-[10px] font-semibold uppercase tracking-wider text-[#888]">
             Assigned To
           </p>
+
           <p className="mt-1 truncate text-sm font-semibold text-black">
             {assignedTo?.name || "Unassigned"}
           </p>
@@ -122,6 +144,7 @@ export default function OpportunityCard({ opportunity }) {
           <p className="text-[10px] font-semibold uppercase tracking-wider text-[#888]">
             Lead Source
           </p>
+
           <p className="mt-1 truncate text-sm font-medium text-[#333]">
             {getSourceLabel(opportunity.source)}
           </p>
@@ -131,6 +154,7 @@ export default function OpportunityCard({ opportunity }) {
           <p className="text-[10px] font-semibold uppercase tracking-wider text-[#888]">
             Opportunity Date
           </p>
+
           <p className="mt-1 text-sm font-medium text-[#333]">
             {formatDate(opportunity.opportunityDate)}
           </p>
@@ -138,6 +162,7 @@ export default function OpportunityCard({ opportunity }) {
       </div>
 
       {/* Footer */}
+
       <div className="mt-4 flex items-center justify-between border-t border-[#e5e5e5] pt-3">
         <span className="text-xs font-medium text-[#777] transition-colors group-hover:text-black">
           View Opportunity
