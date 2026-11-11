@@ -19,6 +19,36 @@ export const PRESETS = [
 ];
 
 // ============================================
+// GENERAL DATE HELPERS
+// ============================================
+
+// Get the start of a day (local midnight)
+export function getDayStart(date = new Date()) {
+  const result = new Date(date);
+
+  if (Number.isNaN(result.getTime())) {
+    throw new Error("Invalid date.");
+  }
+
+  result.setHours(0, 0, 0, 0);
+
+  return result;
+}
+
+// Add or subtract calendar days without mutating the original date
+export function addDays(date, days) {
+  const result = new Date(date);
+
+  if (Number.isNaN(result.getTime()) || !Number.isInteger(days)) {
+    throw new Error("Invalid date or number of days.");
+  }
+
+  result.setDate(result.getDate() + days);
+
+  return result;
+}
+
+// ============================================
 // DATE HELPERS
 // ============================================
 

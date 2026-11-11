@@ -194,12 +194,14 @@ export default async function SalespersonDashboardPage({ searchParams }) {
           mtd={monthRevenue}
           ytd={yearRevenue}
           currency="$"
+          href="/salesperson/sales-revenue"
         />
 
         <PipelineCard
           opportunities={totalOpportunities}
           estimates={totalEstimates}
           pipelineValue={pipelineValue}
+          href="/salesperson/pipeline"
         />
       </section>
 

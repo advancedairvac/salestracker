@@ -1,5 +1,18 @@
+import { getDayStart, addDays } from "@/lib/date/date-utils";
 
- // ============================================
+// ============================================
+// PIPELINE FILTER CONSTANTS
+// ============================================
+
+export const PIPELINE_DATE_FILTERS = [
+  "TODAY",
+  "TOMORROW",
+  "NEXT_WEEK",
+  "NEXT_MONTH",
+  "BEYOND",
+];
+
+// ============================================
 // GET OPPORTUNITY VALUE
 // ============================================
 
@@ -14,9 +27,7 @@ export function getOpportunityValue(opportunity) {
 // ============================================
 
 export function getOpenOpportunities(opportunities = []) {
-  return opportunities.filter(
-    (opportunity) => opportunity.status === "OPEN",
-  );
+  return opportunities.filter((opportunity) => opportunity.status === "OPEN");
 }
 
 // ============================================
@@ -42,9 +53,82 @@ export function getPipelineSummary(opportunities = []) {
   return {
     totalOpportunities: opportunities.length,
     openOpportunities: openOpportunities.length,
-    pipelineValue: openOpportunities.reduce(
-      (total, opportunity) => total + getOpportunityValue(opportunity),
-      0,
-    ),
+    pipelineValue: calculatePipelineValue(openOpportunities),
   };
+}
+
+// ============================================
+// GET FOLLOW-UP DATE RANGE
+// ============================================
+
+export function getFollowUpDateRange(filter, referenceDate = new Date()) {
+  const today = getDayStart(referenceDate);
+
+  switch (filter) {
+    case "TODAY": {
+      return {
+        start: today,
+        endExclusive: addDays(today, 1),
+      };
+    }
+
+    case "TOMORROW": {
+      const start = addDays(today, 1);
+
+      return {
+        start,
+        endExclusive: addDays(start, 1),
+      };
+    }
+
+    case "NEXT_WEEK": {
+      return {
+        start: addDays(today, 2),
+        endExclusive: addDays(today, 8),
+      };
+    }
+
+    case "NEXT_MONTH": {
+      const start = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+
+      return {
+        start,
+        endExclusive: new Date(today.getFullYear(), today.getMonth() + 2, 1),
+      };
+    }
+
+    case "BEYOND": {
+      return {
+        start: new Date(today.getFullYear(), today.getMonth() + 2, 1),
+        endExclusive: null,
+      };
+    }
+
+    default:
+      return null;
+  }
+}
+
+// ============================================
+// VALIDATE PIPELINE FILTER
+// ============================================
+
+export function getSelectedFilter(value, users = []) {
+  if (!value || value === "ALL") {
+    return "ALL";
+  }
+
+  if (PIPELINE_DATE_FILTERS.includes(value)) {
+    return value;
+  }
+
+  if (value.startsWith("USER:")) {
+    const userId = value.slice(5);
+
+    const userExists = users.some((user) => user.id === userId);
+
+    return userExists ? value : "ALL";
+  }
+
+  return "ALL";
 }
