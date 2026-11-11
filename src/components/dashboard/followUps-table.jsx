@@ -93,6 +93,7 @@ export default function FollowUpsTable({
   currency = "$",
   className = "",
   showSalesman = true,
+  currentUserId = null,
 }) {
   // ============================================
   // PAGINATION STATE
@@ -177,8 +178,13 @@ export default function FollowUpsTable({
                   "—";
 
                 const jobType = opportunity?.jobType?.trim();
-
                 const salesman = followUp.assignedTo;
+
+                // Admin can access every opportunity.
+                // Salesperson can access only their own assigned opportunity.
+                const canOpenOpportunity = currentUserId
+                  ? salesman?.id === currentUserId
+                  : true;
 
                 return (
                   <tr
@@ -194,9 +200,13 @@ export default function FollowUpsTable({
                     {/* CUSTOMER / OPPORTUNITY */}
 
                     <td className="px-3 py-2 text-xs leading-tight text-black lg:text-sm">
-                      {opportunity?.id ? (
+                      {opportunity?.id && canOpenOpportunity ? (
                         <Link
-                          href={`/admin/opportunities/${opportunity.id}`}
+                          href={
+                            currentUserId
+                              ? `/salesperson/opportunities/${opportunity.id}`
+                              : `/admin/opportunities/${opportunity.id}`
+                          }
                           className="underline underline-offset-2"
                         >
                           <span className="font-bold">{customerName}</span>
@@ -206,7 +216,13 @@ export default function FollowUpsTable({
                           <span className="font-normal">{jobType || "—"}</span>
                         </Link>
                       ) : (
-                        customerName
+                        <>
+                          <span className="font-bold">{customerName}</span>
+
+                          <br />
+
+                          <span className="font-normal">{jobType || "—"}</span>
+                        </>
                       )}
                     </td>
 
@@ -215,12 +231,16 @@ export default function FollowUpsTable({
                     {showSalesman && (
                       <td className="whitespace-nowrap px-3 py-2 text-xs text-black lg:text-sm">
                         {salesman?.id ? (
-                          <Link
-                            href={`/admin/salesmen/${salesman.id}`}
-                            className="underline underline-offset-2"
-                          >
-                            {salesman.name}
-                          </Link>
+                          currentUserId ? (
+                            <span>{salesman.name}</span>
+                          ) : (
+                            <Link
+                              href={`/admin/salesmen/${salesman.id}`}
+                              className="underline underline-offset-2"
+                            >
+                              {salesman.name}
+                            </Link>
+                          )
                         ) : (
                           "—"
                         )}

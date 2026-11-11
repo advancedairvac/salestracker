@@ -229,7 +229,7 @@ export default async function SalespersonDashboardPage({ searchParams }) {
               monthlyGoal={salespersonData.monthlyGoal}
               opportunities={salespersonData.opportunities}
               closeRate={salespersonData.closeRate}
-              href="/salesperson/profile"
+              href={`/salesperson/salesmen/${salespersonData.id}`}
             />
           </div>
         ) : (

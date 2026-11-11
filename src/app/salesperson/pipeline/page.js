@@ -84,7 +84,10 @@ export default async function SalespersonPipelinePage({ searchParams }) {
           Follow-ups
         </h2>
 
-        <FollowUpsTable followUps={followUpData} />
+        <FollowUpsTable
+          followUps={followUpData}
+          currentUserId={authenticatedUser.id}
+        />
       </section>
 
       {/* First Progress Separator */}

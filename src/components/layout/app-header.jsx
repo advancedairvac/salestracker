@@ -4,14 +4,18 @@ import Link from "next/link";
 import SvgIcon from "@/components/icons/svg-icons";
 
 export default function AppHeader({
+  role = "salesperson",
   onMenuClick,
   menuOpen = false,
   editHref = null,
 }) {
+  const logoHref =
+    String(role).toLowerCase() === "admin" ? "/admin" : "/salesperson";
+
   return (
     <header className="sticky top-0 z-30 flex h-16 w-full shrink-0 items-center justify-between border-b border-neutral-200 bg-white px-5 md:hidden">
       <Link
-        href="/"
+        href={logoHref}
         aria-label="Sales Tracker home"
         className="flex items-center"
       >

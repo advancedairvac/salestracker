@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+
 import SvgIcon from "@/components/icons/svg-icons";
 import { getNavigation } from "@/config/navigation";
 
@@ -14,15 +15,40 @@ export default function AppSidebar({
   onLoginRequired,
 }) {
   const pathname = usePathname();
+
+  const normalizedRole = String(role).toLowerCase();
+  const isAdmin = normalizedRole === "admin";
+
   const items = getNavigation(role, isAuthenticated);
 
   const primaryItems = items.filter((item) => item.type === "primary");
   const secondaryItems = items.filter((item) => item.type === "secondary");
 
-  const isAdmin = role?.toLowerCase() === "admin";
+  // ============================================
+  // ROLE-BASED LOGO DESTINATION
+  // ============================================
 
-  const isActive = (href) =>
-    Boolean(href) && (pathname === href || pathname.startsWith(`${href}/`));
+  const logoHref = !isAuthenticated ? "/" : isAdmin ? "/admin" : "/salesperson";
+
+  // ============================================
+  // ACTIVE NAVIGATION
+  // ============================================
+
+  const isActive = (href) => {
+    if (!href) return false;
+
+    // Dashboard must only be active on its exact route.
+    if (href === "/admin" || href === "/salesperson") {
+      return pathname === href;
+    }
+
+    // Other navigation items support nested routes.
+    return pathname === href || pathname.startsWith(`${href}/`);
+  };
+
+  // ============================================
+  // LINK STYLES
+  // ============================================
 
   const linkBaseClasses = [
     "group relative block w-fit max-w-full",
@@ -56,6 +82,10 @@ export default function AppSidebar({
         : "text-black hover:text-[#005cb9]",
     ].join(" ");
 
+  // ============================================
+  // RENDER NAVIGATION ITEM
+  // ============================================
+
   const renderItem = (item, index) => {
     const active = isActive(item.href);
 
@@ -64,6 +94,7 @@ export default function AppSidebar({
         ? primaryClasses(active)
         : secondaryClasses(active);
 
+    // LOGOUT
     if (item.action === "logout") {
       return (
         <li key={`${item.label}-${index}`}>
@@ -81,6 +112,7 @@ export default function AppSidebar({
       );
     }
 
+    // EXTERNAL LINK
     if (item.external) {
       return (
         <li key={`${item.label}-${index}`}>
@@ -97,6 +129,7 @@ export default function AppSidebar({
       );
     }
 
+    // UNAUTHENTICATED USER
     if (!isAuthenticated) {
       return (
         <li key={`${item.label}-${index}`}>
@@ -111,6 +144,7 @@ export default function AppSidebar({
       );
     }
 
+    // ITEM WITHOUT HREF
     if (!item.href) {
       return (
         <li key={`${item.label}-${index}`}>
@@ -125,6 +159,7 @@ export default function AppSidebar({
       );
     }
 
+    // INTERNAL LINK
     return (
       <li key={`${item.label}-${index}`}>
         <Link
@@ -139,6 +174,10 @@ export default function AppSidebar({
     );
   };
 
+  // ============================================
+  // SIDEBAR
+  // ============================================
+
   return (
     <aside
       className={[
@@ -152,7 +191,8 @@ export default function AppSidebar({
             ].join(" "),
       ].join(" ")}
     >
-      {/* Account badge / Login lock */}
+      {/* ACCOUNT BADGE / LOGIN LOCK */}
+
       <div className="absolute right-8 top-8 z-10 flex h-7 w-7 items-center justify-center">
         {isAuthenticated ? (
           <span
@@ -175,11 +215,18 @@ export default function AppSidebar({
         )}
       </div>
 
-      {/* Company logo */}
+      {/* COMPANY LOGO */}
+
       <div className="pb-10 pt-16">
         <Link
-          href="/"
-          aria-label="Advanced Sales Tracker home"
+          href={logoHref}
+          aria-label={
+            isAdmin
+              ? "Admin Dashboard"
+              : isAuthenticated
+                ? "Salesperson Dashboard"
+                : "Home"
+          }
           onClick={onNavigate}
           className="flex w-full items-center justify-center"
         >
@@ -190,7 +237,8 @@ export default function AppSidebar({
         </Link>
       </div>
 
-      {/* Navigation */}
+      {/* NAVIGATION */}
+
       <nav
         aria-label="Main navigation"
         className="flex-1 overflow-y-auto px-5 pb-5 pt-8 sm:px-7"
@@ -204,7 +252,8 @@ export default function AppSidebar({
         )}
       </nav>
 
-      {/* Search */}
+      {/* SEARCH */}
+
       <div className="shrink-0 bg-white px-5 pb-7 pt-3 sm:px-7">
         <label
           htmlFor={mobile ? "mobile-sidebar-search" : "sidebar-search"}
