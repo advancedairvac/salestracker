@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useState } from "react";
 
-import { createOpportunity } from "@/app/admin/opportunities/new/actions";
+
 import { updateOpportunity } from "@/app/admin/opportunities/[id]/actions";
 
 import Input from "@/components/ui/input";
@@ -191,6 +191,7 @@ export default function NewEditOpportunity({
   user,
   users = [],
   today,
+  createAction,
   mode = "new",
   opportunityId = "",
   initialValues = {},
@@ -198,7 +199,7 @@ export default function NewEditOpportunity({
   const isEdit = mode === "edit";
   const isAdmin = user?.role === "ADMIN";
 
-  const action = isEdit ? updateOpportunity : createOpportunity;
+ const action = isEdit ? updateOpportunity : createAction;
 
   const [state, formAction, pending] = useActionState(action, initialState);
 

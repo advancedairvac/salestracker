@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-
+import { createOpportunity } from "./actions";
 import { getAuthenticatedUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
@@ -84,7 +84,12 @@ export default async function NewOpportunityPage() {
 
       {/* New Opportunity Form */}
       <section className="mt-5 flex w-full flex-1 flex-col sm:mt-6">
-        <NewEditOpportunity user={user} users={users} today={today} />
+        <NewEditOpportunity
+          user={user}
+          users={users}
+          today={today}
+          createAction={createOpportunity}
+        />
       </section>
 
       {/* Page Tagline */}
