@@ -1,4 +1,4 @@
-Folder PATH listing
+﻿Folder PATH listing
 Volume serial number is B0B6-FCE3
 D:\PROJECT\ADVANCED-SALES-TRACKER\SRC
 +---app
@@ -44,6 +44,7 @@ D:\PROJECT\ADVANCED-SALES-TRACKER\SRC
 |   |   |   |   page.js
 |   |   |   |   
 |   |   |   +---new
+|   |   |   |       actions.js
 |   |   |   |       page.js
 |   |   |   |       
 |   |   |   \---[id]
@@ -56,8 +57,18 @@ D:\PROJECT\ADVANCED-SALES-TRACKER\SRC
 |   |   |       page.js
 |   |   |       
 |   |   \---settings
-|   |           page.js
-|   |           
+|   |       |   page.js
+|   |       |   
+|   |       +---commission-rule
+|   |       |       page.js
+|   |       |       
+|   |       +---sales-configuration
+|   |       |       actions.js
+|   |       |       page.js
+|   |       |       
+|   |       \---salesman-management
+|   |               page.js
+|   |               
 |   +---api
 |   |   +---auth
 |   |   |   +---login
@@ -67,6 +78,9 @@ D:\PROJECT\ADVANCED-SALES-TRACKER\SRC
 |   |   |           route.js
 |   |   |           
 |   |   +---db-test
+|   |   |       route.js
+|   |   |       
+|   |   +---profile
 |   |   |       route.js
 |   |   |       
 |   |   +---quickbooks
@@ -93,9 +107,6 @@ D:\PROJECT\ADVANCED-SALES-TRACKER\SRC
 |   |       +---customers
 |   |       |       route.js
 |   |       |       
-|   |       +---employees
-|   |       |       route.js
-|   |       |       
 |   |       +---estimates
 |   |       |       route.js
 |   |       |       
@@ -108,7 +119,10 @@ D:\PROJECT\ADVANCED-SALES-TRACKER\SRC
 |   |       +---test-employee
 |   |       |       route.js
 |   |       |       
-|   |       \---test-job-origin
+|   |       +---test-job-details
+|   |       |       route.js
+|   |       |       
+|   |       \---test-jobs
 |   |               route.js
 |   |               
 |   +---forgot-password
@@ -176,6 +190,7 @@ D:\PROJECT\ADVANCED-SALES-TRACKER\SRC
 |   |       revenue-table.jsx
 |   |       salesman-card.jsx
 |   |       stat-card.jsx
+|   |       table-pagination.jsx
 |   |       
 |   +---icons
 |   |       svg-icons.jsx
@@ -188,10 +203,22 @@ D:\PROJECT\ADVANCED-SALES-TRACKER\SRC
 |   |       mobile-navigation.jsx
 |   |       
 |   +---login
+|   +---profile
+|   |       profile-form.jsx
+|   |       
 |   +---quickbooks-testing
 |   |       quickbooks-tabs.jsx
 |   |       resource-data-tab.jsx
 |   |       
+|   +---settings
+|   |   |   admin-settings-cta.jsx
+|   |   |   settings-content.jsx
+|   |   |   
+|   |   \---sales-configuration
+|   |           job-assignment-modal.jsx
+|   |           job-card.jsx
+|   |           job-cards-list.jsx
+|   |           
 |   \---ui
 |           breadcrumbs.jsx
 |           customer-search.jsx
@@ -228,9 +255,7 @@ D:\PROJECT\ADVANCED-SALES-TRACKER\SRC
 |               Customer.ts
 |               FollowUp.ts
 |               FollowUpSchedule.ts
-|               IdCounter.ts
 |               Opportunity.ts
-|               QuickBooksConnection.ts
 |               Sale.ts
 |               User.ts
 |               
@@ -238,11 +263,27 @@ D:\PROJECT\ADVANCED-SALES-TRACKER\SRC
     |   auth.js
     |   prisma.js
     |   
+    +---dashboard
+    |       dashboard-data.js
+    |       dashboard-metrics.js
+    |       date-range-helpers.js
+    |       pipeline-data.js
+    |       pipeline-helpers.js
+    |       revenue-data.js
+    |       revenue-helpers.js
+    |       servicetitan-helpers.js
+    |       team-helpers.js
+    |       
     +---date
     |       date-utils.js
     |       goal-utils.js
     |       
-    \---integrations
-            quickbooks.js
-            servicetitan.js
+    +---integrations
+    |       quickbooks.js
+    |       servicetitan.js
+    |       
+    \---opportunities
+            OpportunityClose-action.js
+            OpportunityFollowups-action.js
+            opportunityNew-action.js
             
