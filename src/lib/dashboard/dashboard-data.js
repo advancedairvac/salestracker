@@ -1,10 +1,6 @@
-
 import { prisma } from "@/lib/prisma";
 
-import {
-  getJobs,
-  getEstimates,
-} from "@/lib/integrations/servicetitan";
+import { getJobs, getEstimates } from "@/lib/integrations/servicetitan";
 
 import { getRevenueDateRanges } from "@/lib/date/date-utils";
 
@@ -36,9 +32,7 @@ async function measureTime(label, callback) {
   } finally {
     const duration = performance.now() - start;
 
-    console.info(
-      `[Dashboard Performance] ${label}: ${duration.toFixed(0)}ms`,
-    );
+    console.info(`[Dashboard Performance] ${label}: ${duration.toFixed(0)}ms`);
   }
 }
 
@@ -120,10 +114,7 @@ async function fetchDashboardJobs() {
   ) {
     const pageNumbers = Array.from(
       {
-        length: Math.min(
-          PAGE_CONCURRENCY,
-          totalPages - startPage + 1,
-        ),
+        length: Math.min(PAGE_CONCURRENCY, totalPages - startPage + 1),
       },
       (_, index) => startPage + index,
     );
@@ -140,9 +131,7 @@ async function fetchDashboardJobs() {
 
     for (const result of pageResults) {
       if (!result || !Array.isArray(result.data)) {
-        throw new Error(
-          "Unable to fetch ServiceTitan dashboard jobs page.",
-        );
+        throw new Error("Unable to fetch ServiceTitan dashboard jobs page.");
       }
 
       jobs.push(...result.data);
@@ -181,17 +170,13 @@ async function fetchDashboardEstimates() {
   });
 
   if (!firstPage || !Array.isArray(firstPage.data)) {
-    throw new Error(
-      "Unable to fetch ServiceTitan dashboard estimates.",
-    );
+    throw new Error("Unable to fetch ServiceTitan dashboard estimates.");
   }
 
   const totalCount = Number(firstPage.totalCount);
 
   if (!Number.isFinite(totalCount) || totalCount < 0) {
-    throw new Error(
-      "Invalid ServiceTitan estimates totalCount.",
-    );
+    throw new Error("Invalid ServiceTitan estimates totalCount.");
   }
 
   // Optimize immediately instead of retaining full API objects.
@@ -207,10 +192,7 @@ async function fetchDashboardEstimates() {
   ) {
     const pageNumbers = Array.from(
       {
-        length: Math.min(
-          PAGE_CONCURRENCY,
-          totalPages - startPage + 1,
-        ),
+        length: Math.min(PAGE_CONCURRENCY, totalPages - startPage + 1),
       },
       (_, index) => startPage + index,
     );
@@ -255,8 +237,7 @@ async function fetchDashboardEstimates() {
   }
 
   const openEstimates = estimates.filter(
-    (estimate) =>
-      estimate.status.name.toLowerCase() === "open",
+    (estimate) => estimate.status.name.toLowerCase() === "open",
   );
 
   const openEstimateValue = openEstimates.reduce(
@@ -283,15 +264,9 @@ async function fetchDashboardEstimates() {
 async function fetchServiceTitanDashboardData() {
   // Jobs and Estimates run simultaneously.
   const [jobs, estimates] = await Promise.all([
-    measureTime(
-      "Dashboard Jobs Fetch",
-      fetchDashboardJobs,
-    ),
+    measureTime("Dashboard Jobs Fetch", fetchDashboardJobs),
 
-    measureTime(
-      "Dashboard Estimates Fetch",
-      fetchDashboardEstimates,
-    ),
+    measureTime("Dashboard Estimates Fetch", fetchDashboardEstimates),
   ]);
 
   return {
@@ -308,10 +283,7 @@ export async function getDashboardServiceTitanData() {
   const now = Date.now();
 
   // Return cached data.
-  if (
-    serviceTitanCache &&
-    now < serviceTitanCacheExpiresAt
-  ) {
+  if (serviceTitanCache && now < serviceTitanCacheExpiresAt) {
     console.info("[Dashboard Cache] ServiceTitan HIT");
 
     return serviceTitanCache;
@@ -333,8 +305,7 @@ export async function getDashboardServiceTitanData() {
 
     serviceTitanCache = data;
 
-    serviceTitanCacheExpiresAt =
-      Date.now() + SERVICE_TITAN_CACHE_TTL;
+    serviceTitanCacheExpiresAt = Date.now() + SERVICE_TITAN_CACHE_TTL;
 
     return data;
   } catch (error) {
@@ -387,6 +358,11 @@ export async function getDashboardOpportunities({
 // FETCH SALES REVENUE
 // ============================================
 
+// ============================================
+// FETCH SALES REVENUE
+// LIVE SERVICETITAN JOBS + CRM ASSIGNMENTS
+// ============================================
+
 export async function getDashboardRevenueSales({
   start,
   endExclusive,
@@ -396,35 +372,70 @@ export async function getDashboardRevenueSales({
     throw new Error("A valid date range is required.");
   }
 
-  const where = {
-    saleValue: {
-      gt: 0,
-    },
+  // Get cached live ServiceTitan jobs.
+  const { jobs } = await getDashboardServiceTitanData();
 
-    completedAt: {
-      gte: start,
-      lt: endExclusive,
-    },
+  // Filter completed jobs by selected date range and value.
+  const filteredJobs = jobs.filter((job) => {
+    const completedDate = new Date(job.completedOn);
 
-    salesmanId: {
-      not: null,
-    },
-  };
+    return (
+      completedDate >= start &&
+      completedDate < endExclusive &&
+      Number(job.total) > 0
+    );
+  });
 
-  if (salesmanId) {
-    where.salesmanId = salesmanId;
+  if (!filteredJobs.length) {
+    return [];
   }
 
-  return prisma.sale.findMany({
-    where,
+  // Get only CRM assignments for these ServiceTitan jobs.
+  const jobIds = filteredJobs.map((job) => String(job.id));
+
+  const assignments = await prisma.sale.findMany({
+    where: {
+      serviceTitanJobId: {
+        in: jobIds,
+      },
+
+      salesmanId: salesmanId
+        ? salesmanId
+        : {
+            not: null,
+          },
+    },
 
     select: {
-      id: true,
-      saleValue: true,
-      completedAt: true,
+      serviceTitanJobId: true,
       salesmanId: true,
     },
   });
+
+  // Map assignments by ServiceTitan Job ID.
+  const assignmentsByJobId = new Map(
+    assignments.map((assignment) => [
+      String(assignment.serviceTitanJobId),
+      assignment,
+    ]),
+  );
+
+  // Return the same data structure expected by dashboard metrics.
+  return filteredJobs
+    .filter((job) => assignmentsByJobId.has(String(job.id)))
+    .map((job) => {
+      const assignment = assignmentsByJobId.get(String(job.id));
+
+      return {
+        id: String(job.id),
+
+        saleValue: Number(job.total) || 0,
+
+        completedAt: new Date(job.completedOn),
+
+        salesmanId: assignment.salesmanId,
+      };
+    });
 }
 
 // ============================================
@@ -461,53 +472,36 @@ export async function getDashboardTeamMembers() {
 // FETCH ADMIN DASHBOARD DATA
 // ============================================
 
-export async function getAdminDashboardData({
-  start,
-  endExclusive,
-} = {}) {
-  return measureTime(
-    "Admin Dashboard Total",
-    async () => {
-      const [
-        serviceTitanData,
-        opportunities,
-        revenueSales,
-        teamMembers,
-      ] = await Promise.all([
+export async function getAdminDashboardData({ start, endExclusive } = {}) {
+  return measureTime("Admin Dashboard Total", async () => {
+    const [serviceTitanData, opportunities, revenueSales, teamMembers] =
+      await Promise.all([
         getDashboardServiceTitanData(),
 
-        measureTime(
-          "Admin Opportunities Query",
-          () =>
-            getDashboardOpportunities({
-              start,
-              endExclusive,
-            }),
+        measureTime("Admin Opportunities Query", () =>
+          getDashboardOpportunities({
+            start,
+            endExclusive,
+          }),
         ),
 
-        measureTime(
-          "Admin Revenue Sales Query",
-          () =>
-            getDashboardRevenueSales({
-              start,
-              endExclusive,
-            }),
+        measureTime("Admin Revenue Sales Query", () =>
+          getDashboardRevenueSales({
+            start,
+            endExclusive,
+          }),
         ),
 
-        measureTime(
-          "Admin Team Members Query",
-          getDashboardTeamMembers,
-        ),
+        measureTime("Admin Team Members Query", getDashboardTeamMembers),
       ]);
 
-      return {
-        ...serviceTitanData,
-        opportunities,
-        revenueSales,
-        teamMembers,
-      };
-    },
-  );
+    return {
+      ...serviceTitanData,
+      opportunities,
+      revenueSales,
+      teamMembers,
+    };
+  });
 }
 
 // ============================================
@@ -520,46 +514,41 @@ export async function getSalespersonDashboardData({
   salesmanId,
 } = {}) {
   if (!salesmanId) {
-    throw new Error(
-      "Authenticated salesperson ID is required.",
-    );
+    throw new Error("Authenticated salesperson ID is required.");
   }
 
-  return measureTime(
-    "Salesperson Dashboard Total",
-    async () => {
-      const [
-        serviceTitanData,
-        companyOpportunities,
-        ownOpportunities,
-        ownRevenueSales,
-      ] = await Promise.all([
-        getDashboardServiceTitanData(),
+  return measureTime("Salesperson Dashboard Total", async () => {
+    const [
+      serviceTitanData,
+      companyOpportunities,
+      ownOpportunities,
+      ownRevenueSales,
+    ] = await Promise.all([
+      getDashboardServiceTitanData(),
 
-        getDashboardOpportunities({
-          start,
-          endExclusive,
-        }),
+      getDashboardOpportunities({
+        start,
+        endExclusive,
+      }),
 
-        getDashboardOpportunities({
-          start,
-          endExclusive,
-          salesmanId,
-        }),
+      getDashboardOpportunities({
+        start,
+        endExclusive,
+        salesmanId,
+      }),
 
-        getDashboardRevenueSales({
-          start,
-          endExclusive,
-          salesmanId,
-        }),
-      ]);
+      getDashboardRevenueSales({
+        start,
+        endExclusive,
+        salesmanId,
+      }),
+    ]);
 
-      return {
-        ...serviceTitanData,
-        opportunities: companyOpportunities,
-        ownOpportunities,
-        revenueSales: ownRevenueSales,
-      };
-    },
-  );
+    return {
+      ...serviceTitanData,
+      opportunities: companyOpportunities,
+      ownOpportunities,
+      revenueSales: ownRevenueSales,
+    };
+  });
 }

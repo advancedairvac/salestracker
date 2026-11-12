@@ -92,7 +92,7 @@ model User {
   // Activities
   activities Activity[]
 
-  // Sales
+  // Sales Assignments
   assignedSales Sale[] @relation("SaleAssignedTo")
 
   @@index([role])
@@ -109,17 +109,16 @@ model Customer {
   // ServiceTitan customer reference
   stCustomerId String? @unique
 
-  pocName     String?
+  pocName      String?
   businessName String?
-  phone       String?
-  email       String?
-  location    String?
+  phone        String?
+  email        String?
+  location     String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   opportunities Opportunity[]
-  sales         Sale[]
 
   @@index([businessName])
   @@index([phone])
@@ -138,11 +137,11 @@ model Opportunity {
   customerId String
   customer   Customer @relation(fields: [customerId], references: [id], onDelete: Restrict)
 
-  title          String
+  title           String
   opportunityDate DateTime
-  jobType        String?
-  textMessage    String?
-  value          Decimal? @db.Decimal(12, 2)
+  jobType         String?
+  textMessage     String?
+  value           Decimal? @db.Decimal(12, 2)
 
   source LeadSource @default(COMPANY_GENERATED)
   status OpportunityStatus @default(OPEN)
@@ -267,37 +266,27 @@ model Activity {
 }
 
 // ============================================
-// SALE / REVENUE
+// SALE / REVENUE ASSIGNMENT
 // ============================================
 
 model Sale {
   id String @id @default(cuid())
 
-  // ServiceTitan job reference
-  serviceTitanJobId     String @unique
-  serviceTitanJobNumber String?
+  // ServiceTitan Job reference
+  serviceTitanJobId String @unique
 
-  // Customer information
-  customerId String?
-  customer   Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
-  customerName String?
-
-  // Revenue value from ServiceTitan
-  saleValue Decimal @default(0) @db.Decimal(12, 2)
-
-  // Admin-managed fields
-  source LeadSource?
-
+  // Admin-managed assignment fields
   salesmanId String?
   salesman   User? @relation("SaleAssignedTo", fields: [salesmanId], references: [id], onDelete: SetNull)
 
-  completedAt DateTime?
+  source LeadSource?
+
+  // Commission estimate
+  commissionEstimate Decimal @default(0) @db.Decimal(12, 2)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([customerId])
   @@index([salesmanId])
   @@index([source])
-  @@index([completedAt])
 }

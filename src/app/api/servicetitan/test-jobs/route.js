@@ -1,93 +1,78 @@
 
 import { NextResponse } from "next/server";
 import { getJobs } from "@/lib/integrations/servicetitan";
-import { getRevenueDateRanges } from "@/lib/date/date-utils";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
+  // Keep this endpoint available only in development.
+  if (process.env.NODE_ENV !== "development") {
+    return NextResponse.json(
+      { success: false, message: "Not found." },
+      { status: 404 },
+    );
+  }
+
   try {
-    const startTime = Date.now();
-
-    const {
-      yearStart,
-      nextYearStart,
-    } = getRevenueDateRanges();
-
-    const page = 1;
-    const pageSize = 500;
-
-    // Only request fields required by the Admin Dashboard Revenue Card.
-    const requestedFields = "id,jobStatus,completedOn,total";
-
-    const filters = {
-      page,
-      pageSize,
+    const result = await getJobs({
+      page: 1,
+      pageSize: 3,
       includeTotal: true,
       jobStatus: "Completed",
-      completedOnOrAfter: yearStart.toISOString(),
-      completedBefore: nextYearStart.toISOString(),
-      fields: requestedFields,
-    };
+    });
 
-    const response = await getJobs(filters);
+    const jobs = Array.isArray(result?.data) ? result.data : [];
 
-    const jobs = response?.data || [];
-    const totalCount = response?.totalCount || 0;
+    const sampleJobs = jobs.map((job) => ({
+      id: job.id ?? null,
+      jobNumber: job.jobNumber ?? null,
 
-    const returnedFields =
-      jobs.length > 0 ? Object.keys(jobs[0]) : [];
+      customerId: job.customerId ?? null,
+      customerName:
+        job.customerName ??
+        job.customer?.name ??
+        job.customer?.firstName ??
+        null,
 
-    const totalJobValue = jobs.reduce((sum, job) => {
-      return sum + (Number(job.total) || 0);
-    }, 0);
+      customerObject: job.customer
+        ? {
+            id: job.customer.id ?? null,
+            name: job.customer.name ?? null,
+            keys: Object.keys(job.customer),
+          }
+        : null,
 
-    const positiveValueJobs = jobs.filter(
-      (job) => Number(job.total) > 0
-    );
+      total: job.total ?? null,
+      jobStatus: job.jobStatus ?? null,
+      completedOn: job.completedOn ?? null,
 
-    const responseTime = Date.now() - startTime;
+      availableFields: Object.keys(job),
+    }));
 
     return NextResponse.json({
       success: true,
 
-      summary: {
-        page,
-        pageSize,
-        totalCount,
+      environment: process.env.SERVICETITAN_ENV || "integration",
+
+      metadata: {
+        totalCount: result.totalCount ?? null,
+        page: result.page ?? 1,
+        pageSize: result.pageSize ?? 3,
+        hasMore: result.hasMore ?? null,
         returnedRecords: jobs.length,
-        hasMore: jobs.length < totalCount,
-        completedJobs: jobs.filter(
-          (job) =>
-            String(job.jobStatus).toLowerCase() === "completed"
-        ).length,
-        positiveValueJobs: positiveValueJobs.length,
-        totalJobValue: Number(totalJobValue.toFixed(2)),
-        responseTime: `${responseTime}ms`,
       },
 
-      requestedFields: requestedFields.split(","),
-
-      returnedFields,
-
-      fieldProjectionSupported:
-        returnedFields.length > 0 &&
-        returnedFields.every((field) =>
-          requestedFields.split(",").includes(field)
-        ),
-
-      jobs,
+      sampleJobs,
     });
   } catch (error) {
-    console.error("ServiceTitan Test Jobs API Error:", error);
+    console.error("[ServiceTitan Test API]", error);
 
     return NextResponse.json(
       {
         success: false,
-        message: "Failed to fetch ServiceTitan jobs.",
-        error: error.message || "Unknown error",
+        message: error.message || "Unable to fetch ServiceTitan jobs.",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

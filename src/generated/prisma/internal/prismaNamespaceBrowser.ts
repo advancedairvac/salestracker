@@ -186,13 +186,9 @@ export type ActivityScalarFieldEnum = (typeof ActivityScalarFieldEnum)[keyof typ
 export const SaleScalarFieldEnum = {
   id: 'id',
   serviceTitanJobId: 'serviceTitanJobId',
-  serviceTitanJobNumber: 'serviceTitanJobNumber',
-  customerId: 'customerId',
-  customerName: 'customerName',
-  saleValue: 'saleValue',
-  source: 'source',
   salesmanId: 'salesmanId',
-  completedAt: 'completedAt',
+  source: 'source',
+  commissionEstimate: 'commissionEstimate',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
