@@ -39,7 +39,7 @@ let tokenRequestPromise = null;
 async function getAccessToken() {
   const now = Date.now();
 
-  // Reuse cached token if it is still valid.
+  // Reuse cached token if still valid.
   if (cachedAccessToken && now < tokenExpiresAt - 60_000) {
     return cachedAccessToken;
   }
@@ -101,8 +101,6 @@ async function getAccessToken() {
 // ============================================
 
 function invalidateAccessToken(accessToken) {
-  // Only invalidate the token used by the failed request.
-  // This prevents clearing a newer token created by another request.
   if (cachedAccessToken === accessToken) {
     cachedAccessToken = null;
     tokenExpiresAt = 0;
@@ -120,27 +118,13 @@ export async function serviceTitanRequest(path, params = {}) {
   const resolvedPath = path.replace("{tenant}", encodeURIComponent(tenantId));
 
   const url = new URL(`${SERVICE_TITAN_CONFIG.baseUrl}${resolvedPath}`);
+
+  // Add query parameters.
   Object.entries(params).forEach(([key, value]) => {
     if (value !== undefined && value !== null && value !== "") {
       url.searchParams.set(key, String(value));
     }
   });
-
-  // Temporary debugging
-  if (path.includes("/jobs")) {
-    console.log("ServiceTitan Jobs Request URL:", url.toString());
-  }
-
-  
-  Object.entries(params).forEach(([key, value]) => {
-    if (value !== undefined && value !== null && value !== "") {
-      url.searchParams.set(key, String(value));
-    }
-  });
-
-  // ------------------------------------------
-  // API REQUEST HELPER
-  // ------------------------------------------
 
   async function makeRequest(accessToken) {
     return fetch(url, {
@@ -154,35 +138,21 @@ export async function serviceTitanRequest(path, params = {}) {
     });
   }
 
-  // ------------------------------------------
-  // FIRST REQUEST
-  // ------------------------------------------
-
+  // First request.
   let accessToken = await getAccessToken();
 
   let response = await makeRequest(accessToken);
 
-  // ------------------------------------------
-  // AUTOMATIC TOKEN REFRESH
-  // ------------------------------------------
-
+  // Refresh token and retry once after 401.
   if (response.status === 401) {
-    console.warn("ServiceTitan returned 401. Refreshing access token...");
-
     invalidateAccessToken(accessToken);
 
-    // Get a fresh token.
-    // Concurrent requests will share the same token request.
     accessToken = await getAccessToken();
 
-    // Retry the original request once.
     response = await makeRequest(accessToken);
   }
 
-  // ------------------------------------------
-  // RESPONSE HANDLING
-  // ------------------------------------------
-
+  // Response handling.
   const result = await response.json().catch(() => null);
 
   if (!response.ok || !result) {
@@ -261,7 +231,7 @@ export async function getAllEstimates({
 }
 
 // ============================================
-// JOBS / REVENUE
+// JOBS
 // ============================================
 
 export async function getJobs({
@@ -277,6 +247,51 @@ export async function getJobs({
     ...filters,
   });
 }
+
+// ============================================
+// REVENUE JOB FIELDS
+// Only 6 required fields.
+// ============================================
+
+function optimizeRevenueJob(job) {
+  return {
+    id: job.id,
+    jobNumber: job.jobNumber,
+    customerId: job.customerId,
+    jobStatus: job.jobStatus,
+    completedOn: job.completedOn,
+    total: Number(job.total) || 0,
+  };
+}
+
+// ============================================
+// GET REVENUE JOBS
+// ============================================
+
+export async function getRevenueJobs({
+  page = 1,
+  pageSize = 50,
+  includeTotal = true,
+  ...filters
+} = {}) {
+  const result = await getJobs({
+    page,
+    pageSize,
+    includeTotal,
+    ...filters,
+  });
+
+  const jobs = Array.isArray(result.data) ? result.data : [];
+
+  return {
+    ...result,
+    data: jobs.map(optimizeRevenueJob),
+  };
+}
+
+// ============================================
+// GET ALL JOBS
+// ============================================
 
 export async function getAllJobs({
   pageSize = 50,
@@ -306,14 +321,11 @@ export async function getJobType(jobTypeId) {
 
   try {
     return await serviceTitanRequest(
-      "/jpm/v2/tenant/{tenant}/job-types/{jobTypeId}".replace(
-        "{jobTypeId}",
-        encodeURIComponent(String(jobTypeId)),
-      ),
+      `/jpm/v2/tenant/{tenant}/job-types/${encodeURIComponent(
+        String(jobTypeId),
+      )}`,
     );
-  } catch (error) {
-    console.error(`ServiceTitan Job Type Fetch Error (${jobTypeId}):`, error);
-
+  } catch {
     return null;
   }
 }
@@ -437,12 +449,11 @@ export async function getAllServiceTitanCustomers({
   maxPages = 100,
 } = {}) {
   return fetchAllPages(
-    async (page, size) => {
-      return getServiceTitanCustomers({
+    async (page, size) =>
+      getServiceTitanCustomers({
         page,
         pageSize: size,
-      });
-    },
+      }),
     { pageSize, maxPages },
   );
 }

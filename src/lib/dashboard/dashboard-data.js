@@ -21,22 +21,6 @@ let serviceTitanCacheExpiresAt = 0;
 let serviceTitanFetchPromise = null;
 
 // ============================================
-// PERFORMANCE LOGGER
-// ============================================
-
-async function measureTime(label, callback) {
-  const start = performance.now();
-
-  try {
-    return await callback();
-  } finally {
-    const duration = performance.now() - start;
-
-    console.info(`[Dashboard Performance] ${label}: ${duration.toFixed(0)}ms`);
-  }
-}
-
-// ============================================
 // OPTIMIZE DASHBOARD JOB FIELDS
 // ============================================
 
@@ -85,7 +69,6 @@ async function fetchDashboardJobs() {
     completedBefore: nextYearStart.toISOString(),
   };
 
-  // Fetch first page to get totalCount.
   const firstPage = await getJobs({
     ...jobFilters,
     page: 1,
@@ -145,15 +128,7 @@ async function fetchDashboardJobs() {
     );
   }
 
-  const optimizedJobs = optimizeDashboardJobs(jobs);
-
-  console.info("[Dashboard Jobs]", {
-    totalCount,
-    fetchedRecords: jobs.length,
-    returnedFields: Object.keys(optimizedJobs[0] || {}),
-  });
-
-  return optimizedJobs;
+  return optimizeDashboardJobs(jobs);
 }
 
 // ============================================
@@ -162,7 +137,6 @@ async function fetchDashboardJobs() {
 // ============================================
 
 async function fetchDashboardEstimates() {
-  // Fetch first page to get totalCount.
   const firstPage = await getEstimates({
     page: 1,
     pageSize: PAGE_SIZE,
@@ -179,7 +153,6 @@ async function fetchDashboardEstimates() {
     throw new Error("Invalid ServiceTitan estimates totalCount.");
   }
 
-  // Optimize immediately instead of retaining full API objects.
   const estimates = optimizeDashboardEstimates(firstPage.data);
 
   const totalPages = Math.ceil(totalCount / PAGE_SIZE);
@@ -214,9 +187,7 @@ async function fetchDashboardEstimates() {
         );
       }
 
-      const optimizedPage = optimizeDashboardEstimates(result.data);
-
-      estimates.push(...optimizedPage);
+      estimates.push(...optimizeDashboardEstimates(result.data));
     }
   }
 
@@ -227,33 +198,6 @@ async function fetchDashboardEstimates() {
     );
   }
 
-  // Log status summary.
-  const statusCounts = {};
-
-  for (const estimate of estimates) {
-    const status = estimate.status.name;
-
-    statusCounts[status] = (statusCounts[status] || 0) + 1;
-  }
-
-  const openEstimates = estimates.filter(
-    (estimate) => estimate.status.name.toLowerCase() === "open",
-  );
-
-  const openEstimateValue = openEstimates.reduce(
-    (total, estimate) => total + estimate.subtotal,
-    0,
-  );
-
-  console.info("[Dashboard Estimates]", {
-    totalCount,
-    fetchedRecords: estimates.length,
-    returnedFields: Object.keys(estimates[0] || {}),
-    statusCounts,
-    openEstimateCount: openEstimates.length,
-    openEstimateValue: Number(openEstimateValue.toFixed(2)),
-  });
-
   return estimates;
 }
 
@@ -262,11 +206,9 @@ async function fetchDashboardEstimates() {
 // ============================================
 
 async function fetchServiceTitanDashboardData() {
-  // Jobs and Estimates run simultaneously.
   const [jobs, estimates] = await Promise.all([
-    measureTime("Dashboard Jobs Fetch", fetchDashboardJobs),
-
-    measureTime("Dashboard Estimates Fetch", fetchDashboardEstimates),
+    fetchDashboardJobs(),
+    fetchDashboardEstimates(),
   ]);
 
   return {
@@ -284,19 +226,13 @@ export async function getDashboardServiceTitanData() {
 
   // Return cached data.
   if (serviceTitanCache && now < serviceTitanCacheExpiresAt) {
-    console.info("[Dashboard Cache] ServiceTitan HIT");
-
     return serviceTitanCache;
   }
 
   // Reuse ongoing fetch.
   if (serviceTitanFetchPromise) {
-    console.info("[Dashboard Cache] Reusing ongoing fetch");
-
     return serviceTitanFetchPromise;
   }
-
-  console.info("[Dashboard Cache] ServiceTitan MISS");
 
   serviceTitanFetchPromise = fetchServiceTitanDashboardData();
 
@@ -355,15 +291,12 @@ export async function getDashboardOpportunities({
 }
 
 // ============================================
-// FETCH SALES REVENUE
+// BUILD DASHBOARD REVENUE SALES
+// Uses already-fetched ServiceTitan jobs.
 // ============================================
 
-// ============================================
-// FETCH SALES REVENUE
-// LIVE SERVICETITAN JOBS + CRM ASSIGNMENTS
-// ============================================
-
-export async function getDashboardRevenueSales({
+async function buildDashboardRevenueSales({
+  jobs = [],
   start,
   endExclusive,
   salesmanId,
@@ -372,10 +305,6 @@ export async function getDashboardRevenueSales({
     throw new Error("A valid date range is required.");
   }
 
-  // Get cached live ServiceTitan jobs.
-  const { jobs } = await getDashboardServiceTitanData();
-
-  // Filter completed jobs by selected date range and value.
   const filteredJobs = jobs.filter((job) => {
     const completedDate = new Date(job.completedOn);
 
@@ -390,7 +319,6 @@ export async function getDashboardRevenueSales({
     return [];
   }
 
-  // Get only CRM assignments for these ServiceTitan jobs.
   const jobIds = filteredJobs.map((job) => String(job.id));
 
   const assignments = await prisma.sale.findMany({
@@ -412,7 +340,6 @@ export async function getDashboardRevenueSales({
     },
   });
 
-  // Map assignments by ServiceTitan Job ID.
   const assignmentsByJobId = new Map(
     assignments.map((assignment) => [
       String(assignment.serviceTitanJobId),
@@ -420,7 +347,6 @@ export async function getDashboardRevenueSales({
     ]),
   );
 
-  // Return the same data structure expected by dashboard metrics.
   return filteredJobs
     .filter((job) => assignmentsByJobId.has(String(job.id)))
     .map((job) => {
@@ -436,6 +362,26 @@ export async function getDashboardRevenueSales({
         salesmanId: assignment.salesmanId,
       };
     });
+}
+
+// ============================================
+// FETCH SALES REVENUE
+// PUBLIC HELPER
+// ============================================
+
+export async function getDashboardRevenueSales({
+  start,
+  endExclusive,
+  salesmanId,
+} = {}) {
+  const { jobs } = await getDashboardServiceTitanData();
+
+  return buildDashboardRevenueSales({
+    jobs,
+    start,
+    endExclusive,
+    salesmanId,
+  });
 }
 
 // ============================================
@@ -473,35 +419,30 @@ export async function getDashboardTeamMembers() {
 // ============================================
 
 export async function getAdminDashboardData({ start, endExclusive } = {}) {
-  return measureTime("Admin Dashboard Total", async () => {
-    const [serviceTitanData, opportunities, revenueSales, teamMembers] =
-      await Promise.all([
-        getDashboardServiceTitanData(),
+  // Fetch ServiceTitan data only once.
+  const [serviceTitanData, opportunities, teamMembers] = await Promise.all([
+    getDashboardServiceTitanData(),
 
-        measureTime("Admin Opportunities Query", () =>
-          getDashboardOpportunities({
-            start,
-            endExclusive,
-          }),
-        ),
+    getDashboardOpportunities({
+      start,
+      endExclusive,
+    }),
 
-        measureTime("Admin Revenue Sales Query", () =>
-          getDashboardRevenueSales({
-            start,
-            endExclusive,
-          }),
-        ),
+    getDashboardTeamMembers(),
+  ]);
 
-        measureTime("Admin Team Members Query", getDashboardTeamMembers),
-      ]);
-
-    return {
-      ...serviceTitanData,
-      opportunities,
-      revenueSales,
-      teamMembers,
-    };
+  const revenueSales = await buildDashboardRevenueSales({
+    jobs: serviceTitanData.jobs,
+    start,
+    endExclusive,
   });
+
+  return {
+    ...serviceTitanData,
+    opportunities,
+    revenueSales,
+    teamMembers,
+  };
 }
 
 // ============================================
@@ -517,13 +458,9 @@ export async function getSalespersonDashboardData({
     throw new Error("Authenticated salesperson ID is required.");
   }
 
-  return measureTime("Salesperson Dashboard Total", async () => {
-    const [
-      serviceTitanData,
-      companyOpportunities,
-      ownOpportunities,
-      ownRevenueSales,
-    ] = await Promise.all([
+  // Fetch ServiceTitan data only once.
+  const [serviceTitanData, companyOpportunities, ownOpportunities] =
+    await Promise.all([
       getDashboardServiceTitanData(),
 
       getDashboardOpportunities({
@@ -536,19 +473,19 @@ export async function getSalespersonDashboardData({
         endExclusive,
         salesmanId,
       }),
-
-      getDashboardRevenueSales({
-        start,
-        endExclusive,
-        salesmanId,
-      }),
     ]);
 
-    return {
-      ...serviceTitanData,
-      opportunities: companyOpportunities,
-      ownOpportunities,
-      revenueSales: ownRevenueSales,
-    };
+  const ownRevenueSales = await buildDashboardRevenueSales({
+    jobs: serviceTitanData.jobs,
+    start,
+    endExclusive,
+    salesmanId,
   });
+
+  return {
+    ...serviceTitanData,
+    opportunities: companyOpportunities,
+    ownOpportunities,
+    revenueSales: ownRevenueSales,
+  };
 }

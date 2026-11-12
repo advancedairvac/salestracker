@@ -1,53 +1,35 @@
-
 import { NextResponse } from "next/server";
-import { getJobs } from "@/lib/integrations/servicetitan";
 
-export const dynamic = "force-dynamic";
+import { getRevenueJobs } from "@/lib/integrations/servicetitan";
+
+// ============================================
+// TEST REVENUE JOB FIELDS
+// ============================================
 
 export async function GET() {
-  // Keep this endpoint available only in development.
-  if (process.env.NODE_ENV !== "development") {
-    return NextResponse.json(
-      { success: false, message: "Not found." },
-      { status: 404 },
-    );
-  }
-
   try {
-    const result = await getJobs({
+    if (process.env.NODE_ENV !== "development") {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "This endpoint is only available in development.",
+        },
+        { status: 404 },
+      );
+    }
+
+    // Fetch only 3 jobs with the required revenue fields.
+    const result = await getRevenueJobs({
       page: 1,
       pageSize: 3,
       includeTotal: true,
-      jobStatus: "Completed",
     });
 
-    const jobs = Array.isArray(result?.data) ? result.data : [];
+    const jobs = Array.isArray(result.data) ? result.data : [];
 
-    const sampleJobs = jobs.map((job) => ({
-      id: job.id ?? null,
-      jobNumber: job.jobNumber ?? null,
-
-      customerId: job.customerId ?? null,
-      customerName:
-        job.customerName ??
-        job.customer?.name ??
-        job.customer?.firstName ??
-        null,
-
-      customerObject: job.customer
-        ? {
-            id: job.customer.id ?? null,
-            name: job.customer.name ?? null,
-            keys: Object.keys(job.customer),
-          }
-        : null,
-
-      total: job.total ?? null,
-      jobStatus: job.jobStatus ?? null,
-      completedOn: job.completedOn ?? null,
-
-      availableFields: Object.keys(job),
-    }));
+    const availableFields = [
+      ...new Set(jobs.flatMap((job) => Object.keys(job))),
+    ].sort();
 
     return NextResponse.json({
       success: true,
@@ -62,15 +44,17 @@ export async function GET() {
         returnedRecords: jobs.length,
       },
 
-      sampleJobs,
+      availableFields,
+
+      sampleJobs: jobs,
     });
   } catch (error) {
-    console.error("[ServiceTitan Test API]", error);
+    console.error("[ServiceTitan Test Jobs Error]", error);
 
     return NextResponse.json(
       {
         success: false,
-        message: error.message || "Unable to fetch ServiceTitan jobs.",
+        message: error.message || "Unable to fetch ServiceTitan Jobs.",
       },
       { status: 500 },
     );

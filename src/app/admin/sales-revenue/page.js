@@ -13,37 +13,23 @@ export const metadata = {
 
 export const dynamic = "force-dynamic";
 
-// ============================================
-// SALES REVENUE PAGE
-// ============================================
-
 export default async function SalesRevenuePage({ searchParams }) {
   const params = await searchParams;
 
-  // ============================================
-  // FETCH SHARED REVENUE DATA
-  // ============================================
-
-  const { dateRange, totalRevenue, teamGoal, goalConfiguration, revenueData } =
-    await getSalesRevenueData({
-      searchParams: params,
-    });
-
-  // ============================================
-  // RENDER
-  // ============================================
+  const {
+    dateRange,
+    totalRevenue,
+    teamGoal,
+    goalConfiguration,
+    revenueData,
+    pagination,
+  } = await getSalesRevenueData({
+    searchParams: params,
+  });
 
   return (
     <div className="space-y-4 sm:space-y-5">
-      <Breadcrumbs
-        items={[
-          {
-            label: "Sales Tracker",
-            href: "/admin",
-          },
-        ]}
-        currentPage="Sales Revenue"
-      />
+      <Breadcrumbs currentPage="Sales Revenue" />
 
       <RevenueDateFilter
         value={{
@@ -60,22 +46,27 @@ export default async function SalesRevenuePage({ searchParams }) {
         commissionRate={0}
       />
 
-      <section className="space-y-3">
-        <div className="flex items-center justify-between gap-3">
-          <h2 className="text-sm font-bold uppercase tracking-wide text-[#555]">
+      <section>
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-base font-semibold text-black">
             Revenue Details
           </h2>
 
-          <span className="shrink-0 text-xs text-[#777]">
-            {revenueData.length} {revenueData.length === 1 ? "Job" : "Jobs"}
+          <span className="text-sm text-[#777]">
+            {pagination.totalItems} Jobs
           </span>
         </div>
 
-        <RevenueTable sales={revenueData} />
+        <RevenueTable
+          sales={revenueData}
+          currentPage={pagination.currentPage}
+          pageSize={pagination.pageSize}
+          totalItems={pagination.totalItems}
+        />
       </section>
 
       <PageTagline>
-        Success is the sum of small efforts, repeated day in and day out.
+        Revenue performance based on completed ServiceTitan jobs.
       </PageTagline>
     </div>
   );
