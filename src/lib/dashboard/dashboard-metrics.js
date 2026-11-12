@@ -1,4 +1,3 @@
-
 import { isWithinRange } from "@/lib/date/date-utils";
 
 import { calculateTeamGoal } from "@/lib/date/goal-utils";
@@ -13,9 +12,7 @@ import {
   getRevenueByMember,
 } from "@/lib/dashboard/revenue-helpers";
 
-import {
-  getPipelineSummary,
-} from "@/lib/dashboard/pipeline-helpers";
+import { getPipelineSummary } from "@/lib/dashboard/pipeline-helpers";
 
 import {
   getOpportunityCountByMember,
@@ -27,10 +24,7 @@ import {
 // ServiceTitan Jobs API
 // ============================================
 
-export function getRevenueMetrics({
-  jobs = [],
-  dateRanges = {},
-} = {}) {
+export function getRevenueMetrics({ jobs = [], dateRanges = {} } = {}) {
   const {
     todayStart,
     tomorrowStart,
@@ -63,6 +57,8 @@ export function getRevenueMetrics({
 
 // ============================================
 // ESTIMATE METRICS
+// ServiceTitan Estimates API
+// Only OPEN estimates
 // ============================================
 
 export function getEstimateMetrics({
@@ -70,18 +66,35 @@ export function getEstimateMetrics({
   start,
   endExclusive,
 } = {}) {
-  const selectedPeriodEstimates = estimates.filter((estimate) =>
+  // Filter only Open estimates.
+  const openEstimates = estimates.filter(
+    (estimate) => String(estimate.status?.name || "").toLowerCase() === "open",
+  );
+
+  // Apply selected dashboard date range.
+  const selectedPeriodEstimates = openEstimates.filter((estimate) =>
     isWithinRange(estimate.createdOn, start, endExclusive),
   );
 
+  // Calculate total value from Open estimate subtotals.
+  const estimateValue = selectedPeriodEstimates.reduce((total, estimate) => {
+    const subtotal = Number(estimate.subtotal) || 0;
+
+    return total + (Number.isFinite(subtotal) ? subtotal : 0);
+  }, 0);
+
   return {
     totalEstimates: selectedPeriodEstimates.length,
+
+    estimateValue: Number(estimateValue.toFixed(2)),
+
     estimates: selectedPeriodEstimates,
   };
 }
 
 // ============================================
 // PIPELINE METRICS
+// Opportunities
 // ============================================
 
 export function getPipelineMetrics(opportunities = []) {
@@ -100,8 +113,7 @@ export function getTeamMetrics({
 } = {}) {
   const revenueByMember = getRevenueByMember(revenueSales);
 
-  const opportunityCountByMember =
-    getOpportunityCountByMember(opportunities);
+  const opportunityCountByMember = getOpportunityCountByMember(opportunities);
 
   return buildTeamPerformanceData({
     teamMembers,
@@ -125,9 +137,7 @@ export function getSalespersonMetrics({
     return null;
   }
 
-  const ownSales = revenueSales.filter(
-    (sale) => sale.salesmanId === user.id,
-  );
+  const ownSales = revenueSales.filter((sale) => sale.salesmanId === user.id);
 
   const ownOpportunities = opportunities.filter(
     (opportunity) => opportunity.assignedToId === user.id,

@@ -1,4 +1,4 @@
-
+import PerformanceMonitor from "@/components/dev/performance-monitor";
 import { Montserrat } from "next/font/google";
 import "./globals.css";
 
@@ -22,6 +22,7 @@ export default function RootLayout({ children }) {
       <body
         className={`${montserrat.variable} antialiased min-h-screen`}
       >
+        <PerformanceMonitor />
         {children}
       </body>
     </html>

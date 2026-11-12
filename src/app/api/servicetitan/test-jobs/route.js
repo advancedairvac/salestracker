@@ -1,66 +1,93 @@
 
 import { NextResponse } from "next/server";
-
-import { getAuthenticatedUser } from "@/lib/auth";
 import { getJobs } from "@/lib/integrations/servicetitan";
+import { getRevenueDateRanges } from "@/lib/date/date-utils";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const user = await getAuthenticatedUser();
+    const startTime = Date.now();
 
-    if (!user || user.role !== "ADMIN") {
-      return NextResponse.json(
-        { success: false, message: "Unauthorized" },
-        { status: 401 },
-      );
-    }
+    const {
+      yearStart,
+      nextYearStart,
+    } = getRevenueDateRanges();
 
-    const result = await getJobs({
-      page: 1,
-      pageSize: 5,
+    const page = 1;
+    const pageSize = 500;
+
+    // Only request fields required by the Admin Dashboard Revenue Card.
+    const requestedFields = "id,jobStatus,completedOn,total";
+
+    const filters = {
+      page,
+      pageSize,
       includeTotal: true,
-    });
+      jobStatus: "Completed",
+      completedOnOrAfter: yearStart.toISOString(),
+      completedBefore: nextYearStart.toISOString(),
+      fields: requestedFields,
+    };
 
-    const jobs = Array.isArray(result.data) ? result.data : [];
+    const response = await getJobs(filters);
+
+    const jobs = response?.data || [];
+    const totalCount = response?.totalCount || 0;
+
+    const returnedFields =
+      jobs.length > 0 ? Object.keys(jobs[0]) : [];
+
+    const totalJobValue = jobs.reduce((sum, job) => {
+      return sum + (Number(job.total) || 0);
+    }, 0);
+
+    const positiveValueJobs = jobs.filter(
+      (job) => Number(job.total) > 0
+    );
+
+    const responseTime = Date.now() - startTime;
 
     return NextResponse.json({
       success: true,
 
-      totalCount: result.totalCount ?? null,
-      hasMore: result.hasMore ?? null,
+      summary: {
+        page,
+        pageSize,
+        totalCount,
+        returnedRecords: jobs.length,
+        hasMore: jobs.length < totalCount,
+        completedJobs: jobs.filter(
+          (job) =>
+            String(job.jobStatus).toLowerCase() === "completed"
+        ).length,
+        positiveValueJobs: positiveValueJobs.length,
+        totalJobValue: Number(totalJobValue.toFixed(2)),
+        responseTime: `${responseTime}ms`,
+      },
 
-      returnedJobs: jobs.length,
+      requestedFields: requestedFields.split(","),
 
-      jobs: jobs.map((job) => ({
-        raw: job,
+      returnedFields,
 
-        extracted: {
-          id: job.id ?? null,
-          jobNumber: job.jobNumber ?? null,
-          summary: job.summary ?? null,
-          jobName: job.name ?? null,
-          customerId: job.customerId ?? null,
-          locationId: job.locationId ?? null,
-          jobStatus: job.jobStatus ?? null,
-          total: job.total ?? null,
-          completedOn: job.completedOn ?? null,
-          createdOn: job.createdOn ?? null,
-        },
+      fieldProjectionSupported:
+        returnedFields.length > 0 &&
+        returnedFields.every((field) =>
+          requestedFields.split(",").includes(field)
+        ),
 
-        availableFields: Object.keys(job),
-      })),
+      jobs,
     });
   } catch (error) {
-    console.error("ServiceTitan Jobs Test Error:", error);
+    console.error("ServiceTitan Test Jobs API Error:", error);
 
     return NextResponse.json(
       {
         success: false,
-        message: error.message || "Unable to test ServiceTitan Jobs API.",
+        message: "Failed to fetch ServiceTitan jobs.",
+        error: error.message || "Unknown error",
       },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

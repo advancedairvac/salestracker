@@ -1,19 +1,10 @@
+import { getRevenueDateRanges } from "@/lib/date/date-utils";
 
-import {
-  getRevenueDateRanges,
-} from "@/lib/date/date-utils";
+import { getGoalConfiguration } from "@/lib/date/goal-utils";
 
-import {
-  getGoalConfiguration,
-} from "@/lib/date/goal-utils";
+import { resolveSelectedDateRange } from "@/lib/dashboard/date-range-helpers";
 
-import {
-  resolveSelectedDateRange,
-} from "@/lib/dashboard/date-range-helpers";
-
-import {
-  getAdminDashboardData,
-} from "@/lib/dashboard/dashboard-data";
+import { getAdminDashboardData } from "@/lib/dashboard/dashboard-data";
 
 import {
   getRevenueMetrics,
@@ -74,51 +65,38 @@ export default async function AdminDashboardPage({ searchParams }) {
   // FETCH DATA
   // ============================================
 
-  const {
-    jobs,
-    estimates,
-    opportunities,
-    revenueSales,
-    teamMembers,
-  } = await getAdminDashboardData({
-    start,
-    endExclusive,
-  });
+  const { jobs, estimates, opportunities, revenueSales, teamMembers } =
+    await getAdminDashboardData({
+      start,
+      endExclusive,
+    });
 
   // ============================================
   // SALES REVENUE METRICS
   // ServiceTitan Jobs API
   // ============================================
 
-  const {
-    todayRevenue,
-    monthRevenue,
-    yearRevenue,
-  } = getRevenueMetrics({
+  const { todayRevenue, monthRevenue, yearRevenue } = getRevenueMetrics({
     jobs,
     dateRanges: revenueDateRanges,
   });
 
   // ============================================
   // ESTIMATE METRICS
+  // ServiceTitan Estimates API
   // ============================================
 
-  const {
-    totalEstimates,
-  } = getEstimateMetrics({
+  const { totalEstimates, estimateValue } = getEstimateMetrics({
     estimates,
     start,
     endExclusive,
   });
 
   // ============================================
-  // PIPELINE METRICS
+  // OPPORTUNITY METRICS
   // ============================================
 
-  const {
-    totalOpportunities,
-    pipelineValue,
-  } = getPipelineMetrics(opportunities);
+  const { totalOpportunities } = getPipelineMetrics(opportunities);
 
   // ============================================
   // TEAM PERFORMANCE METRICS
@@ -171,7 +149,8 @@ export default async function AdminDashboardPage({ searchParams }) {
         <PipelineCard
           opportunities={totalOpportunities}
           estimates={totalEstimates}
-          pipelineValue={pipelineValue}
+          pipelineValue={estimateValue}
+          currency="$"
         />
       </section>
 

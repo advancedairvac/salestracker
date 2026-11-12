@@ -230,7 +230,7 @@ export async function getSalesRevenueData({ searchParams = {} } = {}) {
   const [jobs, serviceTitanCustomers, teamMembers] = await Promise.all([
     getAllJobs({
       pageSize: 100,
-      maxPages: 100,
+      maxPages: 1,
     }),
 
     getAllServiceTitanCustomers({
