@@ -12,6 +12,10 @@ import {
   getSelectedFilter,
 } from "@/lib/dashboard/pipeline-helpers";
 
+// ============================================
+// CONFIGURATION
+// ============================================
+
 const PAGE_SIZES = [10, 20, 50, 100];
 
 // ============================================
@@ -162,7 +166,6 @@ function formatPipelineEstimates(
   return serviceTitanEstimates.map((estimate) => {
     const estimateId = String(estimate.id);
 
-    // Customer Sync returns an object keyed by ServiceTitan customer ID.
     const customer = serviceTitanCustomers[String(estimate.customerId)] || null;
 
     const customerName = getCustomerName(customer);
@@ -254,7 +257,53 @@ async function getPaginatedPipelineEstimates({ page, pageSize }) {
 }
 
 // ============================================
-// GET PIPELINE DATA
+// PIPELINE PAGE DATA
+// Users + Selected Filter
+// ============================================
+
+export async function getPipelinePageData({ requestedFilter = "ALL" } = {}) {
+  const users = await getPipelineUsers();
+
+  const selectedFilter = getSelectedFilter(requestedFilter, users);
+
+  return {
+    users,
+    selectedFilter,
+  };
+}
+
+// ============================================
+// PIPELINE FOLLOW-UP DATA
+// ============================================
+
+export async function getPipelineFollowUpsData({
+  selectedFilter = "ALL",
+} = {}) {
+  return getPipelineFollowUps(selectedFilter);
+}
+
+// ============================================
+// PIPELINE ESTIMATES DATA
+// ============================================
+
+export async function getPipelineEstimatesData({
+  requestedPage = 1,
+  requestedPageSize = 10,
+} = {}) {
+  const { page, pageSize } = normalizePagination(
+    requestedPage,
+    requestedPageSize,
+  );
+
+  return getPaginatedPipelineEstimates({
+    page,
+    pageSize,
+  });
+}
+
+// ============================================
+// LEGACY COMBINED PIPELINE DATA
+// Compatibility with existing callers
 // ============================================
 
 export async function getPipelineData({
@@ -262,39 +311,27 @@ export async function getPipelineData({
   requestedPage = 1,
   requestedPageSize = 10,
 } = {}) {
-  // Fetch active users.
-  const users = await getPipelineUsers();
+  const { users, selectedFilter } = await getPipelinePageData({
+    requestedFilter,
+  });
 
-  // Validate selected filter.
-  const selectedFilter = getSelectedFilter(requestedFilter, users);
+  const [followUpData, estimateResult] = await Promise.all([
+    getPipelineFollowUpsData({
+      selectedFilter,
+    }),
 
-  // Normalize pagination.
-  const { page, pageSize } = normalizePagination(
-    requestedPage,
-    requestedPageSize,
-  );
-
-  // Fetch follow-ups and current-page estimates independently.
-  const [followUps, estimateResult] = await Promise.all([
-    getPipelineFollowUps(selectedFilter),
-
-    getPaginatedPipelineEstimates({
-      page,
-      pageSize,
+    getPipelineEstimatesData({
+      requestedPage,
+      requestedPageSize,
     }),
   ]);
 
   return {
     users,
-
     selectedFilter,
-
-    followUpData: followUps,
-
+    followUpData,
     estimates: estimateResult.estimates,
-
     pagination: estimateResult.pagination,
-
     isServerPaginated: estimateResult.isServerPaginated,
   };
 }
