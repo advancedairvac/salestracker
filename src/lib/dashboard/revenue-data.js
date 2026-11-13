@@ -9,7 +9,7 @@ import {
 
 import { resolveSelectedDateRange } from "@/lib/dashboard/date-range-helpers";
 
-import { isWithinRange } from "@/lib/date/date-utils";
+import { getRevenueDateRanges, isWithinRange } from "@/lib/date/date-utils";
 
 import { getGoalConfiguration, calculateTeamGoal } from "@/lib/date/goal-utils";
 
@@ -18,6 +18,8 @@ import {
   getCompletedJobs,
   calculateJobRevenue,
 } from "@/lib/dashboard/servicetitan-helpers";
+
+import { getCachedYtdRevenueJobs } from "@/lib/dashboard/servicetitan-jobs";
 
 import { getDashboardTeamMembers } from "@/lib/dashboard/dashboard-data";
 
@@ -29,6 +31,17 @@ const ALLOWED_PAGE_SIZES = [10, 20, 50, 100];
 
 const SERVICE_TITAN_PAGE_SIZE = 500;
 const MAX_SERVICE_TITAN_PAGES = 1000;
+
+const REVENUE_RANGE_CACHE_TTL = 5 * 60 * 1000;
+const REVENUE_PAGE_CONCURRENCY = 4;
+
+// ============================================
+// DATE RANGE CACHE
+// Used for ranges outside current YTD.
+// ============================================
+
+const revenueRangeCache = new Map();
+const revenueRangeFetchPromises = new Map();
 
 // ============================================
 // QUERY HELPERS
@@ -75,6 +88,16 @@ function getRevenueDateRange(searchParams = {}) {
 }
 
 // ============================================
+// CHECK WHETHER RANGE IS WITHIN CURRENT YEAR
+// ============================================
+
+function isRangeWithinCurrentYear({ start, endExclusive }) {
+  const { yearStart, nextYearStart } = getRevenueDateRanges();
+
+  return start >= yearStart && endExclusive <= nextYearStart;
+}
+
+// ============================================
 // REVENUE PAGINATION PARAMETERS
 // ============================================
 
@@ -88,78 +111,210 @@ function getRevenuePagination(searchParams = {}) {
 
 // ============================================
 // FETCH ALL MATCHING SERVICE TITAN JOBS
+// CONTROLLED PARALLEL PAGINATION
 // ============================================
 
 async function fetchAllRevenueJobs({ start, endExclusive } = {}) {
-  const allJobs = [];
-  const seenJobIds = new Set();
-
-  let page = 1;
-  let expectedTotal = null;
-
   const completedOnOrAfter = start.toISOString();
   const completedBefore = endExclusive.toISOString();
 
-  while (page <= MAX_SERVICE_TITAN_PAGES) {
-    const result = await getRevenueJobs({
-      page,
-      pageSize: SERVICE_TITAN_PAGE_SIZE,
-      includeTotal: true,
+  const filters = {
+    pageSize: SERVICE_TITAN_PAGE_SIZE,
 
-      jobStatus: "Completed",
-      completedOnOrAfter,
-      completedBefore,
-    });
+    jobStatus: "Completed",
 
-    const jobs = Array.isArray(result.data) ? result.data : [];
+    completedOnOrAfter,
 
-    if (page === 1) {
-      const totalCount = Number(result.totalCount);
+    completedBefore,
+  };
 
-      expectedTotal =
-        Number.isFinite(totalCount) && totalCount >= 0 ? totalCount : null;
-    }
+  // ------------------------------------------
+  // FETCH FIRST PAGE
+  // ------------------------------------------
 
-    for (const job of jobs) {
-      if (!job?.id) continue;
+  const firstPage = await getRevenueJobs({
+    ...filters,
 
-      const jobId = String(job.id);
+    page: 1,
 
-      if (seenJobIds.has(jobId)) continue;
+    includeTotal: true,
+  });
 
-      seenJobIds.add(jobId);
-      allJobs.push(job);
-    }
-
-    if (jobs.length === 0 || result.hasMore === false) {
-      break;
-    }
-
-    if (
-      result.hasMore === undefined &&
-      expectedTotal !== null &&
-      allJobs.length >= expectedTotal
-    ) {
-      break;
-    }
-
-    if (result.hasMore === undefined && jobs.length < SERVICE_TITAN_PAGE_SIZE) {
-      break;
-    }
-
-    page += 1;
+  if (!firstPage || !Array.isArray(firstPage.data)) {
+    throw new Error("Unable to fetch ServiceTitan revenue jobs.");
   }
 
-  if (page > MAX_SERVICE_TITAN_PAGES) {
+  const totalCount = Number(firstPage.totalCount);
+
+  if (!Number.isFinite(totalCount) || totalCount < 0) {
+    throw new Error("Invalid ServiceTitan revenue jobs totalCount.");
+  }
+
+  const totalPages = Math.ceil(totalCount / SERVICE_TITAN_PAGE_SIZE);
+
+  if (totalPages > MAX_SERVICE_TITAN_PAGES) {
     throw new Error(
       "ServiceTitan revenue pagination exceeded the maximum allowed pages.",
     );
   }
 
-  return {
-    jobs: allJobs,
-    expectedTotal,
-  };
+  const allJobs = [...firstPage.data];
+
+  // ------------------------------------------
+  // FETCH REMAINING PAGES
+  // Maximum 4 concurrent requests.
+  // ------------------------------------------
+
+  for (
+    let startPage = 2;
+    startPage <= totalPages;
+    startPage += REVENUE_PAGE_CONCURRENCY
+  ) {
+    const pageNumbers = Array.from(
+      {
+        length: Math.min(REVENUE_PAGE_CONCURRENCY, totalPages - startPage + 1),
+      },
+      (_, index) => startPage + index,
+    );
+
+    const pageResults = await Promise.all(
+      pageNumbers.map((page) =>
+        getRevenueJobs({
+          ...filters,
+
+          page,
+
+          includeTotal: false,
+        }),
+      ),
+    );
+
+    for (const result of pageResults) {
+      if (!result || !Array.isArray(result.data)) {
+        throw new Error("Unable to fetch ServiceTitan revenue jobs page.");
+      }
+
+      allJobs.push(...result.data);
+    }
+  }
+
+  // ------------------------------------------
+  // VERIFY COMPLETE DATA
+  // ------------------------------------------
+
+  if (allJobs.length !== totalCount) {
+    throw new Error(
+      `Incomplete ServiceTitan revenue data. Expected ${totalCount}, received ${allJobs.length}.`,
+    );
+  }
+
+  // ------------------------------------------
+  // REMOVE DUPLICATE JOB IDS
+  // ------------------------------------------
+
+  const uniqueJobs = [];
+  const seenJobIds = new Set();
+
+  for (const job of allJobs) {
+    if (!job?.id) continue;
+
+    const jobId = String(job.id);
+
+    if (seenJobIds.has(jobId)) continue;
+
+    seenJobIds.add(jobId);
+
+    uniqueJobs.push(job);
+  }
+
+  if (uniqueJobs.length !== totalCount) {
+    throw new Error(
+      `Duplicate or missing ServiceTitan jobs. Expected ${totalCount}, received ${uniqueJobs.length}.`,
+    );
+  }
+
+  return uniqueJobs;
+}
+
+// ============================================
+// GET CACHED REVENUE JOBS FOR DATE RANGE
+// ============================================
+
+async function getCachedRevenueJobsForRange({ start, endExclusive }) {
+  const cacheKey = [start.toISOString(), endExclusive.toISOString()].join("_");
+
+  const now = Date.now();
+
+  // ------------------------------------------
+  // RETURN VALID CACHE
+  // ------------------------------------------
+
+  const cached = revenueRangeCache.get(cacheKey);
+
+  if (cached && now < cached.expiresAt) {
+    return cached.jobs;
+  }
+
+  // Remove expired cache entry.
+  if (cached) {
+    revenueRangeCache.delete(cacheKey);
+  }
+
+  // ------------------------------------------
+  // REUSE ONGOING FETCH
+  // ------------------------------------------
+
+  const existingPromise = revenueRangeFetchPromises.get(cacheKey);
+
+  if (existingPromise) {
+    return existingPromise;
+  }
+
+  // ------------------------------------------
+  // START NEW FETCH
+  // ------------------------------------------
+
+  const fetchPromise = fetchAllRevenueJobs({
+    start,
+    endExclusive,
+  });
+
+  revenueRangeFetchPromises.set(cacheKey, fetchPromise);
+
+  try {
+    const jobs = await fetchPromise;
+
+    revenueRangeCache.set(cacheKey, {
+      jobs,
+
+      expiresAt: Date.now() + REVENUE_RANGE_CACHE_TTL,
+    });
+
+    return jobs;
+  } finally {
+    revenueRangeFetchPromises.delete(cacheKey);
+  }
+}
+
+// ============================================
+// GET REVENUE JOBS FOR SELECTED DATE RANGE
+// ============================================
+
+async function getRevenueJobsForRange({ start, endExclusive }) {
+  // Current-year ranges use shared Dashboard cache.
+  if (isRangeWithinCurrentYear({ start, endExclusive })) {
+    const cachedJobs = await getCachedYtdRevenueJobs();
+
+    return cachedJobs.filter((job) =>
+      isWithinRange(job.completedOn, start, endExclusive),
+    );
+  }
+
+  // Previous-year and cross-year ranges use range cache.
+  return getCachedRevenueJobsForRange({
+    start,
+    endExclusive,
+  });
 }
 
 // ============================================
@@ -197,6 +352,7 @@ function getSourceLabel(source) {
 
 // ============================================
 // FETCH CRM SALE ASSIGNMENTS
+// CURRENT PAGE ONLY
 // ============================================
 
 async function getRevenueSaleAssignments(serviceTitanJobIds = []) {
@@ -213,7 +369,9 @@ async function getRevenueSaleAssignments(serviceTitanJobIds = []) {
 
     select: {
       serviceTitanJobId: true,
+
       source: true,
+
       salesmanId: true,
 
       salesman: {
@@ -279,8 +437,11 @@ function buildPagination({ requestedPage, pageSize, totalItems }) {
 
   return {
     currentPage,
+
     pageSize,
+
     totalItems,
+
     totalPages,
 
     hasPreviousPage: currentPage > 1,
@@ -312,8 +473,8 @@ export async function getSalesRevenueData({ searchParams = {} } = {}) {
   // FETCH REVENUE JOBS AND TEAM MEMBERS
   // ------------------------------------------
 
-  const [revenueJobResult, teamMembers] = await Promise.all([
-    fetchAllRevenueJobs({
+  const [revenueJobs, teamMembers] = await Promise.all([
+    getRevenueJobsForRange({
       start,
       endExclusive,
     }),
@@ -326,7 +487,7 @@ export async function getSalesRevenueData({ searchParams = {} } = {}) {
   // Includes zero-value jobs in the table.
   // ------------------------------------------
 
-  const matchingJobs = revenueJobResult.jobs.filter(
+  const matchingJobs = revenueJobs.filter(
     (job) =>
       isCompletedJob(job) &&
       isWithinRange(job.completedOn, start, endExclusive),
@@ -388,6 +549,7 @@ export async function getSalesRevenueData({ searchParams = {} } = {}) {
 
   // ------------------------------------------
   // FETCH ASSIGNMENTS AND CUSTOMERS
+  // Only current page data is fetched.
   // ------------------------------------------
 
   const [saleAssignments, customerLookup] = await Promise.all([
@@ -402,7 +564,9 @@ export async function getSalesRevenueData({ searchParams = {} } = {}) {
 
   const revenueData = buildRevenueTableData({
     jobs: paginatedJobs,
+
     customerLookup,
+
     saleAssignments,
   });
 

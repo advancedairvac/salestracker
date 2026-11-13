@@ -11,6 +11,8 @@ export const metadata = {
   title: "In The Pipeline",
 };
 
+export const dynamic = "force-dynamic";
+
 // ============================================
 // PIPELINE PAGE
 // ============================================
@@ -21,14 +23,27 @@ export default async function PipelinePage({ searchParams }) {
   const requestedFilter =
     typeof params?.filter === "string" ? params.filter : "ALL";
 
+  const requestedPage = typeof params?.page === "string" ? params.page : 1;
+
+  const requestedPageSize =
+    typeof params?.pageSize === "string" ? params.pageSize : 10;
+
   // ============================================
   // FETCH PIPELINE DATA
   // ============================================
 
-  const { users, selectedFilter, followUpData, estimates } =
-    await getPipelineData({
-      requestedFilter,
-    });
+  const {
+    users,
+    selectedFilter,
+    followUpData,
+    estimates,
+    pagination,
+    isServerPaginated,
+  } = await getPipelineData({
+    requestedFilter,
+    requestedPage,
+    requestedPageSize,
+  });
 
   // ============================================
   // RENDER
@@ -36,8 +51,6 @@ export default async function PipelinePage({ searchParams }) {
 
   return (
     <div className="w-full">
-      {/* Breadcrumb */}
-
       <Breadcrumbs
         items={[
           {
@@ -47,8 +60,6 @@ export default async function PipelinePage({ searchParams }) {
         ]}
         currentPage="In The Pipeline"
       />
-
-      {/* Pipeline Filter */}
 
       <PipelineFilter users={users} selectedFilter={selectedFilter} />
 
@@ -62,8 +73,6 @@ export default async function PipelinePage({ searchParams }) {
         <FollowUpsTable followUps={followUpData} />
       </section>
 
-      {/* First Progress Separator */}
-
       <div className="my-8 flex w-full items-center">
         <div className="h-[4px] w-8 shrink-0 rounded-full bg-black" />
         <div className="h-[4px] flex-1 rounded-full bg-[#eeeeee]" />
@@ -76,17 +85,19 @@ export default async function PipelinePage({ searchParams }) {
           Estimates
         </h2>
 
-        <EstimatesTable estimates={estimates} />
+        <EstimatesTable
+          estimates={estimates}
+          currentPage={pagination.currentPage}
+          pageSize={pagination.pageSize}
+          totalItems={pagination.totalItems}
+          serverPaginated={isServerPaginated}
+        />
       </section>
-
-      {/* Second Progress Separator */}
 
       <div className="my-8 flex w-full items-center">
         <div className="h-[4px] w-8 shrink-0 rounded-full bg-black" />
         <div className="h-[4px] flex-1 rounded-full bg-[#eeeeee]" />
       </div>
-
-      {/* Page Tagline */}
 
       <PageTagline>Drive thy business, or it will drive thee.</PageTagline>
     </div>

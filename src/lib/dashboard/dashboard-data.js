@@ -1,8 +1,8 @@
 import { prisma } from "@/lib/prisma";
 
-import { getJobs, getEstimates } from "@/lib/integrations/servicetitan";
+import { getEstimates } from "@/lib/integrations/servicetitan";
 
-import { getRevenueDateRanges } from "@/lib/date/date-utils";
+import { getCachedYtdRevenueJobs } from "@/lib/dashboard/servicetitan-jobs";
 
 // ============================================
 // CONFIGURATION
@@ -13,7 +13,7 @@ const PAGE_CONCURRENCY = 4;
 const SERVICE_TITAN_CACHE_TTL = 5 * 60 * 1000;
 
 // ============================================
-// SERVICE TITAN CACHE
+// DASHBOARD CACHE
 // ============================================
 
 let serviceTitanCache = null;
@@ -22,6 +22,7 @@ let serviceTitanFetchPromise = null;
 
 // ============================================
 // OPTIMIZE DASHBOARD JOB FIELDS
+// Keep only fields required by Dashboard.
 // ============================================
 
 function optimizeDashboardJobs(jobs = []) {
@@ -56,77 +57,11 @@ function optimizeDashboardEstimates(estimates = []) {
 
 // ============================================
 // FETCH DASHBOARD JOBS
-// YTD COMPLETED JOBS ONLY
+// Uses shared YTD cache.
 // ============================================
 
 async function fetchDashboardJobs() {
-  const { yearStart, nextYearStart } = getRevenueDateRanges();
-
-  const jobFilters = {
-    pageSize: PAGE_SIZE,
-    jobStatus: "Completed",
-    completedOnOrAfter: yearStart.toISOString(),
-    completedBefore: nextYearStart.toISOString(),
-  };
-
-  const firstPage = await getJobs({
-    ...jobFilters,
-    page: 1,
-    includeTotal: true,
-  });
-
-  if (!firstPage || !Array.isArray(firstPage.data)) {
-    throw new Error("Unable to fetch ServiceTitan dashboard jobs.");
-  }
-
-  const jobs = [...firstPage.data];
-
-  const totalCount = Number(firstPage.totalCount);
-
-  if (!Number.isFinite(totalCount) || totalCount < 0) {
-    throw new Error("Invalid ServiceTitan jobs totalCount.");
-  }
-
-  const totalPages = Math.ceil(totalCount / PAGE_SIZE);
-
-  // Fetch remaining pages with controlled concurrency.
-  for (
-    let startPage = 2;
-    startPage <= totalPages;
-    startPage += PAGE_CONCURRENCY
-  ) {
-    const pageNumbers = Array.from(
-      {
-        length: Math.min(PAGE_CONCURRENCY, totalPages - startPage + 1),
-      },
-      (_, index) => startPage + index,
-    );
-
-    const pageResults = await Promise.all(
-      pageNumbers.map((page) =>
-        getJobs({
-          ...jobFilters,
-          page,
-          includeTotal: false,
-        }),
-      ),
-    );
-
-    for (const result of pageResults) {
-      if (!result || !Array.isArray(result.data)) {
-        throw new Error("Unable to fetch ServiceTitan dashboard jobs page.");
-      }
-
-      jobs.push(...result.data);
-    }
-  }
-
-  // Prevent incomplete revenue calculations.
-  if (jobs.length !== totalCount) {
-    throw new Error(
-      `Incomplete ServiceTitan jobs data. Expected ${totalCount}, received ${jobs.length}.`,
-    );
-  }
+  const jobs = await getCachedYtdRevenueJobs();
 
   return optimizeDashboardJobs(jobs);
 }
@@ -191,7 +126,6 @@ async function fetchDashboardEstimates() {
     }
   }
 
-  // Prevent incomplete estimate calculations.
   if (estimates.length !== totalCount) {
     throw new Error(
       `Incomplete ServiceTitan estimates data. Expected ${totalCount}, received ${estimates.length}.`,
@@ -419,7 +353,6 @@ export async function getDashboardTeamMembers() {
 // ============================================
 
 export async function getAdminDashboardData({ start, endExclusive } = {}) {
-  // Fetch ServiceTitan data only once.
   const [serviceTitanData, opportunities, teamMembers] = await Promise.all([
     getDashboardServiceTitanData(),
 
@@ -458,7 +391,6 @@ export async function getSalespersonDashboardData({
     throw new Error("Authenticated salesperson ID is required.");
   }
 
-  // Fetch ServiceTitan data only once.
   const [serviceTitanData, companyOpportunities, ownOpportunities] =
     await Promise.all([
       getDashboardServiceTitanData(),

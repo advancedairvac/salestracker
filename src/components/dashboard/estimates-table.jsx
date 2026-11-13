@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import TablePagination from "@/components/dashboard/table-pagination";
 
@@ -32,39 +33,104 @@ function formatSource(source) {
 
 export default function EstimatesTable({
   estimates = [],
+  currentPage = 1,
+  pageSize = 10,
+  totalItems = 0,
+  serverPaginated = true,
   currency = "$",
   className = "",
 }) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  // Local pagination is retained for the legacy USER filter.
+  const [localPage, setLocalPage] = useState(1);
+  const [localPageSize, setLocalPageSize] = useState(10);
+
   // ============================================
-  // PAGINATION STATE
+  // URL PAGINATION
   // ============================================
 
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  function updatePagination(params) {
+    const query = new URLSearchParams(searchParams.toString());
 
-  const totalItems = estimates.length;
-  const totalPages = Math.ceil(totalItems / pageSize);
+    Object.entries(params).forEach(([key, value]) => {
+      query.set(key, String(value));
+    });
 
-  useEffect(() => {
-    if (currentPage > Math.max(1, totalPages)) {
-      setCurrentPage(Math.max(1, totalPages));
-    }
-  }, [currentPage, totalPages]);
-
-  function handlePageSizeChange(size) {
-    setPageSize(size);
-    setCurrentPage(1);
+    router.push(`${pathname}?${query.toString()}`);
   }
 
   // ============================================
-  // PAGINATED DATA
+  // PAGE CHANGE
   // ============================================
 
-  const paginatedEstimates = useMemo(() => {
-    const startIndex = (currentPage - 1) * pageSize;
+  function handlePageChange(page) {
+    const activePage = serverPaginated ? currentPage : localPage;
 
-    return estimates.slice(startIndex, startIndex + pageSize);
-  }, [estimates, currentPage, pageSize]);
+    if (page < 1 || page === activePage) {
+      return;
+    }
+
+    if (serverPaginated) {
+      updatePagination({
+        page,
+        pageSize,
+      });
+
+      return;
+    }
+
+    setLocalPage(page);
+  }
+
+  // ============================================
+  // PAGE SIZE CHANGE
+  // ============================================
+
+  function handlePageSizeChange(size) {
+    if (![10, 20, 50, 100].includes(size)) {
+      return;
+    }
+
+    if (serverPaginated) {
+      updatePagination({
+        page: 1,
+        pageSize: size,
+      });
+
+      return;
+    }
+
+    setLocalPageSize(size);
+    setLocalPage(1);
+  }
+
+  // ============================================
+  // ACTIVE PAGINATION VALUES
+  // ============================================
+
+  const activePage = serverPaginated ? currentPage : localPage;
+
+  const activePageSize = serverPaginated ? pageSize : localPageSize;
+
+  const activeTotalItems = serverPaginated ? totalItems : estimates.length;
+
+  // ============================================
+  // LEGACY CLIENT-SIDE PAGINATION
+  // Only used for USER filter.
+  // ============================================
+
+  const displayedEstimates = useMemo(() => {
+    if (serverPaginated) {
+      return estimates;
+    }
+
+    const startIndex = (localPage - 1) * localPageSize;
+
+    return estimates.slice(startIndex, startIndex + localPageSize);
+  }, [estimates, serverPaginated, localPage, localPageSize]);
 
   // ============================================
   // RENDER
@@ -103,8 +169,8 @@ export default function EstimatesTable({
           </thead>
 
           <tbody>
-            {paginatedEstimates.length > 0 ? (
-              paginatedEstimates.map((estimate) => (
+            {displayedEstimates.length > 0 ? (
+              displayedEstimates.map((estimate) => (
                 <tr
                   key={estimate.id}
                   className="border-b border-[#d9d9d9] transition-colors hover:bg-[#f8f8f8]"
@@ -148,13 +214,11 @@ export default function EstimatesTable({
         </table>
       </div>
 
-      {/* PAGINATION */}
-
       <TablePagination
-        currentPage={currentPage}
-        pageSize={pageSize}
-        totalItems={totalItems}
-        onPageChange={setCurrentPage}
+        currentPage={activePage}
+        pageSize={activePageSize}
+        totalItems={activeTotalItems}
+        onPageChange={handlePageChange}
         onPageSizeChange={handlePageSizeChange}
       />
     </section>

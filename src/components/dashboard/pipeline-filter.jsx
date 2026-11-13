@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 const DATE_FILTERS = [
   { value: "TODAY", label: "TODAY" },
@@ -12,18 +12,26 @@ const DATE_FILTERS = [
 
 export default function PipelineFilter({ users = [], selectedFilter = "ALL" }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   function handleChange(event) {
     const value = event.target.value;
 
+    const params = new URLSearchParams(searchParams.toString());
+
     if (value === "ALL") {
-      router.push("/admin/pipeline");
-      return;
+      params.delete("filter");
+    } else {
+      params.set("filter", value);
     }
 
-    const params = new URLSearchParams({
-      filter: value,
-    });
+    // Start from the first page after changing filters.
+    params.set("page", "1");
+
+    // Keep the selected page size.
+    if (!params.has("pageSize")) {
+      params.set("pageSize", "10");
+    }
 
     router.push(`/admin/pipeline?${params.toString()}`);
   }

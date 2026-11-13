@@ -1,15 +1,22 @@
-
 import { prisma } from "@/lib/prisma";
 
 import {
+  getEstimates,
   getAllEstimates,
   getAllServiceTitanCustomers,
 } from "@/lib/integrations/servicetitan";
 
 import {
+  getServiceTitanCustomersByIds,
+  getCustomerName,
+} from "@/lib/dashboard/customer-sync";
+
+import {
   getFollowUpDateRange,
   getSelectedFilter,
 } from "@/lib/dashboard/pipeline-helpers";
+
+const PAGE_SIZES = [10, 20, 50, 100];
 
 // ============================================
 // GET ACTIVE PIPELINE USERS
@@ -46,9 +53,7 @@ async function getPipelineUsers() {
 function buildFollowUpWhere(selectedFilter) {
   const isUserFilter = selectedFilter.startsWith("USER:");
 
-  const selectedUserId = isUserFilter
-    ? selectedFilter.slice(5)
-    : null;
+  const selectedUserId = isUserFilter ? selectedFilter.slice(5) : null;
 
   const where = {
     status: "PENDING",
@@ -70,9 +75,7 @@ function buildFollowUpWhere(selectedFilter) {
     if (dateRange) {
       where.dueAt = {
         gte: dateRange.start,
-        ...(dateRange.endExclusive
-          ? { lt: dateRange.endExclusive }
-          : {}),
+        ...(dateRange.endExclusive ? { lt: dateRange.endExclusive } : {}),
       };
     }
   }
@@ -85,10 +88,8 @@ function buildFollowUpWhere(selectedFilter) {
 // ============================================
 
 async function getPipelineFollowUps(selectedFilter) {
-  const where = buildFollowUpWhere(selectedFilter);
-
   const followUps = await prisma.followUp.findMany({
-    where,
+    where: buildFollowUpWhere(selectedFilter),
     include: {
       opportunity: {
         include: {
@@ -136,30 +137,7 @@ async function getPipelineFollowUps(selectedFilter) {
 }
 
 // ============================================
-// GET SERVICETITAN DATA
-// ============================================
-
-async function getPipelineServiceTitanData() {
-  const [estimates, customers] = await Promise.all([
-    getAllEstimates({
-      pageSize: 100,
-      maxPages: 10,
-    }),
-
-    getAllServiceTitanCustomers({
-      pageSize: 100,
-      maxPages: 100,
-    }),
-  ]);
-
-  return {
-    estimates,
-    customers,
-  };
-}
-
-// ============================================
-// GET ESTIMATE IDS
+// GET SERVICETITAN ESTIMATE IDS
 // ============================================
 
 function getServiceTitanEstimateIds(estimates = []) {
@@ -202,31 +180,12 @@ async function getEstimateAssignments(estimateIds = []) {
 }
 
 // ============================================
-// CREATE CUSTOMER MAP
-// ============================================
-
-function createCustomerMap(customers = []) {
-  return new Map(
-    customers
-      .filter(
-        (customer) =>
-          customer.stCustomerId !== undefined &&
-          customer.stCustomerId !== null,
-      )
-      .map((customer) => [
-        String(customer.stCustomerId),
-        customer,
-      ]),
-  );
-}
-
-// ============================================
 // FORMAT SERVICETITAN ESTIMATES
 // ============================================
 
 function formatPipelineEstimates(
   serviceTitanEstimates = [],
-  serviceTitanCustomers = [],
+  serviceTitanCustomers = {},
   crmAssignments = [],
 ) {
   const assignmentMap = new Map(
@@ -236,16 +195,15 @@ function formatPipelineEstimates(
     ]),
   );
 
-  const customerMap = createCustomerMap(serviceTitanCustomers);
-
   return serviceTitanEstimates.map((estimate) => {
     const estimateId = String(estimate.id);
 
     const assignment = assignmentMap.get(estimateId);
 
-    const customer = customerMap.get(
-      String(estimate.customerId),
-    );
+    // Customer Sync returns an object keyed by ServiceTitan customer ID.
+    const customer = serviceTitanCustomers[String(estimate.customerId)] || null;
+
+    const customerName = getCustomerName(customer);
 
     const estimateValue =
       estimate.total ?? estimate.subtotal ?? estimate.amount ?? 0;
@@ -258,7 +216,7 @@ function formatPipelineEstimates(
 
       customer: {
         businessName:
-          customer?.pocName || estimate.customerName || "—",
+          customerName !== "—" ? customerName : estimate.customerName || "—",
       },
 
       value: Number(estimateValue) || 0,
@@ -273,17 +231,120 @@ function formatPipelineEstimates(
 }
 
 // ============================================
-// APPLY USER FILTER TO ESTIMATES
+// NORMALIZE PAGINATION
 // ============================================
 
-function filterPipelineEstimates(
-  estimates = [],
-  crmAssignments = [],
-  selectedUserId = null,
-) {
-  if (!selectedUserId) {
-    return estimates;
-  }
+function normalizePagination(page, pageSize) {
+  const requestedPage = Number(page);
+  const requestedPageSize = Number(pageSize);
+
+  return {
+    page:
+      Number.isInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1,
+
+    pageSize: PAGE_SIZES.includes(requestedPageSize) ? requestedPageSize : 10,
+  };
+}
+
+// ============================================
+// GET SERVER-PAGINATED ESTIMATES
+// ============================================
+
+async function getPaginatedPipelineEstimates({ page, pageSize }) {
+  // Fetch only the requested ServiceTitan estimate page.
+  const result = await getEstimates({
+    page,
+    pageSize,
+    includeTotal: true,
+  });
+
+  const serviceTitanEstimates = Array.isArray(result.data) ? result.data : [];
+
+  // Collect current-page estimate IDs.
+  const estimateIds = getServiceTitanEstimateIds(serviceTitanEstimates);
+
+  // Collect unique customer IDs from current-page estimates.
+  const customerIds = [
+    ...new Set(
+      serviceTitanEstimates
+        .map((estimate) => estimate.customerId)
+        .filter((id) => id !== undefined && id !== null)
+        .map(String),
+    ),
+  ];
+
+  // Fetch only current-page CRM assignments and customers.
+  const [crmAssignments, customerResult] = await Promise.all([
+    getEstimateAssignments(estimateIds),
+
+    getServiceTitanCustomersByIds(customerIds),
+  ]);
+
+  // Format current-page estimates using the Customer Sync lookup.
+  const estimates = formatPipelineEstimates(
+    serviceTitanEstimates,
+    customerResult,
+    crmAssignments,
+  );
+
+  // ServiceTitan total count.
+  const totalItems = Number(
+    result.totalCount ?? result.totalItems ?? result.count ?? 0,
+  );
+
+  return {
+    estimates,
+
+    pagination: {
+      currentPage: page,
+      pageSize,
+
+      totalItems:
+        Number.isFinite(totalItems) && totalItems >= 0
+          ? totalItems
+          : estimates.length,
+    },
+
+    isServerPaginated: true,
+  };
+}
+
+// ============================================
+// LEGACY SALESPERSON FILTER
+// Keep existing behavior for now.
+// ============================================
+
+async function getLegacyUserFilteredEstimates(selectedUserId) {
+  const [serviceTitanEstimates, serviceTitanCustomers] = await Promise.all([
+    getAllEstimates({
+      pageSize: 100,
+      maxPages: 10,
+    }),
+
+    getAllServiceTitanCustomers({
+      pageSize: 100,
+      maxPages: 100,
+    }),
+  ]);
+
+  const estimateIds = getServiceTitanEstimateIds(serviceTitanEstimates);
+
+  const crmAssignments = await getEstimateAssignments(estimateIds);
+
+  const estimates = formatPipelineEstimates(
+    serviceTitanEstimates,
+    serviceTitanCustomers.reduce((lookup, customer) => {
+      if (
+        customer?.stCustomerId !== undefined &&
+        customer?.stCustomerId !== null
+      ) {
+        lookup[String(customer.stCustomerId)] = customer;
+      }
+
+      return lookup;
+    }, {}),
+    crmAssignments,
+  );
 
   const assignmentMap = new Map(
     crmAssignments.map((assignment) => [
@@ -292,11 +353,23 @@ function filterPipelineEstimates(
     ]),
   );
 
-  return estimates.filter((estimate) => {
+  const filteredEstimates = estimates.filter((estimate) => {
     const assignment = assignmentMap.get(estimate.id);
 
     return assignment?.assignedToId === selectedUserId;
   });
+
+  return {
+    estimates: filteredEstimates,
+
+    pagination: {
+      currentPage: 1,
+      pageSize: 10,
+      totalItems: filteredEstimates.length,
+    },
+
+    isServerPaginated: false,
+  };
 }
 
 // ============================================
@@ -305,55 +378,48 @@ function filterPipelineEstimates(
 
 export async function getPipelineData({
   requestedFilter = "ALL",
+  requestedPage = 1,
+  requestedPageSize = 10,
 } = {}) {
-  // Fetch active users
+  // Fetch active users.
   const users = await getPipelineUsers();
 
-  // Validate selected filter
-  const selectedFilter = getSelectedFilter(
-    requestedFilter,
-    users,
-  );
+  // Validate selected filter.
+  const selectedFilter = getSelectedFilter(requestedFilter, users);
 
   const isUserFilter = selectedFilter.startsWith("USER:");
 
-  const selectedUserId = isUserFilter
-    ? selectedFilter.slice(5)
-    : null;
+  const selectedUserId = isUserFilter ? selectedFilter.slice(5) : null;
 
-  // Fetch Follow-ups and ServiceTitan data
-  const [followUps, serviceTitanData] = await Promise.all([
+  // Normalize pagination.
+  const { page, pageSize } = normalizePagination(
+    requestedPage,
+    requestedPageSize,
+  );
+
+  // Fetch follow-ups and estimates.
+  const [followUps, estimateResult] = await Promise.all([
     getPipelineFollowUps(selectedFilter),
-    getPipelineServiceTitanData(),
+
+    isUserFilter
+      ? getLegacyUserFilteredEstimates(selectedUserId)
+      : getPaginatedPipelineEstimates({
+          page,
+          pageSize,
+        }),
   ]);
-
-  // Get CRM assignments
-  const estimateIds = getServiceTitanEstimateIds(
-    serviceTitanData.estimates,
-  );
-
-  const crmAssignments = await getEstimateAssignments(
-    estimateIds,
-  );
-
-  // Format estimates
-  const estimates = formatPipelineEstimates(
-    serviceTitanData.estimates,
-    serviceTitanData.customers,
-    crmAssignments,
-  );
-
-  // Apply selected user filter
-  const filteredEstimates = filterPipelineEstimates(
-    estimates,
-    crmAssignments,
-    selectedUserId,
-  );
 
   return {
     users,
+
     selectedFilter,
+
     followUpData: followUps,
-    estimates: filteredEstimates,
+
+    estimates: estimateResult.estimates,
+
+    pagination: estimateResult.pagination,
+
+    isServerPaginated: estimateResult.isServerPaginated,
   };
 }
