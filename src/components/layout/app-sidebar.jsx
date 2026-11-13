@@ -164,6 +164,7 @@ export default function AppSidebar({
       <li key={`${item.label}-${index}`}>
         <Link
           href={item.href}
+          prefetch={true}
           onClick={onNavigate}
           aria-current={active ? "page" : undefined}
           className={classes}

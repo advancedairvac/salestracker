@@ -1,8 +1,8 @@
+import { cache } from "react";
 import { prisma } from "@/lib/prisma";
-
 import { getCachedYtdRevenueJobs } from "@/lib/dashboard/servicetitan-jobs";
-
 import { getDashboardEstimateSummary } from "@/lib/dashboard/servicetitan-estimates";
+import { getRevenueDateRanges } from "@/lib/date/date-utils";
 
 // ============================================
 // PERFORMANCE MEASUREMENT
@@ -14,6 +14,7 @@ async function measureTime(label, callback) {
 
   try {
     const result = await callback();
+
     const duration = (performance.now() - start) / 1000;
 
     console.log(`[Dashboard Performance] ${label}: ${duration.toFixed(2)} sec`);
@@ -74,7 +75,6 @@ async function fetchDashboardJobs() {
 
 // ============================================
 // FETCH DASHBOARD ESTIMATE SUMMARY
-// Uses selected Dashboard date range
 //
 // Estimate Value = subtotal + tax
 // Estimate Count = totalCount
@@ -82,6 +82,8 @@ async function fetchDashboardJobs() {
 // ============================================
 
 async function fetchDashboardEstimates({ start, endExclusive }) {
+  validateDateRange({ start, endExclusive });
+
   return measureTime("Dashboard Estimate Summary", () =>
     getDashboardEstimateSummary({
       start,
@@ -91,40 +93,33 @@ async function fetchDashboardEstimates({ start, endExclusive }) {
 }
 
 // ============================================
-// FETCH SERVICETITAN DASHBOARD DATA
+// FETCH ACTIVE TEAM MEMBERS
 // ============================================
 
-async function fetchServiceTitanDashboardData({ start, endExclusive }) {
-  validateDateRange({ start, endExclusive });
+export async function getDashboardTeamMembers() {
+  return measureTime("Prisma Team Members Query", () =>
+    prisma.user.findMany({
+      where: {
+        role: {
+          in: ["ADMIN", "SALESPERSON"],
+        },
 
-  const [jobs, estimateSummary] = await Promise.all([
-    fetchDashboardJobs(),
+        isActive: true,
+      },
 
-    fetchDashboardEstimates({
-      start,
-      endExclusive,
-    }),
-  ]);
+      select: {
+        id: true,
+        name: true,
+        title: true,
+        role: true,
+        monthlyGoal: true,
+        quarterlyGoal: true,
+        annualGoal: true,
+      },
 
-  return {
-    jobs,
-    estimateSummary,
-  };
-}
-
-// ============================================
-// GET SERVICETITAN DASHBOARD DATA
-// NO DASHBOARD DATA CACHE
-// ============================================
-
-export async function getDashboardServiceTitanData({
-  start,
-  endExclusive,
-} = {}) {
-  return measureTime("Total ServiceTitan Dashboard Data", () =>
-    fetchServiceTitanDashboardData({
-      start,
-      endExclusive,
+      orderBy: {
+        name: "asc",
+      },
     }),
   );
 }
@@ -164,6 +159,32 @@ export async function getDashboardOpportunities({
     }),
   );
 }
+
+// ============================================
+// REQUEST-LEVEL JOBS CACHE
+//
+// Reuse Jobs during the same server render.
+// Not a persistent database/API cache.
+// ============================================
+
+const getCachedDashboardJobsForRender = cache(async () => fetchDashboardJobs());
+
+// ============================================
+// REQUEST-LEVEL OPPORTUNITIES CACHE
+//
+// Same date range + same salesperson filter
+// will reuse the same Prisma query.
+// ============================================
+
+const getCachedOpportunitiesForRender = cache(
+  async (startTime, endTime, salesmanId = null) => {
+    return getDashboardOpportunities({
+      start: new Date(startTime),
+      endExclusive: new Date(endTime),
+      salesmanId,
+    });
+  },
+);
 
 // ============================================
 // BUILD DASHBOARD REVENUE SALES
@@ -240,9 +261,86 @@ async function buildDashboardRevenueSales({
 }
 
 // ============================================
+// ADMIN REVENUE SECTION DATA
+//
+// Independent of Dashboard Date Filter.
+// Uses persistent cached Jobs data.
+// ============================================
+
+export async function getAdminRevenueSectionData() {
+  const jobs = await getCachedDashboardJobsForRender();
+
+  return {
+    jobs,
+    revenueDateRanges: getRevenueDateRanges(),
+  };
+}
+
+// ============================================
+// ADMIN PIPELINE SECTION DATA
+//
+// Estimates API + Opportunities Prisma.
+// ============================================
+
+export async function getAdminPipelineSectionData({ start, endExclusive }) {
+  validateDateRange({ start, endExclusive });
+
+  const startTime = start.getTime();
+  const endTime = endExclusive.getTime();
+
+  const [estimateSummary, opportunities] = await Promise.all([
+    fetchDashboardEstimates({
+      start,
+      endExclusive,
+    }),
+
+    getCachedOpportunitiesForRender(startTime, endTime),
+  ]);
+
+  return {
+    estimateSummary,
+    opportunities,
+  };
+}
+
+// ============================================
+// ADMIN TEAM SECTION DATA
+//
+// Jobs + Opportunities + Team Members.
+// ============================================
+
+export async function getAdminTeamSectionData({ start, endExclusive }) {
+  validateDateRange({ start, endExclusive });
+
+  const startTime = start.getTime();
+  const endTime = endExclusive.getTime();
+
+  const [jobs, opportunities, teamMembers] = await Promise.all([
+    getCachedDashboardJobsForRender(),
+
+    getCachedOpportunitiesForRender(startTime, endTime),
+
+    getDashboardTeamMembers(),
+  ]);
+
+  const revenueSales = await buildDashboardRevenueSales({
+    jobs,
+    start,
+    endExclusive,
+  });
+
+  return {
+    teamMembers,
+    revenueSales,
+    opportunities,
+  };
+}
+
+// ============================================
 // FETCH SALES REVENUE
-// Fetch Jobs only
-// No unnecessary Estimates API request
+//
+// Jobs only.
+// No unnecessary Estimates API request.
 // ============================================
 
 export async function getDashboardRevenueSales({
@@ -252,7 +350,7 @@ export async function getDashboardRevenueSales({
 } = {}) {
   validateDateRange({ start, endExclusive });
 
-  const jobs = await fetchDashboardJobs();
+  const jobs = await getCachedDashboardJobsForRender();
 
   return buildDashboardRevenueSales({
     jobs,
@@ -263,55 +361,65 @@ export async function getDashboardRevenueSales({
 }
 
 // ============================================
-// FETCH ACTIVE TEAM MEMBERS
+// FETCH SERVICETITAN DASHBOARD DATA
 // ============================================
 
-export async function getDashboardTeamMembers() {
-  return measureTime("Prisma Team Members Query", () =>
-    prisma.user.findMany({
-      where: {
-        role: {
-          in: ["ADMIN", "SALESPERSON"],
-        },
+async function fetchServiceTitanDashboardData({ start, endExclusive }) {
+  validateDateRange({ start, endExclusive });
 
-        isActive: true,
-      },
+  const [jobs, estimateSummary] = await Promise.all([
+    getCachedDashboardJobsForRender(),
 
-      select: {
-        id: true,
-        name: true,
-        title: true,
-        role: true,
-        monthlyGoal: true,
-        quarterlyGoal: true,
-        annualGoal: true,
-      },
+    fetchDashboardEstimates({
+      start,
+      endExclusive,
+    }),
+  ]);
 
-      orderBy: {
-        name: "asc",
-      },
+  return {
+    jobs,
+    estimateSummary,
+  };
+}
+
+// ============================================
+// GET SERVICETITAN DASHBOARD DATA
+// ============================================
+
+export async function getDashboardServiceTitanData({
+  start,
+  endExclusive,
+} = {}) {
+  validateDateRange({ start, endExclusive });
+
+  return measureTime("Total ServiceTitan Dashboard Data", () =>
+    fetchServiceTitanDashboardData({
+      start,
+      endExclusive,
     }),
   );
 }
 
 // ============================================
 // FETCH ADMIN DASHBOARD DATA
+//
+// Backward compatibility for existing pages.
 // ============================================
 
 export async function getAdminDashboardData({ start, endExclusive } = {}) {
   validateDateRange({ start, endExclusive });
 
   return measureTime("Total Admin Dashboard Data", async () => {
+    const startTime = start.getTime();
+    const endTime = endExclusive.getTime();
+
     const [serviceTitanData, opportunities, teamMembers] = await Promise.all([
       getDashboardServiceTitanData({
         start,
         endExclusive,
       }),
 
-      getDashboardOpportunities({
-        start,
-        endExclusive,
-      }),
+      getCachedOpportunitiesForRender(startTime, endTime),
 
       getDashboardTeamMembers(),
     ]);
@@ -347,6 +455,9 @@ export async function getSalespersonDashboardData({
   validateDateRange({ start, endExclusive });
 
   return measureTime("Total Salesperson Dashboard Data", async () => {
+    const startTime = start.getTime();
+    const endTime = endExclusive.getTime();
+
     const [serviceTitanData, companyOpportunities, ownOpportunities] =
       await Promise.all([
         getDashboardServiceTitanData({
@@ -354,16 +465,9 @@ export async function getSalespersonDashboardData({
           endExclusive,
         }),
 
-        getDashboardOpportunities({
-          start,
-          endExclusive,
-        }),
+        getCachedOpportunitiesForRender(startTime, endTime),
 
-        getDashboardOpportunities({
-          start,
-          endExclusive,
-          salesmanId,
-        }),
+        getCachedOpportunitiesForRender(startTime, endTime, salesmanId),
       ]);
 
     const ownRevenueSales = await buildDashboardRevenueSales({

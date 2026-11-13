@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 
+import MetricSkeleton from "@/components/ui/skeleton/metric-skeleton";
+
 export default function PipelineCard({
   opportunities = 0,
   estimateCount = 0,
@@ -9,6 +11,7 @@ export default function PipelineCard({
   currency = "$",
   href = "/admin/pipeline",
   className = "",
+  loading = false,
 }) {
   const formatAmount = (amount) => {
     return `${currency}${new Intl.NumberFormat("en-US", {
@@ -17,10 +20,29 @@ export default function PipelineCard({
     }).format(Number(amount) || 0)}`;
   };
 
+  const metrics = [
+    {
+      value: opportunities,
+      label: "Opps",
+      width: "24px",
+    },
+    {
+      value: estimateCount,
+      label: "Estimates",
+      width: "35px",
+    },
+    {
+      value: formatAmount(estimateValue),
+      label: null,
+      width: "55px",
+    },
+  ];
+
   return (
     <Link
       href={href}
       className={`block w-full border border-[#d5d5d5] bg-white p-4 transition-colors hover:border-[#777] sm:p-[18px] ${className}`}
+      aria-busy={loading}
     >
       <div className="flex items-center justify-between gap-3">
         <h2 className="text-[19px] font-extrabold uppercase leading-tight tracking-[-0.4px] text-black sm:text-xl">
@@ -43,20 +65,26 @@ export default function PipelineCard({
         </svg>
       </div>
 
-      <div className="mt-5 flex flex-wrap items-baseline gap-x-5 gap-y-2 text-sm text-black sm:gap-x-6">
-        <div className="flex items-baseline gap-1.5 whitespace-nowrap">
-          <strong className="font-extrabold">{opportunities}</strong>
+      <div
+        className="mt-5 flex flex-wrap items-baseline gap-x-5 gap-y-2 text-sm text-black sm:gap-x-6"
+        aria-live="polite"
+      >
+        {metrics.map((metric, index) => (
+          <div
+            key={index}
+            className="flex min-w-0 flex-wrap items-baseline gap-x-1.5"
+          >
+            {loading ? (
+              <MetricSkeleton width={metric.width} />
+            ) : (
+              <strong className="font-extrabold">{metric.value}</strong>
+            )}
 
-          <span className="font-medium uppercase">Opps</span>
-        </div>
-
-        <div className="flex min-w-0 flex-wrap items-baseline gap-x-1.5">
-          <strong className="font-extrabold">{estimateCount}</strong>
-
-          <span className="font-medium uppercase">Estimates</span>
-
-          <span className="font-medium">/ {formatAmount(estimateValue)}</span>
-        </div>
+            {metric.label && (
+              <span className="font-medium uppercase">{metric.label}</span>
+            )}
+          </div>
+        ))}
       </div>
     </Link>
   );

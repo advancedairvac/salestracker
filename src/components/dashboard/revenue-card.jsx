@@ -1,7 +1,8 @@
-
 "use client";
 
 import Link from "next/link";
+
+import MetricSkeleton from "@/components/ui/skeleton/metric-skeleton";
 
 export default function RevenueCard({
   today = 0,
@@ -10,6 +11,7 @@ export default function RevenueCard({
   currency = "$",
   href = "/admin/sales-revenue",
   className = "",
+  loading = false,
 }) {
   const formatAmount = (amount) => {
     const value = Number(amount) || 0;
@@ -20,10 +22,17 @@ export default function RevenueCard({
     }).format(value)}`;
   };
 
+  const metrics = [
+    { label: "Today", value: today },
+    { label: "MTD", value: mtd },
+    { label: "YTD", value: ytd },
+  ];
+
   return (
     <Link
       href={href}
       className={`block w-full border border-[#d5d5d5] bg-white p-4 transition-colors hover:border-[#777] sm:p-[18px] ${className}`}
+      aria-busy={loading}
     >
       <div className="flex items-center justify-between gap-3">
         <h2 className="text-[19px] font-extrabold uppercase leading-tight tracking-[-0.4px] text-black sm:text-xl">
@@ -46,33 +55,28 @@ export default function RevenueCard({
         </svg>
       </div>
 
-      <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 sm:gap-x-5">
-        <div className="flex items-baseline gap-2 whitespace-nowrap">
-          <strong className="text-sm font-extrabold text-black sm:text-[15px]">
-            {formatAmount(today)}
-          </strong>
-          <span className="text-xs font-medium uppercase text-[#333] sm:text-sm">
-            Today
-          </span>
-        </div>
+      <div
+        className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 sm:gap-x-5"
+        aria-live="polite"
+      >
+        {metrics.map((metric) => (
+          <div
+            key={metric.label}
+            className="flex items-baseline gap-2 whitespace-nowrap"
+          >
+            {loading ? (
+              <MetricSkeleton width="48px" />
+            ) : (
+              <strong className="text-sm font-extrabold text-black sm:text-[15px]">
+                {formatAmount(metric.value)}
+              </strong>
+            )}
 
-        <div className="flex items-baseline gap-2 whitespace-nowrap">
-          <strong className="text-sm font-extrabold text-black sm:text-[15px]">
-            {formatAmount(mtd)}
-          </strong>
-          <span className="text-xs font-medium uppercase text-[#333] sm:text-sm">
-            MTD
-          </span>
-        </div>
-
-        <div className="flex items-baseline gap-2 whitespace-nowrap">
-          <strong className="text-sm font-extrabold text-black sm:text-[15px]">
-            {formatAmount(ytd)}
-          </strong>
-          <span className="text-xs font-medium uppercase text-[#333] sm:text-sm">
-            YTD
-          </span>
-        </div>
+            <span className="text-xs font-medium uppercase text-[#333] sm:text-sm">
+              {metric.label}
+            </span>
+          </div>
+        ))}
       </div>
     </Link>
   );

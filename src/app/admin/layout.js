@@ -1,4 +1,3 @@
-
 import { redirect } from "next/navigation";
 import AppShell from "@/components/layout/app-shell";
 import { getAuthenticatedUser } from "@/lib/auth";
