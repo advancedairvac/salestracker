@@ -7,15 +7,14 @@ import {
   getCustomerName,
 } from "@/lib/dashboard/customer-sync";
 
-import {
-  getDateRange,
-  getDateBounds,
-  isValidDateString,
-} from "@/lib/date/date-utils";
+import { resolveSelectedDateRange } from "@/lib/dashboard/date-range-helpers";
+
+import { isWithinRange } from "@/lib/date/date-utils";
 
 import { getGoalConfiguration, calculateTeamGoal } from "@/lib/date/goal-utils";
 
 import {
+  isCompletedJob,
   getCompletedJobs,
   calculateJobRevenue,
 } from "@/lib/dashboard/servicetitan-helpers";
@@ -25,22 +24,6 @@ import { getDashboardTeamMembers } from "@/lib/dashboard/dashboard-data";
 // ============================================
 // CONFIGURATION
 // ============================================
-
-const VALID_PRESETS = [
-  "Custom",
-  "Today",
-  "Yesterday",
-  "Last 7 Days",
-  "Last 30 Days",
-  "Last 365 Days",
-  "MTD",
-  "QTD",
-  "YTD",
-  "Q1",
-  "Q2",
-  "Q3",
-  "Q4",
-];
 
 const ALLOWED_PAGE_SIZES = [10, 20, 50, 100];
 
@@ -76,40 +59,18 @@ function getPageSize(value) {
 // ============================================
 
 function getRevenueDateRange(searchParams = {}) {
-  const initialRange = getDateRange("MTD");
-
-  const requestedPreset = getQueryValue(searchParams.preset);
-
-  const preset = VALID_PRESETS.includes(requestedPreset)
-    ? requestedPreset
-    : "MTD";
-
-  const requestedStartDate = getQueryValue(searchParams.startDate);
-  const requestedEndDate = getQueryValue(searchParams.endDate);
-
-  const hasValidCustomRange =
-    isValidDateString(requestedStartDate) &&
-    isValidDateString(requestedEndDate) &&
-    requestedStartDate <= requestedEndDate;
-
-  const startDate = hasValidCustomRange
-    ? requestedStartDate
-    : initialRange.startDate;
-
-  const endDate = hasValidCustomRange ? requestedEndDate : initialRange.endDate;
-
-  const dateBounds = getDateBounds(startDate, endDate);
-
-  if (!dateBounds) {
-    throw new Error("Invalid revenue date range.");
-  }
+  const dateRange = resolveSelectedDateRange({
+    preset: getQueryValue(searchParams.preset),
+    startDate: getQueryValue(searchParams.startDate),
+    endDate: getQueryValue(searchParams.endDate),
+  });
 
   return {
-    preset,
-    startDate,
-    endDate,
-    start: dateBounds.start,
-    endExclusive: dateBounds.endExclusive,
+    preset: dateRange.selectedPreset,
+    startDate: dateRange.selectedStartDate,
+    endDate: dateRange.selectedEndDate,
+    start: dateRange.start,
+    endExclusive: dateRange.endExclusive,
   };
 }
 
@@ -129,12 +90,15 @@ function getRevenuePagination(searchParams = {}) {
 // FETCH ALL MATCHING SERVICE TITAN JOBS
 // ============================================
 
-async function fetchAllRevenueJobs({ startDate, endDate } = {}) {
+async function fetchAllRevenueJobs({ start, endExclusive } = {}) {
   const allJobs = [];
   const seenJobIds = new Set();
 
   let page = 1;
   let expectedTotal = null;
+
+  const completedOnOrAfter = start.toISOString();
+  const completedBefore = endExclusive.toISOString();
 
   while (page <= MAX_SERVICE_TITAN_PAGES) {
     const result = await getRevenueJobs({
@@ -143,8 +107,8 @@ async function fetchAllRevenueJobs({ startDate, endDate } = {}) {
       includeTotal: true,
 
       jobStatus: "Completed",
-      completedOnOrAfter: startDate,
-      completedBefore: endDate,
+      completedOnOrAfter,
+      completedBefore,
     });
 
     const jobs = Array.isArray(result.data) ? result.data : [];
@@ -157,15 +121,11 @@ async function fetchAllRevenueJobs({ startDate, endDate } = {}) {
     }
 
     for (const job of jobs) {
-      if (!job?.id) {
-        continue;
-      }
+      if (!job?.id) continue;
 
       const jobId = String(job.id);
 
-      if (seenJobIds.has(jobId)) {
-        continue;
-      }
+      if (seenJobIds.has(jobId)) continue;
 
       seenJobIds.add(jobId);
       allJobs.push(job);
@@ -175,8 +135,6 @@ async function fetchAllRevenueJobs({ startDate, endDate } = {}) {
       break;
     }
 
-    // Only use totalCount as a stopping condition
-    // when the API does not provide hasMore.
     if (
       result.hasMore === undefined &&
       expectedTotal !== null &&
@@ -225,15 +183,16 @@ function sortRevenueJobs(jobs = []) {
 // ============================================
 
 function getSourceLabel(source) {
-  if (source === "SELF_GENERATED") {
-    return "Self Generated";
-  }
+  switch (source) {
+    case "SELF_GENERATED":
+      return "Self Generated";
 
-  if (source === "COMPANY_GENERATED") {
-    return "Company Generated";
-  }
+    case "COMPANY_GENERATED":
+      return "Company Generated";
 
-  return "—";
+    default:
+      return "—";
+  }
 }
 
 // ============================================
@@ -355,42 +314,42 @@ export async function getSalesRevenueData({ searchParams = {} } = {}) {
 
   const [revenueJobResult, teamMembers] = await Promise.all([
     fetchAllRevenueJobs({
-      startDate,
-      endDate,
+      start,
+      endExclusive,
     }),
 
     getDashboardTeamMembers(),
   ]);
 
   // ------------------------------------------
-  // FILTER ALL COMPLETED JOBS
+  // FILTER COMPLETED JOBS
   // Includes zero-value jobs in the table.
   // ------------------------------------------
 
-  const matchingJobs = revenueJobResult.jobs.filter((job) => {
-    if (job.jobStatus !== "Completed") {
-      return false;
-    }
+  const matchingJobs = revenueJobResult.jobs.filter(
+    (job) =>
+      isCompletedJob(job) &&
+      isWithinRange(job.completedOn, start, endExclusive),
+  );
 
-    const completedDate = new Date(job.completedOn);
-
-    return (
-      Number.isFinite(completedDate.getTime()) &&
-      completedDate >= start &&
-      completedDate < endExclusive
-    );
-  });
+  // ------------------------------------------
+  // SORT JOBS: NEWEST FIRST
+  // ------------------------------------------
 
   const sortedJobs = sortRevenueJobs(matchingJobs);
 
   // ------------------------------------------
   // REVENUE SUMMARY
-  // Preserve existing calculation semantics.
+  // Only positive-value completed jobs.
   // ------------------------------------------
 
   const summaryJobs = getCompletedJobs(sortedJobs);
 
   const totalRevenue = calculateJobRevenue(summaryJobs);
+
+  // ------------------------------------------
+  // TEAM GOAL
+  // ------------------------------------------
 
   const goalConfiguration = getGoalConfiguration(preset, startDate, endDate);
 
@@ -419,13 +378,17 @@ export async function getSalesRevenueData({ searchParams = {} } = {}) {
 
   const customerIds = paginatedJobs
     .map((job) => job.customerId)
-    .filter((id) => id !== undefined && id !== null);
+    .filter((id) => id !== undefined && id !== null && id !== "");
 
   // ------------------------------------------
-  // FETCH CURRENT PAGE ASSIGNMENTS AND CUSTOMERS
+  // CURRENT PAGE SERVICE TITAN JOB IDS
   // ------------------------------------------
 
   const serviceTitanJobIds = paginatedJobs.map((job) => String(job.id));
+
+  // ------------------------------------------
+  // FETCH ASSIGNMENTS AND CUSTOMERS
+  // ------------------------------------------
 
   const [saleAssignments, customerLookup] = await Promise.all([
     getRevenueSaleAssignments(serviceTitanJobIds),
@@ -434,7 +397,7 @@ export async function getSalesRevenueData({ searchParams = {} } = {}) {
   ]);
 
   // ------------------------------------------
-  // BUILD TABLE DATA
+  // BUILD REVENUE TABLE DATA
   // ------------------------------------------
 
   const revenueData = buildRevenueTableData({
@@ -455,8 +418,11 @@ export async function getSalesRevenueData({ searchParams = {} } = {}) {
     },
 
     totalRevenue,
+
     teamGoal,
+
     goalConfiguration,
+
     teamMembers,
 
     revenueData,
