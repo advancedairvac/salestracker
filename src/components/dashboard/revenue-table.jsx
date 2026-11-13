@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import TablePagination from "@/components/dashboard/table-pagination";
 
@@ -10,7 +10,8 @@ import TablePagination from "@/components/dashboard/table-pagination";
 
 function formatCurrency(amount, currency) {
   return `${currency}${new Intl.NumberFormat("en-US", {
-    maximumFractionDigits: 0,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
   }).format(Number(amount) || 0)}`;
 }
 
@@ -32,39 +33,59 @@ function formatSource(source) {
 
 export default function RevenueTable({
   sales = [],
+  currentPage = 1,
+  pageSize = 10,
+  totalItems = 0,
   currency = "$",
   className = "",
 }) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
   // ============================================
-  // PAGINATION STATE
+  // UPDATE URL PARAMETERS
   // ============================================
 
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  function updatePagination(params) {
+    const query = new URLSearchParams(searchParams.toString());
 
-  const totalItems = sales.length;
-  const totalPages = Math.ceil(totalItems / pageSize);
+    Object.entries(params).forEach(([key, value]) => {
+      query.set(key, String(value));
+    });
 
-  useEffect(() => {
-    if (currentPage > Math.max(1, totalPages)) {
-      setCurrentPage(Math.max(1, totalPages));
-    }
-  }, [currentPage, totalPages]);
-
-  function handlePageSizeChange(size) {
-    setPageSize(size);
-    setCurrentPage(1);
+    router.push(`${pathname}?${query.toString()}`);
   }
 
   // ============================================
-  // PAGINATED DATA
+  // HANDLE PAGE CHANGE
   // ============================================
 
-  const paginatedSales = useMemo(() => {
-    const startIndex = (currentPage - 1) * pageSize;
+  function handlePageChange(page) {
+    if (page < 1 || page === currentPage) {
+      return;
+    }
 
-    return sales.slice(startIndex, startIndex + pageSize);
-  }, [sales, currentPage, pageSize]);
+    updatePagination({
+      page,
+      pageSize,
+    });
+  }
+
+  // ============================================
+  // HANDLE PAGE SIZE CHANGE
+  // ============================================
+
+  function handlePageSizeChange(size) {
+    if (![10, 20, 50, 100].includes(size)) {
+      return;
+    }
+
+    updatePagination({
+      page: 1,
+      pageSize: size,
+    });
+  }
 
   // ============================================
   // RENDER
@@ -73,34 +94,34 @@ export default function RevenueTable({
   return (
     <section className={`w-full ${className}`}>
       <div className="w-full overflow-x-auto">
-        <table className="w-full min-w-[650px] border-collapse text-left">
+        <table className="w-full min-w-[700px] border-collapse text-left">
           <thead>
             <tr className="bg-[#d9d9d9]">
-              <th className="px-4 py-2.5 text-[11px] font-bold uppercase tracking-wide text-black sm:text-xs">
+              <th className="whitespace-nowrap px-4 py-2.5 text-[11px] font-bold uppercase tracking-wide text-black sm:text-xs">
                 Titan Job#
               </th>
 
-              <th className="px-4 py-2.5 text-left text-[11px] font-bold uppercase tracking-wide text-black sm:text-xs">
+              <th className="whitespace-nowrap px-4 py-2.5 text-[11px] font-bold uppercase tracking-wide text-black sm:text-xs">
                 Customer
               </th>
 
-              <th className="px-4 py-2.5 text-left text-[11px] font-bold uppercase tracking-wide text-black sm:text-xs">
+              <th className="whitespace-nowrap px-4 py-2.5 text-[11px] font-bold uppercase tracking-wide text-black sm:text-xs">
                 Value
               </th>
 
-              <th className="px-4 py-2.5 text-left text-[11px] font-bold uppercase tracking-wide text-black sm:text-xs">
+              <th className="whitespace-nowrap px-4 py-2.5 text-[11px] font-bold uppercase tracking-wide text-black sm:text-xs">
                 Source
               </th>
 
-              <th className="px-4 py-2.5 text-left text-[11px] font-bold uppercase tracking-wide text-black sm:text-xs">
-                Salesman
+              <th className="whitespace-nowrap px-4 py-2.5 text-[11px] font-bold uppercase tracking-wide text-black sm:text-xs">
+                Comm. Est.
               </th>
             </tr>
           </thead>
 
           <tbody>
-            {paginatedSales.length > 0 ? (
-              paginatedSales.map((sale) => (
+            {sales.length > 0 ? (
+              sales.map((sale) => (
                 <tr
                   key={sale.id}
                   className="border-b border-[#d9d9d9] transition-colors hover:bg-[#f8f8f8]"
@@ -122,20 +143,17 @@ export default function RevenueTable({
                   </td>
 
                   <td className="whitespace-nowrap px-4 py-2 text-sm text-black sm:text-base">
-                    {sale.salesmanName ? (
-                      <span className="underline underline-offset-2">
-                        {sale.salesmanName}
-                      </span>
-                    ) : (
-                      "—"
-                    )}
+                    {formatCurrency(sale.commissionEstimate, currency)}
                   </td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan={5} className="px-4 py-10 text-sm text-[#777]">
-                  No sales records found for this date range.
+                <td
+                  colSpan={5}
+                  className="px-4 py-10 text-center text-sm text-[#777]"
+                >
+                  No completed jobs found for this date range.
                 </td>
               </tr>
             )}
@@ -143,23 +161,15 @@ export default function RevenueTable({
         </table>
       </div>
 
-      {/* PAGINATION */}
+      {/* SERVER-SIDE PAGINATION */}
 
       <TablePagination
         currentPage={currentPage}
         pageSize={pageSize}
         totalItems={totalItems}
-        onPageChange={setCurrentPage}
+        onPageChange={handlePageChange}
         onPageSizeChange={handlePageSizeChange}
       />
-
-      {/* TOTAL SALES COUNT */}
-
-      {sales.length > 0 && (
-        <p className="mt-2 text-right text-xs text-[#777]">
-          {sales.length} {sales.length === 1 ? "Sale" : "Sales"}
-        </p>
-      )}
     </section>
   );
 }

@@ -1,9 +1,11 @@
 import { prisma } from "@/lib/prisma";
 
+import { getRevenueJobs } from "@/lib/integrations/servicetitan";
+
 import {
-  getAllJobs,
-  getAllServiceTitanCustomers,
-} from "@/lib/integrations/servicetitan";
+  getServiceTitanCustomersByIds,
+  getCustomerName,
+} from "@/lib/dashboard/customer-sync";
 
 import {
   getDateRange,
@@ -21,7 +23,7 @@ import {
 import { getDashboardTeamMembers } from "@/lib/dashboard/dashboard-data";
 
 // ============================================
-// DATE RANGE
+// CONFIGURATION
 // ============================================
 
 const VALID_PRESETS = [
@@ -40,9 +42,38 @@ const VALID_PRESETS = [
   "Q4",
 ];
 
+const ALLOWED_PAGE_SIZES = [10, 20, 50, 100];
+
+const SERVICE_TITAN_PAGE_SIZE = 500;
+const MAX_SERVICE_TITAN_PAGES = 1000;
+
+// ============================================
+// QUERY HELPERS
+// ============================================
+
 function getQueryValue(value) {
   return Array.isArray(value) ? value[0] : value;
 }
+
+function getPositiveInteger(value, fallback) {
+  const parsed = Number(value);
+
+  if (!Number.isInteger(parsed) || parsed < 1) {
+    return fallback;
+  }
+
+  return parsed;
+}
+
+function getPageSize(value) {
+  const parsed = getPositiveInteger(value, 10);
+
+  return ALLOWED_PAGE_SIZES.includes(parsed) ? parsed : 10;
+}
+
+// ============================================
+// DATE RANGE
+// ============================================
 
 function getRevenueDateRange(searchParams = {}) {
   const initialRange = getDateRange("MTD");
@@ -58,7 +89,8 @@ function getRevenueDateRange(searchParams = {}) {
 
   const hasValidCustomRange =
     isValidDateString(requestedStartDate) &&
-    isValidDateString(requestedEndDate);
+    isValidDateString(requestedEndDate) &&
+    requestedStartDate <= requestedEndDate;
 
   const startDate = hasValidCustomRange
     ? requestedStartDate
@@ -82,54 +114,110 @@ function getRevenueDateRange(searchParams = {}) {
 }
 
 // ============================================
-// CUSTOMER LOOKUP
+// REVENUE PAGINATION PARAMETERS
 // ============================================
 
-function getCustomerList(customers) {
-  if (Array.isArray(customers)) {
-    return customers;
-  }
+function getRevenuePagination(searchParams = {}) {
+  return {
+    requestedPage: getPositiveInteger(getQueryValue(searchParams.page), 1),
 
-  if (Array.isArray(customers?.customers)) {
-    return customers.customers;
-  }
-
-  if (Array.isArray(customers?.data)) {
-    return customers.data;
-  }
-
-  return [];
+    pageSize: getPageSize(getQueryValue(searchParams.pageSize)),
+  };
 }
 
-function getCustomerName(customer) {
-  if (!customer) {
-    return "—";
-  }
+// ============================================
+// FETCH ALL MATCHING SERVICE TITAN JOBS
+// ============================================
 
-  if (customer.pocName) {
-    return customer.pocName;
-  }
+async function fetchAllRevenueJobs({ startDate, endDate } = {}) {
+  const allJobs = [];
+  const seenJobIds = new Set();
 
-  const fullName = [customer.firstName, customer.lastName]
-    .filter(Boolean)
-    .join(" ")
-    .trim();
+  let page = 1;
+  let expectedTotal = null;
 
-  return fullName || customer.name || customer.businessName || "—";
-}
+  while (page <= MAX_SERVICE_TITAN_PAGES) {
+    const result = await getRevenueJobs({
+      page,
+      pageSize: SERVICE_TITAN_PAGE_SIZE,
+      includeTotal: true,
 
-function buildCustomerLookup(customers) {
-  const customerMap = new Map();
+      jobStatus: "Completed",
+      completedOnOrAfter: startDate,
+      completedBefore: endDate,
+    });
 
-  for (const customer of customers) {
-    if (!customer?.id) {
-      continue;
+    const jobs = Array.isArray(result.data) ? result.data : [];
+
+    if (page === 1) {
+      const totalCount = Number(result.totalCount);
+
+      expectedTotal =
+        Number.isFinite(totalCount) && totalCount >= 0 ? totalCount : null;
     }
 
-    customerMap.set(String(customer.id), getCustomerName(customer));
+    for (const job of jobs) {
+      if (!job?.id) {
+        continue;
+      }
+
+      const jobId = String(job.id);
+
+      if (seenJobIds.has(jobId)) {
+        continue;
+      }
+
+      seenJobIds.add(jobId);
+      allJobs.push(job);
+    }
+
+    if (jobs.length === 0 || result.hasMore === false) {
+      break;
+    }
+
+    // Only use totalCount as a stopping condition
+    // when the API does not provide hasMore.
+    if (
+      result.hasMore === undefined &&
+      expectedTotal !== null &&
+      allJobs.length >= expectedTotal
+    ) {
+      break;
+    }
+
+    if (result.hasMore === undefined && jobs.length < SERVICE_TITAN_PAGE_SIZE) {
+      break;
+    }
+
+    page += 1;
   }
 
-  return customerMap;
+  if (page > MAX_SERVICE_TITAN_PAGES) {
+    throw new Error(
+      "ServiceTitan revenue pagination exceeded the maximum allowed pages.",
+    );
+  }
+
+  return {
+    jobs: allJobs,
+    expectedTotal,
+  };
+}
+
+// ============================================
+// SORT JOBS: NEWEST FIRST
+// ============================================
+
+function sortRevenueJobs(jobs = []) {
+  return [...jobs].sort((a, b) => {
+    const dateA = new Date(a.completedOn).getTime();
+    const dateB = new Date(b.completedOn).getTime();
+
+    const validDateA = Number.isFinite(dateA) ? dateA : 0;
+    const validDateB = Number.isFinite(dateB) ? dateB : 0;
+
+    return validDateB - validDateA;
+  });
 }
 
 // ============================================
@@ -185,7 +273,7 @@ async function getRevenueSaleAssignments(serviceTitanJobIds = []) {
 
 function buildRevenueTableData({
   jobs = [],
-  customerLookup = new Map(),
+  customerLookup = {},
   saleAssignments = [],
 } = {}) {
   const salesByJobId = new Map();
@@ -199,14 +287,18 @@ function buildRevenueTableData({
   return jobs.map((job) => {
     const savedSale = salesByJobId.get(String(job.id));
 
+    const customer = customerLookup[String(job.customerId)];
+
     return {
       id: job.id,
 
       serviceTitanJobId: job.jobNumber || job.id,
 
-      customerName: customerLookup.get(String(job.customerId)) || "—",
+      customerName: getCustomerName(customer),
 
       saleValue: Number(job.total) || 0,
+
+      completedOn: job.completedOn || null,
 
       source: getSourceLabel(savedSale?.source),
 
@@ -218,65 +310,142 @@ function buildRevenueTableData({
 }
 
 // ============================================
+// BUILD PAGINATION
+// ============================================
+
+function buildPagination({ requestedPage, pageSize, totalItems }) {
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+
+  const currentPage = Math.min(requestedPage, totalPages);
+
+  return {
+    currentPage,
+    pageSize,
+    totalItems,
+    totalPages,
+
+    hasPreviousPage: currentPage > 1,
+
+    hasNextPage: currentPage < totalPages,
+  };
+}
+
+// ============================================
 // SHARED SALES REVENUE DATA
 // ============================================
 
 export async function getSalesRevenueData({ searchParams = {} } = {}) {
+  // ------------------------------------------
+  // DATE RANGE
+  // ------------------------------------------
+
   const dateRange = getRevenueDateRange(searchParams);
 
   const { preset, startDate, endDate, start, endExclusive } = dateRange;
 
-  // Fetch ServiceTitan data and team members together.
-  const [jobs, serviceTitanCustomers, teamMembers] = await Promise.all([
-    getAllJobs({
-      pageSize: 100,
-      maxPages: 1,
-    }),
+  // ------------------------------------------
+  // PAGINATION PARAMETERS
+  // ------------------------------------------
 
-    getAllServiceTitanCustomers({
-      pageSize: 100,
-      maxPages: 100,
+  const { requestedPage, pageSize } = getRevenuePagination(searchParams);
+
+  // ------------------------------------------
+  // FETCH REVENUE JOBS AND TEAM MEMBERS
+  // ------------------------------------------
+
+  const [revenueJobResult, teamMembers] = await Promise.all([
+    fetchAllRevenueJobs({
+      startDate,
+      endDate,
     }),
 
     getDashboardTeamMembers(),
   ]);
 
-  // Keep only completed jobs with positive values.
-  const completedJobs = getCompletedJobs(jobs);
+  // ------------------------------------------
+  // FILTER ALL COMPLETED JOBS
+  // Includes zero-value jobs in the table.
+  // ------------------------------------------
 
-  // Apply the selected date range.
-  const filteredJobs = completedJobs
-    .filter((job) => {
-      const completedDate = new Date(job.completedOn);
+  const matchingJobs = revenueJobResult.jobs.filter((job) => {
+    if (job.jobStatus !== "Completed") {
+      return false;
+    }
 
-      return completedDate >= start && completedDate < endExclusive;
-    })
-    .sort((a, b) => new Date(b.completedOn) - new Date(a.completedOn));
+    const completedDate = new Date(job.completedOn);
 
-  // Fetch CRM assignments only for the relevant jobs.
-  const serviceTitanJobIds = filteredJobs.map((job) => String(job.id));
-
-  const [saleAssignments] = await Promise.all([
-    getRevenueSaleAssignments(serviceTitanJobIds),
-  ]);
-
-  // Build customer lookup and revenue table.
-  const customerLookup = buildCustomerLookup(
-    getCustomerList(serviceTitanCustomers),
-  );
-
-  const revenueData = buildRevenueTableData({
-    jobs: filteredJobs,
-    customerLookup,
-    saleAssignments,
+    return (
+      Number.isFinite(completedDate.getTime()) &&
+      completedDate >= start &&
+      completedDate < endExclusive
+    );
   });
 
-  // Calculate revenue and team goal.
-  const totalRevenue = calculateJobRevenue(filteredJobs);
+  const sortedJobs = sortRevenueJobs(matchingJobs);
+
+  // ------------------------------------------
+  // REVENUE SUMMARY
+  // Preserve existing calculation semantics.
+  // ------------------------------------------
+
+  const summaryJobs = getCompletedJobs(sortedJobs);
+
+  const totalRevenue = calculateJobRevenue(summaryJobs);
 
   const goalConfiguration = getGoalConfiguration(preset, startDate, endDate);
 
   const teamGoal = calculateTeamGoal(teamMembers, goalConfiguration.goalType);
+
+  // ------------------------------------------
+  // SERVER-SIDE PAGINATION
+  // ------------------------------------------
+
+  const pagination = buildPagination({
+    requestedPage,
+    pageSize,
+    totalItems: sortedJobs.length,
+  });
+
+  const startIndex = (pagination.currentPage - 1) * pagination.pageSize;
+
+  const paginatedJobs = sortedJobs.slice(
+    startIndex,
+    startIndex + pagination.pageSize,
+  );
+
+  // ------------------------------------------
+  // CURRENT PAGE CUSTOMER IDS
+  // ------------------------------------------
+
+  const customerIds = paginatedJobs
+    .map((job) => job.customerId)
+    .filter((id) => id !== undefined && id !== null);
+
+  // ------------------------------------------
+  // FETCH CURRENT PAGE ASSIGNMENTS AND CUSTOMERS
+  // ------------------------------------------
+
+  const serviceTitanJobIds = paginatedJobs.map((job) => String(job.id));
+
+  const [saleAssignments, customerLookup] = await Promise.all([
+    getRevenueSaleAssignments(serviceTitanJobIds),
+
+    getServiceTitanCustomersByIds(customerIds),
+  ]);
+
+  // ------------------------------------------
+  // BUILD TABLE DATA
+  // ------------------------------------------
+
+  const revenueData = buildRevenueTableData({
+    jobs: paginatedJobs,
+    customerLookup,
+    saleAssignments,
+  });
+
+  // ------------------------------------------
+  // RETURN
+  // ------------------------------------------
 
   return {
     dateRange: {
@@ -289,6 +458,9 @@ export async function getSalesRevenueData({ searchParams = {} } = {}) {
     teamGoal,
     goalConfiguration,
     teamMembers,
+
     revenueData,
+
+    pagination,
   };
 }

@@ -1,7 +1,12 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+
 import DateSelector from "@/components/ui/date-selector";
+
+// ============================================
+// REVENUE DATE FILTER
+// ============================================
 
 export default function RevenueDateFilter({
   value,
@@ -9,6 +14,7 @@ export default function RevenueDateFilter({
   basePath = "/admin/sales-revenue",
 }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   // ============================================
   // HANDLE DATE AND PRESET CHANGE
@@ -19,11 +25,22 @@ export default function RevenueDateFilter({
       return;
     }
 
-    const params = new URLSearchParams({
-      startDate: range.startDate,
-      endDate: range.endDate,
-      preset: selectedPreset || "Custom",
-    });
+    // Preserve existing query parameters.
+    const params = new URLSearchParams(searchParams.toString());
+
+    // Update date range.
+    params.set("startDate", range.startDate);
+    params.set("endDate", range.endDate);
+    params.set("preset", selectedPreset || "Custom");
+
+    // Reset pagination after date change.
+    params.set("page", "1");
+
+    // Keep the previously selected page size.
+    // If none exists, the server defaults to 10.
+    if (!params.has("pageSize")) {
+      params.set("pageSize", "10");
+    }
 
     router.push(`${basePath}?${params.toString()}`);
   }
