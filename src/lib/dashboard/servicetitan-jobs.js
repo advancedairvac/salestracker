@@ -1,4 +1,3 @@
-
 import { getRevenueJobs } from "@/lib/integrations/servicetitan";
 import { getRevenueDateRanges } from "@/lib/date/date-utils";
 
@@ -8,18 +7,10 @@ import { getRevenueDateRanges } from "@/lib/date/date-utils";
 
 const PAGE_SIZE = 500;
 const PAGE_CONCURRENCY = 4;
-const CACHE_TTL = 5 * 60 * 1000;
-
-// ============================================
-// SHARED YTD JOB CACHE
-// ============================================
-
-let ytdJobsCache = null;
-let ytdJobsCacheExpiresAt = 0;
-let ytdJobsFetchPromise = null;
 
 // ============================================
 // FETCH ALL YTD COMPLETED JOBS
+// NO DATA CACHE
 // ============================================
 
 async function fetchYtdCompletedJobs() {
@@ -63,10 +54,7 @@ async function fetchYtdCompletedJobs() {
   ) {
     const pageNumbers = Array.from(
       {
-        length: Math.min(
-          PAGE_CONCURRENCY,
-          totalPages - startPage + 1,
-        ),
+        length: Math.min(PAGE_CONCURRENCY, totalPages - startPage + 1),
       },
       (_, index) => startPage + index,
     );
@@ -83,9 +71,7 @@ async function fetchYtdCompletedJobs() {
 
     for (const result of pageResults) {
       if (!result || !Array.isArray(result.data)) {
-        throw new Error(
-          "Unable to fetch ServiceTitan YTD jobs page.",
-        );
+        throw new Error("Unable to fetch ServiceTitan YTD jobs page.");
       }
 
       jobs.push(...result.data);
@@ -130,37 +116,20 @@ async function fetchYtdCompletedJobs() {
 }
 
 // ============================================
-// GET SHARED CACHED YTD JOBS
+// GET YTD REVENUE JOBS
+// ALWAYS FETCH FRESH DATA
+// ============================================
+
+export async function getYtdRevenueJobs() {
+  return fetchYtdCompletedJobs();
+}
+
+// ============================================
+// BACKWARD COMPATIBILITY
+// Existing imports will continue working.
+// This function DOES NOT use cache.
 // ============================================
 
 export async function getCachedYtdRevenueJobs() {
-  const now = Date.now();
-
-  // Return valid cached data.
-  if (ytdJobsCache && now < ytdJobsCacheExpiresAt) {
-    return ytdJobsCache;
-  }
-
-  // Reuse an ongoing fetch.
-  if (ytdJobsFetchPromise) {
-    return ytdJobsFetchPromise;
-  }
-
-  ytdJobsFetchPromise = fetchYtdCompletedJobs();
-
-  try {
-    const jobs = await ytdJobsFetchPromise;
-
-    ytdJobsCache = jobs;
-    ytdJobsCacheExpiresAt = Date.now() + CACHE_TTL;
-
-    return jobs;
-  } catch (error) {
-    ytdJobsCache = null;
-    ytdJobsCacheExpiresAt = 0;
-
-    throw error;
-  } finally {
-    ytdJobsFetchPromise = null;
-  }
+  return getYtdRevenueJobs();
 }

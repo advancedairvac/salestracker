@@ -1,28 +1,54 @@
 import { prisma } from "@/lib/prisma";
 
-import { getEstimates } from "@/lib/integrations/servicetitan";
-
 import { getCachedYtdRevenueJobs } from "@/lib/dashboard/servicetitan-jobs";
 
-// ============================================
-// CONFIGURATION
-// ============================================
-
-const PAGE_SIZE = 500;
-const PAGE_CONCURRENCY = 4;
-const SERVICE_TITAN_CACHE_TTL = 5 * 60 * 1000;
+import { getDashboardEstimateSummary } from "@/lib/dashboard/servicetitan-estimates";
 
 // ============================================
-// DASHBOARD CACHE
+// PERFORMANCE MEASUREMENT
+// All durations displayed in seconds
 // ============================================
 
-let serviceTitanCache = null;
-let serviceTitanCacheExpiresAt = 0;
-let serviceTitanFetchPromise = null;
+async function measureTime(label, callback) {
+  const start = performance.now();
+
+  try {
+    const result = await callback();
+    const duration = (performance.now() - start) / 1000;
+
+    console.log(`[Dashboard Performance] ${label}: ${duration.toFixed(2)} sec`);
+
+    return result;
+  } catch (error) {
+    const duration = (performance.now() - start) / 1000;
+
+    console.error(
+      `[Dashboard Performance] ${label} FAILED: ${duration.toFixed(2)} sec`,
+      error,
+    );
+
+    throw error;
+  }
+}
+
+// ============================================
+// VALIDATE DASHBOARD DATE RANGE
+// ============================================
+
+function validateDateRange({ start, endExclusive } = {}) {
+  if (
+    !(start instanceof Date) ||
+    !(endExclusive instanceof Date) ||
+    Number.isNaN(start.getTime()) ||
+    Number.isNaN(endExclusive.getTime()) ||
+    start >= endExclusive
+  ) {
+    throw new Error("A valid date range is required.");
+  }
+}
 
 // ============================================
 // OPTIMIZE DASHBOARD JOB FIELDS
-// Keep only fields required by Dashboard.
 // ============================================
 
 function optimizeDashboardJobs(jobs = []) {
@@ -35,157 +61,72 @@ function optimizeDashboardJobs(jobs = []) {
 }
 
 // ============================================
-// OPTIMIZE DASHBOARD ESTIMATE FIELDS
-// ============================================
-
-function optimizeDashboardEstimates(estimates = []) {
-  return estimates.map((estimate) => ({
-    id: estimate.id,
-
-    status: {
-      value: estimate.status?.value ?? null,
-      name: estimate.status?.name || "Unknown",
-    },
-
-    subtotal: Number(estimate.subtotal) || 0,
-
-    tax: Number(estimate.tax) || 0,
-
-    createdOn: estimate.createdOn,
-  }));
-}
-
-// ============================================
 // FETCH DASHBOARD JOBS
-// Uses shared YTD cache.
 // ============================================
 
 async function fetchDashboardJobs() {
-  const jobs = await getCachedYtdRevenueJobs();
+  return measureTime("ServiceTitan Jobs Data", async () => {
+    const jobs = await getCachedYtdRevenueJobs();
 
-  return optimizeDashboardJobs(jobs);
-}
-
-// ============================================
-// FETCH DASHBOARD ESTIMATES
-// ALL ESTIMATES WITH CONTROLLED PAGINATION
-// ============================================
-
-async function fetchDashboardEstimates() {
-  const firstPage = await getEstimates({
-    page: 1,
-    pageSize: PAGE_SIZE,
-    includeTotal: true,
+    return optimizeDashboardJobs(jobs);
   });
-
-  if (!firstPage || !Array.isArray(firstPage.data)) {
-    throw new Error("Unable to fetch ServiceTitan dashboard estimates.");
-  }
-
-  const totalCount = Number(firstPage.totalCount);
-
-  if (!Number.isFinite(totalCount) || totalCount < 0) {
-    throw new Error("Invalid ServiceTitan estimates totalCount.");
-  }
-
-  const estimates = optimizeDashboardEstimates(firstPage.data);
-
-  const totalPages = Math.ceil(totalCount / PAGE_SIZE);
-
-  // Fetch remaining pages with controlled concurrency.
-  for (
-    let startPage = 2;
-    startPage <= totalPages;
-    startPage += PAGE_CONCURRENCY
-  ) {
-    const pageNumbers = Array.from(
-      {
-        length: Math.min(PAGE_CONCURRENCY, totalPages - startPage + 1),
-      },
-      (_, index) => startPage + index,
-    );
-
-    const pageResults = await Promise.all(
-      pageNumbers.map((page) =>
-        getEstimates({
-          page,
-          pageSize: PAGE_SIZE,
-          includeTotal: false,
-        }),
-      ),
-    );
-
-    for (const result of pageResults) {
-      if (!result || !Array.isArray(result.data)) {
-        throw new Error(
-          "Unable to fetch ServiceTitan dashboard estimates page.",
-        );
-      }
-
-      estimates.push(...optimizeDashboardEstimates(result.data));
-    }
-  }
-
-  if (estimates.length !== totalCount) {
-    throw new Error(
-      `Incomplete ServiceTitan estimates data. Expected ${totalCount}, received ${estimates.length}.`,
-    );
-  }
-
-  return estimates;
 }
 
 // ============================================
-// FETCH DASHBOARD SERVICETITAN DATA
+// FETCH DASHBOARD ESTIMATE SUMMARY
+// Uses selected Dashboard date range
+//
+// Estimate Value = subtotal + tax
+// Estimate Count = totalCount
+// Date Filter = createdOn
 // ============================================
 
-async function fetchServiceTitanDashboardData() {
-  const [jobs, estimates] = await Promise.all([
+async function fetchDashboardEstimates({ start, endExclusive }) {
+  return measureTime("Dashboard Estimate Summary", () =>
+    getDashboardEstimateSummary({
+      start,
+      endExclusive,
+    }),
+  );
+}
+
+// ============================================
+// FETCH SERVICETITAN DASHBOARD DATA
+// ============================================
+
+async function fetchServiceTitanDashboardData({ start, endExclusive }) {
+  validateDateRange({ start, endExclusive });
+
+  const [jobs, estimateSummary] = await Promise.all([
     fetchDashboardJobs(),
-    fetchDashboardEstimates(),
+
+    fetchDashboardEstimates({
+      start,
+      endExclusive,
+    }),
   ]);
 
   return {
     jobs,
-    estimates,
+    estimateSummary,
   };
 }
 
 // ============================================
-// GET CACHED SERVICETITAN DASHBOARD DATA
+// GET SERVICETITAN DASHBOARD DATA
+// NO DASHBOARD DATA CACHE
 // ============================================
 
-export async function getDashboardServiceTitanData() {
-  const now = Date.now();
-
-  // Return cached data.
-  if (serviceTitanCache && now < serviceTitanCacheExpiresAt) {
-    return serviceTitanCache;
-  }
-
-  // Reuse ongoing fetch.
-  if (serviceTitanFetchPromise) {
-    return serviceTitanFetchPromise;
-  }
-
-  serviceTitanFetchPromise = fetchServiceTitanDashboardData();
-
-  try {
-    const data = await serviceTitanFetchPromise;
-
-    serviceTitanCache = data;
-
-    serviceTitanCacheExpiresAt = Date.now() + SERVICE_TITAN_CACHE_TTL;
-
-    return data;
-  } catch (error) {
-    serviceTitanCache = null;
-    serviceTitanCacheExpiresAt = 0;
-
-    throw error;
-  } finally {
-    serviceTitanFetchPromise = null;
-  }
+export async function getDashboardServiceTitanData({
+  start,
+  endExclusive,
+} = {}) {
+  return measureTime("Total ServiceTitan Dashboard Data", () =>
+    fetchServiceTitanDashboardData({
+      start,
+      endExclusive,
+    }),
+  );
 }
 
 // ============================================
@@ -197,9 +138,7 @@ export async function getDashboardOpportunities({
   endExclusive,
   salesmanId,
 } = {}) {
-  if (!start || !endExclusive) {
-    throw new Error("A valid date range is required.");
-  }
+  validateDateRange({ start, endExclusive });
 
   const where = {
     opportunityDate: {
@@ -212,21 +151,22 @@ export async function getDashboardOpportunities({
     where.assignedToId = salesmanId;
   }
 
-  return prisma.opportunity.findMany({
-    where,
+  return measureTime("Prisma Opportunities Query", () =>
+    prisma.opportunity.findMany({
+      where,
 
-    select: {
-      id: true,
-      assignedToId: true,
-      value: true,
-      status: true,
-    },
-  });
+      select: {
+        id: true,
+        assignedToId: true,
+        value: true,
+        status: true,
+      },
+    }),
+  );
 }
 
 // ============================================
 // BUILD DASHBOARD REVENUE SALES
-// Uses already-fetched ServiceTitan jobs.
 // ============================================
 
 async function buildDashboardRevenueSales({
@@ -235,72 +175,74 @@ async function buildDashboardRevenueSales({
   endExclusive,
   salesmanId,
 } = {}) {
-  if (!start || !endExclusive) {
-    throw new Error("A valid date range is required.");
-  }
+  validateDateRange({ start, endExclusive });
 
-  const filteredJobs = jobs.filter((job) => {
-    const completedDate = new Date(job.completedOn);
+  return measureTime("Build Dashboard Revenue Sales", async () => {
+    const filteredJobs = jobs.filter((job) => {
+      const completedDate = new Date(job.completedOn);
 
-    return (
-      completedDate >= start &&
-      completedDate < endExclusive &&
-      Number(job.total) > 0
-    );
-  });
-
-  if (!filteredJobs.length) {
-    return [];
-  }
-
-  const jobIds = filteredJobs.map((job) => String(job.id));
-
-  const assignments = await prisma.sale.findMany({
-    where: {
-      serviceTitanJobId: {
-        in: jobIds,
-      },
-
-      salesmanId: salesmanId
-        ? salesmanId
-        : {
-            not: null,
-          },
-    },
-
-    select: {
-      serviceTitanJobId: true,
-      salesmanId: true,
-    },
-  });
-
-  const assignmentsByJobId = new Map(
-    assignments.map((assignment) => [
-      String(assignment.serviceTitanJobId),
-      assignment,
-    ]),
-  );
-
-  return filteredJobs
-    .filter((job) => assignmentsByJobId.has(String(job.id)))
-    .map((job) => {
-      const assignment = assignmentsByJobId.get(String(job.id));
-
-      return {
-        id: String(job.id),
-
-        saleValue: Number(job.total) || 0,
-
-        completedAt: new Date(job.completedOn),
-
-        salesmanId: assignment.salesmanId,
-      };
+      return (
+        completedDate >= start &&
+        completedDate < endExclusive &&
+        Number(job.total) > 0
+      );
     });
+
+    if (!filteredJobs.length) {
+      return [];
+    }
+
+    const jobIds = filteredJobs.map((job) => String(job.id));
+
+    const assignments = await measureTime(
+      "Prisma Sales Assignments Query",
+      () =>
+        prisma.sale.findMany({
+          where: {
+            serviceTitanJobId: {
+              in: jobIds,
+            },
+
+            salesmanId: salesmanId
+              ? salesmanId
+              : {
+                  not: null,
+                },
+          },
+
+          select: {
+            serviceTitanJobId: true,
+            salesmanId: true,
+          },
+        }),
+    );
+
+    const assignmentsByJobId = new Map(
+      assignments.map((assignment) => [
+        String(assignment.serviceTitanJobId),
+        assignment,
+      ]),
+    );
+
+    return filteredJobs
+      .filter((job) => assignmentsByJobId.has(String(job.id)))
+      .map((job) => {
+        const assignment = assignmentsByJobId.get(String(job.id));
+
+        return {
+          id: String(job.id),
+          saleValue: Number(job.total) || 0,
+          completedAt: new Date(job.completedOn),
+          salesmanId: assignment.salesmanId,
+        };
+      });
+  });
 }
 
 // ============================================
 // FETCH SALES REVENUE
-// PUBLIC HELPER
+// Fetch Jobs only
+// No unnecessary Estimates API request
 // ============================================
 
 export async function getDashboardRevenueSales({
@@ -308,7 +250,9 @@ export async function getDashboardRevenueSales({
   endExclusive,
   salesmanId,
 } = {}) {
-  const { jobs } = await getDashboardServiceTitanData();
+  validateDateRange({ start, endExclusive });
+
+  const jobs = await fetchDashboardJobs();
 
   return buildDashboardRevenueSales({
     jobs,
@@ -323,29 +267,31 @@ export async function getDashboardRevenueSales({
 // ============================================
 
 export async function getDashboardTeamMembers() {
-  return prisma.user.findMany({
-    where: {
-      role: {
-        in: ["ADMIN", "SALESPERSON"],
+  return measureTime("Prisma Team Members Query", () =>
+    prisma.user.findMany({
+      where: {
+        role: {
+          in: ["ADMIN", "SALESPERSON"],
+        },
+
+        isActive: true,
       },
 
-      isActive: true,
-    },
+      select: {
+        id: true,
+        name: true,
+        title: true,
+        role: true,
+        monthlyGoal: true,
+        quarterlyGoal: true,
+        annualGoal: true,
+      },
 
-    select: {
-      id: true,
-      name: true,
-      title: true,
-      role: true,
-      monthlyGoal: true,
-      quarterlyGoal: true,
-      annualGoal: true,
-    },
-
-    orderBy: {
-      name: "asc",
-    },
-  });
+      orderBy: {
+        name: "asc",
+      },
+    }),
+  );
 }
 
 // ============================================
@@ -353,29 +299,36 @@ export async function getDashboardTeamMembers() {
 // ============================================
 
 export async function getAdminDashboardData({ start, endExclusive } = {}) {
-  const [serviceTitanData, opportunities, teamMembers] = await Promise.all([
-    getDashboardServiceTitanData(),
+  validateDateRange({ start, endExclusive });
 
-    getDashboardOpportunities({
+  return measureTime("Total Admin Dashboard Data", async () => {
+    const [serviceTitanData, opportunities, teamMembers] = await Promise.all([
+      getDashboardServiceTitanData({
+        start,
+        endExclusive,
+      }),
+
+      getDashboardOpportunities({
+        start,
+        endExclusive,
+      }),
+
+      getDashboardTeamMembers(),
+    ]);
+
+    const revenueSales = await buildDashboardRevenueSales({
+      jobs: serviceTitanData.jobs,
       start,
       endExclusive,
-    }),
+    });
 
-    getDashboardTeamMembers(),
-  ]);
-
-  const revenueSales = await buildDashboardRevenueSales({
-    jobs: serviceTitanData.jobs,
-    start,
-    endExclusive,
+    return {
+      ...serviceTitanData,
+      opportunities,
+      revenueSales,
+      teamMembers,
+    };
   });
-
-  return {
-    ...serviceTitanData,
-    opportunities,
-    revenueSales,
-    teamMembers,
-  };
 }
 
 // ============================================
@@ -391,33 +344,40 @@ export async function getSalespersonDashboardData({
     throw new Error("Authenticated salesperson ID is required.");
   }
 
-  const [serviceTitanData, companyOpportunities, ownOpportunities] =
-    await Promise.all([
-      getDashboardServiceTitanData(),
+  validateDateRange({ start, endExclusive });
 
-      getDashboardOpportunities({
-        start,
-        endExclusive,
-      }),
+  return measureTime("Total Salesperson Dashboard Data", async () => {
+    const [serviceTitanData, companyOpportunities, ownOpportunities] =
+      await Promise.all([
+        getDashboardServiceTitanData({
+          start,
+          endExclusive,
+        }),
 
-      getDashboardOpportunities({
-        start,
-        endExclusive,
-        salesmanId,
-      }),
-    ]);
+        getDashboardOpportunities({
+          start,
+          endExclusive,
+        }),
 
-  const ownRevenueSales = await buildDashboardRevenueSales({
-    jobs: serviceTitanData.jobs,
-    start,
-    endExclusive,
-    salesmanId,
+        getDashboardOpportunities({
+          start,
+          endExclusive,
+          salesmanId,
+        }),
+      ]);
+
+    const ownRevenueSales = await buildDashboardRevenueSales({
+      jobs: serviceTitanData.jobs,
+      start,
+      endExclusive,
+      salesmanId,
+    });
+
+    return {
+      ...serviceTitanData,
+      opportunities: companyOpportunities,
+      ownOpportunities,
+      revenueSales: ownRevenueSales,
+    };
   });
-
-  return {
-    ...serviceTitanData,
-    opportunities: companyOpportunities,
-    ownOpportunities,
-    revenueSales: ownRevenueSales,
-  };
 }

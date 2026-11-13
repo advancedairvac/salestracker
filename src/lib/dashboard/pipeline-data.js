@@ -1,10 +1,6 @@
 import { prisma } from "@/lib/prisma";
 
-import {
-  getEstimates,
-  getAllEstimates,
-  getAllServiceTitanCustomers,
-} from "@/lib/integrations/servicetitan";
+import { getEstimates } from "@/lib/integrations/servicetitan";
 
 import {
   getServiceTitanCustomersByIds,
@@ -90,6 +86,7 @@ function buildFollowUpWhere(selectedFilter) {
 async function getPipelineFollowUps(selectedFilter) {
   const followUps = await prisma.followUp.findMany({
     where: buildFollowUpWhere(selectedFilter),
+
     include: {
       opportunity: {
         include: {
@@ -101,6 +98,7 @@ async function getPipelineFollowUps(selectedFilter) {
           },
         },
       },
+
       assignedTo: {
         select: {
           id: true,
@@ -108,6 +106,7 @@ async function getPipelineFollowUps(selectedFilter) {
         },
       },
     },
+
     orderBy: {
       dueAt: "asc",
     },
@@ -137,14 +136,14 @@ async function getPipelineFollowUps(selectedFilter) {
 }
 
 // ============================================
-// GET SERVICETITAN ESTIMATE IDS
+// GET SERVICETITAN CUSTOMER IDS
 // ============================================
 
-function getServiceTitanEstimateIds(estimates = []) {
+function getServiceTitanCustomerIds(estimates = []) {
   return [
     ...new Set(
       estimates
-        .map((estimate) => estimate.id)
+        .map((estimate) => estimate.customerId)
         .filter((id) => id !== undefined && id !== null)
         .map(String),
     ),
@@ -152,53 +151,16 @@ function getServiceTitanEstimateIds(estimates = []) {
 }
 
 // ============================================
-// GET CRM ESTIMATE ASSIGNMENTS
-// ============================================
-
-async function getEstimateAssignments(estimateIds = []) {
-  if (!estimateIds.length) {
-    return [];
-  }
-
-  return prisma.opportunity.findMany({
-    where: {
-      serviceTitanEstimateId: {
-        in: estimateIds,
-      },
-    },
-    select: {
-      serviceTitanEstimateId: true,
-      source: true,
-      assignedToId: true,
-      assignedTo: {
-        select: {
-          name: true,
-        },
-      },
-    },
-  });
-}
-
-// ============================================
-// FORMAT SERVICETITAN ESTIMATES
+// FORMAT PIPELINE ESTIMATES
+// No Salesperson or Source lookup
 // ============================================
 
 function formatPipelineEstimates(
   serviceTitanEstimates = [],
   serviceTitanCustomers = {},
-  crmAssignments = [],
 ) {
-  const assignmentMap = new Map(
-    crmAssignments.map((assignment) => [
-      String(assignment.serviceTitanEstimateId),
-      assignment,
-    ]),
-  );
-
   return serviceTitanEstimates.map((estimate) => {
     const estimateId = String(estimate.id);
-
-    const assignment = assignmentMap.get(estimateId);
 
     // Customer Sync returns an object keyed by ServiceTitan customer ID.
     const customer = serviceTitanCustomers[String(estimate.customerId)] || null;
@@ -220,12 +182,6 @@ function formatPipelineEstimates(
       },
 
       value: Number(estimateValue) || 0,
-
-      assignedTo: assignment?.assignedTo || null,
-
-      source: assignment?.source || null,
-
-      commissionEstimate: 0,
     };
   });
 }
@@ -248,6 +204,7 @@ function normalizePagination(page, pageSize) {
 
 // ============================================
 // GET SERVER-PAGINATED ESTIMATES
+// Fetch only the requested page
 // ============================================
 
 async function getPaginatedPipelineEstimates({ page, pageSize }) {
@@ -260,31 +217,18 @@ async function getPaginatedPipelineEstimates({ page, pageSize }) {
 
   const serviceTitanEstimates = Array.isArray(result.data) ? result.data : [];
 
-  // Collect current-page estimate IDs.
-  const estimateIds = getServiceTitanEstimateIds(serviceTitanEstimates);
-
   // Collect unique customer IDs from current-page estimates.
-  const customerIds = [
-    ...new Set(
-      serviceTitanEstimates
-        .map((estimate) => estimate.customerId)
-        .filter((id) => id !== undefined && id !== null)
-        .map(String),
-    ),
-  ];
+  const customerIds = getServiceTitanCustomerIds(serviceTitanEstimates);
 
-  // Fetch only current-page CRM assignments and customers.
-  const [crmAssignments, customerResult] = await Promise.all([
-    getEstimateAssignments(estimateIds),
+  // Fetch only current-page customers.
+  const customerResult = customerIds.length
+    ? await getServiceTitanCustomersByIds(customerIds)
+    : {};
 
-    getServiceTitanCustomersByIds(customerIds),
-  ]);
-
-  // Format current-page estimates using the Customer Sync lookup.
+  // Format current-page estimates.
   const estimates = formatPipelineEstimates(
     serviceTitanEstimates,
     customerResult,
-    crmAssignments,
   );
 
   // ServiceTitan total count.
@@ -310,69 +254,6 @@ async function getPaginatedPipelineEstimates({ page, pageSize }) {
 }
 
 // ============================================
-// LEGACY SALESPERSON FILTER
-// Keep existing behavior for now.
-// ============================================
-
-async function getLegacyUserFilteredEstimates(selectedUserId) {
-  const [serviceTitanEstimates, serviceTitanCustomers] = await Promise.all([
-    getAllEstimates({
-      pageSize: 100,
-      maxPages: 10,
-    }),
-
-    getAllServiceTitanCustomers({
-      pageSize: 100,
-      maxPages: 100,
-    }),
-  ]);
-
-  const estimateIds = getServiceTitanEstimateIds(serviceTitanEstimates);
-
-  const crmAssignments = await getEstimateAssignments(estimateIds);
-
-  const estimates = formatPipelineEstimates(
-    serviceTitanEstimates,
-    serviceTitanCustomers.reduce((lookup, customer) => {
-      if (
-        customer?.stCustomerId !== undefined &&
-        customer?.stCustomerId !== null
-      ) {
-        lookup[String(customer.stCustomerId)] = customer;
-      }
-
-      return lookup;
-    }, {}),
-    crmAssignments,
-  );
-
-  const assignmentMap = new Map(
-    crmAssignments.map((assignment) => [
-      String(assignment.serviceTitanEstimateId),
-      assignment,
-    ]),
-  );
-
-  const filteredEstimates = estimates.filter((estimate) => {
-    const assignment = assignmentMap.get(estimate.id);
-
-    return assignment?.assignedToId === selectedUserId;
-  });
-
-  return {
-    estimates: filteredEstimates,
-
-    pagination: {
-      currentPage: 1,
-      pageSize: 10,
-      totalItems: filteredEstimates.length,
-    },
-
-    isServerPaginated: false,
-  };
-}
-
-// ============================================
 // GET PIPELINE DATA
 // ============================================
 
@@ -387,26 +268,20 @@ export async function getPipelineData({
   // Validate selected filter.
   const selectedFilter = getSelectedFilter(requestedFilter, users);
 
-  const isUserFilter = selectedFilter.startsWith("USER:");
-
-  const selectedUserId = isUserFilter ? selectedFilter.slice(5) : null;
-
   // Normalize pagination.
   const { page, pageSize } = normalizePagination(
     requestedPage,
     requestedPageSize,
   );
 
-  // Fetch follow-ups and estimates.
+  // Fetch follow-ups and current-page estimates independently.
   const [followUps, estimateResult] = await Promise.all([
     getPipelineFollowUps(selectedFilter),
 
-    isUserFilter
-      ? getLegacyUserFilteredEstimates(selectedUserId)
-      : getPaginatedPipelineEstimates({
-          page,
-          pageSize,
-        }),
+    getPaginatedPipelineEstimates({
+      page,
+      pageSize,
+    }),
   ]);
 
   return {

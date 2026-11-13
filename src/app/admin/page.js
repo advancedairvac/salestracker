@@ -8,7 +8,6 @@ import { getAdminDashboardData } from "@/lib/dashboard/dashboard-data";
 
 import {
   getRevenueMetrics,
-  getEstimateMetrics,
   getPipelineMetrics,
   getTeamMetrics,
 } from "@/lib/dashboard/dashboard-metrics";
@@ -62,10 +61,10 @@ export default async function AdminDashboardPage({ searchParams }) {
   );
 
   // ============================================
-  // FETCH DATA
+  // FETCH DASHBOARD DATA
   // ============================================
 
-  const { jobs, estimates, opportunities, revenueSales, teamMembers } =
+  const { jobs, estimateSummary, opportunities, revenueSales, teamMembers } =
     await getAdminDashboardData({
       start,
       endExclusive,
@@ -82,15 +81,15 @@ export default async function AdminDashboardPage({ searchParams }) {
   });
 
   // ============================================
-  // ESTIMATE METRICS
+  // ESTIMATE SUMMARY
   // ServiceTitan Estimates API
+  //
+  // Value = subtotal + tax
+  // Count = totalCount
   // ============================================
 
-  const { totalEstimates, estimateValue } = getEstimateMetrics({
-    estimates,
-    start,
-    endExclusive,
-  });
+  const totalEstimates = estimateSummary?.totalCount ?? 0;
+  const estimateValue = estimateSummary?.totalValue ?? 0;
 
   // ============================================
   // OPPORTUNITY METRICS
@@ -148,8 +147,8 @@ export default async function AdminDashboardPage({ searchParams }) {
 
         <PipelineCard
           opportunities={totalOpportunities}
-          estimates={totalEstimates}
-          pipelineValue={estimateValue}
+          estimateCount={totalEstimates}
+          estimateValue={estimateValue}
           currency="$"
         />
       </section>

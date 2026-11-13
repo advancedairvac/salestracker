@@ -1,12 +1,11 @@
-
 "use client";
 
 import Link from "next/link";
 
 export default function PipelineCard({
   opportunities = 0,
-  estimates = 0,
-  pipelineValue = 0,
+  estimateCount = 0,
+  estimateValue = 0,
   currency = "$",
   href = "/admin/pipeline",
   className = "",
@@ -46,26 +45,17 @@ export default function PipelineCard({
 
       <div className="mt-5 flex flex-wrap items-baseline gap-x-5 gap-y-2 text-sm text-black sm:gap-x-6">
         <div className="flex items-baseline gap-1.5 whitespace-nowrap">
-          <strong className="font-extrabold">
-            {opportunities}
-          </strong>
-          <span className="font-medium uppercase">
-            Opps
-          </span>
+          <strong className="font-extrabold">{opportunities}</strong>
+
+          <span className="font-medium uppercase">Opps</span>
         </div>
 
         <div className="flex min-w-0 flex-wrap items-baseline gap-x-1.5">
-          <strong className="font-extrabold">
-            {estimates}
-          </strong>
+          <strong className="font-extrabold">{estimateCount}</strong>
 
-          <span className="font-medium uppercase">
-            Estimates
-          </span>
+          <span className="font-medium uppercase">Estimates</span>
 
-          <span className="font-medium">
-            / {formatAmount(pipelineValue)}
-          </span>
+          <span className="font-medium">/ {formatAmount(estimateValue)}</span>
         </div>
       </div>
     </Link>
