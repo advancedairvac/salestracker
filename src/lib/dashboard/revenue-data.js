@@ -71,7 +71,7 @@ function getPageSize(value) {
 // DATE RANGE
 // ============================================
 
-function getRevenueDateRange(searchParams = {}) {
+export function getSalesRevenueDateRange(searchParams = {}) {
   const dateRange = resolveSelectedDateRange({
     preset: getQueryValue(searchParams.preset),
     startDate: getQueryValue(searchParams.startDate),
@@ -120,11 +120,8 @@ async function fetchAllRevenueJobs({ start, endExclusive } = {}) {
 
   const filters = {
     pageSize: SERVICE_TITAN_PAGE_SIZE,
-
     jobStatus: "Completed",
-
     completedOnOrAfter,
-
     completedBefore,
   };
 
@@ -134,9 +131,7 @@ async function fetchAllRevenueJobs({ start, endExclusive } = {}) {
 
   const firstPage = await getRevenueJobs({
     ...filters,
-
     page: 1,
-
     includeTotal: true,
   });
 
@@ -181,9 +176,7 @@ async function fetchAllRevenueJobs({ start, endExclusive } = {}) {
       pageNumbers.map((page) =>
         getRevenueJobs({
           ...filters,
-
           page,
-
           includeTotal: false,
         }),
       ),
@@ -223,7 +216,6 @@ async function fetchAllRevenueJobs({ start, endExclusive } = {}) {
     if (seenJobIds.has(jobId)) continue;
 
     seenJobIds.add(jobId);
-
     uniqueJobs.push(job);
   }
 
@@ -255,7 +247,6 @@ async function getCachedRevenueJobsForRange({ start, endExclusive }) {
     return cached.jobs;
   }
 
-  // Remove expired cache entry.
   if (cached) {
     revenueRangeCache.delete(cacheKey);
   }
@@ -286,7 +277,6 @@ async function getCachedRevenueJobsForRange({ start, endExclusive }) {
 
     revenueRangeCache.set(cacheKey, {
       jobs,
-
       expiresAt: Date.now() + REVENUE_RANGE_CACHE_TTL,
     });
 
@@ -369,9 +359,7 @@ async function getRevenueSaleAssignments(serviceTitanJobIds = []) {
 
     select: {
       serviceTitanJobId: true,
-
       source: true,
-
       salesmanId: true,
 
       salesman: {
@@ -437,37 +425,24 @@ function buildPagination({ requestedPage, pageSize, totalItems }) {
 
   return {
     currentPage,
-
     pageSize,
-
     totalItems,
-
     totalPages,
-
     hasPreviousPage: currentPage > 1,
-
     hasNextPage: currentPage < totalPages,
   };
 }
 
 // ============================================
-// SHARED SALES REVENUE DATA
+// REVENUE SUMMARY DATA
 // ============================================
 
-export async function getSalesRevenueData({ searchParams = {} } = {}) {
-  // ------------------------------------------
-  // DATE RANGE
-  // ------------------------------------------
-
-  const dateRange = getRevenueDateRange(searchParams);
+export async function getSalesRevenueSummaryData({ dateRange } = {}) {
+  if (!dateRange?.start || !dateRange?.endExclusive) {
+    throw new Error("A valid revenue date range is required.");
+  }
 
   const { preset, startDate, endDate, start, endExclusive } = dateRange;
-
-  // ------------------------------------------
-  // PAGINATION PARAMETERS
-  // ------------------------------------------
-
-  const { requestedPage, pageSize } = getRevenuePagination(searchParams);
 
   // ------------------------------------------
   // FETCH REVENUE JOBS AND TEAM MEMBERS
@@ -494,15 +469,11 @@ export async function getSalesRevenueData({ searchParams = {} } = {}) {
   );
 
   // ------------------------------------------
-  // SORT JOBS: NEWEST FIRST
-  // ------------------------------------------
-
-  const sortedJobs = sortRevenueJobs(matchingJobs);
-
-  // ------------------------------------------
   // REVENUE SUMMARY
   // Only positive-value completed jobs.
   // ------------------------------------------
+
+  const sortedJobs = sortRevenueJobs(matchingJobs);
 
   const summaryJobs = getCompletedJobs(sortedJobs);
 
@@ -515,6 +486,63 @@ export async function getSalesRevenueData({ searchParams = {} } = {}) {
   const goalConfiguration = getGoalConfiguration(preset, startDate, endDate);
 
   const teamGoal = calculateTeamGoal(teamMembers, goalConfiguration.goalType);
+
+  // ------------------------------------------
+  // RETURN SUMMARY DATA
+  // ------------------------------------------
+
+  return {
+    totalRevenue,
+    teamGoal,
+    goalConfiguration,
+    teamMembers,
+  };
+}
+
+// ============================================
+// REVENUE TABLE DATA
+// ============================================
+
+export async function getSalesRevenueTableData({
+  dateRange,
+  searchParams = {},
+} = {}) {
+  if (!dateRange?.start || !dateRange?.endExclusive) {
+    throw new Error("A valid revenue date range is required.");
+  }
+
+  const { start, endExclusive } = dateRange;
+
+  // ------------------------------------------
+  // PAGINATION PARAMETERS
+  // ------------------------------------------
+
+  const { requestedPage, pageSize } = getRevenuePagination(searchParams);
+
+  // ------------------------------------------
+  // FETCH REVENUE JOBS
+  // ------------------------------------------
+
+  const revenueJobs = await getRevenueJobsForRange({
+    start,
+    endExclusive,
+  });
+
+  // ------------------------------------------
+  // FILTER COMPLETED JOBS
+  // ------------------------------------------
+
+  const matchingJobs = revenueJobs.filter(
+    (job) =>
+      isCompletedJob(job) &&
+      isWithinRange(job.completedOn, start, endExclusive),
+  );
+
+  // ------------------------------------------
+  // SORT JOBS: NEWEST FIRST
+  // ------------------------------------------
+
+  const sortedJobs = sortRevenueJobs(matchingJobs);
 
   // ------------------------------------------
   // SERVER-SIDE PAGINATION
@@ -564,33 +592,44 @@ export async function getSalesRevenueData({ searchParams = {} } = {}) {
 
   const revenueData = buildRevenueTableData({
     jobs: paginatedJobs,
-
     customerLookup,
-
     saleAssignments,
   });
 
-  // ------------------------------------------
-  // RETURN
-  // ------------------------------------------
+  return {
+    revenueData,
+    pagination,
+  };
+}
+
+// ============================================
+// LEGACY COMBINED DATA FUNCTION
+// Temporary compatibility for existing page.js
+// ============================================
+
+export async function getSalesRevenueData({ searchParams = {} } = {}) {
+  const dateRange = getSalesRevenueDateRange(searchParams);
+
+  const [summaryData, tableData] = await Promise.all([
+    getSalesRevenueSummaryData({
+      dateRange,
+    }),
+
+    getSalesRevenueTableData({
+      dateRange,
+      searchParams,
+    }),
+  ]);
 
   return {
     dateRange: {
-      startDate,
-      endDate,
-      preset,
+      startDate: dateRange.startDate,
+      endDate: dateRange.endDate,
+      preset: dateRange.preset,
     },
 
-    totalRevenue,
+    ...summaryData,
 
-    teamGoal,
-
-    goalConfiguration,
-
-    teamMembers,
-
-    revenueData,
-
-    pagination,
+    ...tableData,
   };
 }
