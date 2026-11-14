@@ -8,15 +8,11 @@ const SALES_CONFIGURATION_PATH = "/admin/settings/sales-configuration";
 
 export async function saveJobAssignment({
   serviceTitanJobId,
-  jobNumber,
-  customerName,
-  saleValue,
-  completedOn,
   source,
   salesmanId,
+  commissionEstimate,
 }) {
   try {
-    // Admin authentication
     const currentUser = await getAuthenticatedUser();
 
     if (!currentUser || currentUser.role !== "ADMIN") {
@@ -33,7 +29,6 @@ export async function saveJobAssignment({
       };
     }
 
-    // Validate Job ID
     if (!serviceTitanJobId) {
       return {
         success: false,
@@ -41,11 +36,7 @@ export async function saveJobAssignment({
       };
     }
 
-    // Validate Source
-    const allowedSources = [
-      "SELF_GENERATED",
-      "COMPANY_GENERATED",
-    ];
+    const allowedSources = ["SELF_GENERATED", "COMPANY"];
 
     if (!allowedSources.includes(source)) {
       return {
@@ -54,7 +45,6 @@ export async function saveJobAssignment({
       };
     }
 
-    // Validate Salesman
     if (salesmanId) {
       const salesman = await prisma.user.findFirst({
         where: {
@@ -75,58 +65,45 @@ export async function saveJobAssignment({
       }
     }
 
-    const parsedValue = Number(saleValue);
+    const parsedCommission = Number(commissionEstimate);
 
-    if (!Number.isFinite(parsedValue) || parsedValue < 0) {
+    if (!Number.isFinite(parsedCommission) || parsedCommission < 0) {
       return {
         success: false,
-        message: "Invalid Job Value.",
+        message: "Please enter a valid commission estimate.",
       };
     }
-
-    const completedDate = completedOn
-      ? new Date(completedOn)
-      : null;
-
-    const validCompletedDate =
-      completedDate && !Number.isNaN(completedDate.getTime())
-        ? completedDate
-        : null;
 
     const savedSale = await prisma.sale.upsert({
       where: {
         serviceTitanJobId: String(serviceTitanJobId),
       },
 
-      // Update only assignment fields.
-      // Existing financial and customer data remain unchanged.
       update: {
         source,
         salesmanId: salesmanId || null,
+        commissionEstimate: parsedCommission,
       },
 
-      // Create a new Sale record if this Job does not exist.
       create: {
         serviceTitanJobId: String(serviceTitanJobId),
-        serviceTitanJobNumber: jobNumber
-          ? String(jobNumber)
-          : null,
-
-        customerName: customerName || null,
-
-        saleValue: parsedValue,
-
-        completedAt: validCompletedDate,
-
         source,
-
         salesmanId: salesmanId || null,
+        commissionEstimate: parsedCommission,
       },
 
       select: {
         id: true,
+        serviceTitanJobId: true,
         source: true,
         salesmanId: true,
+        commissionEstimate: true,
+        salesman: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
       },
     });
 
@@ -140,6 +117,8 @@ export async function saveJobAssignment({
         id: savedSale.id,
         source: savedSale.source,
         salesmanId: savedSale.salesmanId,
+        salesmanName: savedSale.salesman?.name || null,
+        commissionEstimate: Number(savedSale.commissionEstimate),
       },
     };
   } catch (error) {

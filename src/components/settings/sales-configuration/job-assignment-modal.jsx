@@ -9,10 +9,17 @@ const SOURCE_OPTIONS = [
     label: "Self Generated",
   },
   {
-    value: "COMPANY_GENERATED",
-    label: "Company Generated",
+    value: "COMPANY",
+    label: "Company",
   },
 ];
+
+function formatCurrency(value) {
+  return Number(value || 0).toLocaleString("en-US", {
+    style: "currency",
+    currency: "USD",
+  });
+}
 
 export default function JobAssignmentModal({
   isOpen,
@@ -23,6 +30,7 @@ export default function JobAssignmentModal({
 }) {
   const [source, setSource] = useState("");
   const [salesmanId, setSalesmanId] = useState("");
+  const [commissionEstimate, setCommissionEstimate] = useState("0");
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
@@ -33,6 +41,7 @@ export default function JobAssignmentModal({
 
     setSource(job.source || "");
     setSalesmanId(job.salesmanId || "");
+    setCommissionEstimate(String(job.commissionEstimate ?? 0));
     setError("");
     setSuccessMessage("");
   }, [isOpen, job]);
@@ -50,15 +59,19 @@ export default function JobAssignmentModal({
       return;
     }
 
+    const parsedCommission = Number(commissionEstimate);
+
+    if (!Number.isFinite(parsedCommission) || parsedCommission < 0) {
+      setError("Please enter a valid commission estimate.");
+      return;
+    }
+
     startTransition(async () => {
       const result = await saveJobAssignment({
         serviceTitanJobId: job.serviceTitanJobId,
-        jobNumber: job.jobNumber,
-        customerName: job.customerName,
-        saleValue: job.saleValue,
-        completedOn: job.completedOn,
         source,
         salesmanId: salesmanId || null,
+        commissionEstimate: parsedCommission,
       });
 
       if (!result.success) {
@@ -69,10 +82,10 @@ export default function JobAssignmentModal({
       setSuccessMessage(result.message);
 
       onSaved?.({
-        source,
-        salesmanId: salesmanId || null,
-        salesmanName:
-          salesmen.find((item) => item.id === salesmanId)?.name || null,
+        source: result.data.source,
+        salesmanId: result.data.salesmanId,
+        salesmanName: result.data.salesmanName,
+        commissionEstimate: result.data.commissionEstimate,
       });
 
       setTimeout(() => {
@@ -127,14 +140,10 @@ export default function JobAssignmentModal({
         <form onSubmit={handleSubmit} className="space-y-5 p-5">
           {/* Job Information */}
           <div className="rounded-lg border border-[#e5e5e5] bg-[#fafafa] p-4">
-            <p className="text-[13px] font-bold text-[#171717]">
-              {job.title}
-            </p>
+            <p className="text-[13px] font-bold text-[#171717]">{job.title}</p>
 
-            <div className="mt-3 flex items-center justify-between">
-              <span className="text-[12px] text-[#737373]">
-                Customer
-              </span>
+            <div className="mt-3 flex items-center justify-between gap-3">
+              <span className="text-[12px] text-[#737373]">Customer</span>
 
               <span className="text-right text-[12px] font-semibold text-[#404040]">
                 {job.customerName || "—"}
@@ -142,15 +151,10 @@ export default function JobAssignmentModal({
             </div>
 
             <div className="mt-2 flex items-center justify-between">
-              <span className="text-[12px] text-[#737373]">
-                Job Value
-              </span>
+              <span className="text-[12px] text-[#737373]">Job Value</span>
 
               <span className="text-[13px] font-bold text-[#171717]">
-                {Number(job.saleValue || 0).toLocaleString("en-US", {
-                  style: "currency",
-                  currency: "USD",
-                })}
+                {formatCurrency(job.saleValue)}
               </span>
             </div>
           </div>
@@ -169,6 +173,7 @@ export default function JobAssignmentModal({
               value={source}
               onChange={(event) => setSource(event.target.value)}
               required
+              disabled={isPending}
               className="h-11 w-full rounded-lg border border-[#d5d5d5] bg-white px-3 text-[13px] text-[#171717] outline-none transition focus:border-[#171717]"
             >
               <option value="">Select Source</option>
@@ -194,6 +199,7 @@ export default function JobAssignmentModal({
               id="job-salesman"
               value={salesmanId}
               onChange={(event) => setSalesmanId(event.target.value)}
+              disabled={isPending}
               className="h-11 w-full rounded-lg border border-[#d5d5d5] bg-white px-3 text-[13px] text-[#171717] outline-none transition focus:border-[#171717]"
             >
               <option value="">Unassigned</option>
@@ -204,6 +210,28 @@ export default function JobAssignmentModal({
                 </option>
               ))}
             </select>
+          </div>
+
+          {/* Commission Estimate */}
+          <div>
+            <label
+              htmlFor="job-commission"
+              className="mb-2 block text-[12px] font-bold uppercase tracking-wide text-[#404040]"
+            >
+              Commission Estimate ($)
+            </label>
+
+            <input
+              id="job-commission"
+              type="number"
+              min="0"
+              step="0.01"
+              value={commissionEstimate}
+              onChange={(event) => setCommissionEstimate(event.target.value)}
+              disabled={isPending}
+              placeholder="0.00"
+              className="h-11 w-full rounded-lg border border-[#d5d5d5] bg-white px-3 text-[13px] text-[#171717] outline-none transition focus:border-[#171717]"
+            />
           </div>
 
           {/* Feedback */}

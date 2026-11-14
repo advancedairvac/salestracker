@@ -12,20 +12,18 @@ function formatCurrency(value) {
 
 function getSourceLabel(source) {
   if (source === "SELF_GENERATED") return "Self Generated";
-  if (source === "COMPANY_GENERATED") return "Company Generated";
+  if (source === "COMPANY") return "Company";
   return "Not Assigned";
 }
 
-export default function JobCard({
-  job,
-  salesmen = [],
-}) {
+export default function JobCard({ job, salesmen = [] }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const [assignment, setAssignment] = useState({
     source: job.source || null,
     salesmanId: job.salesmanId || null,
     salesmanName: job.salesmanName || null,
+    commissionEstimate: Number(job.commissionEstimate || 0),
   });
 
   const handleSaved = (updatedAssignment) => {
@@ -67,7 +65,6 @@ export default function JobCard({
           </span>
         </div>
 
-        {/* Divider */}
         <div className="my-4 border-t border-[#ededed]" />
 
         {/* Customer and Value */}
@@ -114,6 +111,17 @@ export default function JobCard({
               {assignment.salesmanName || "Unassigned"}
             </p>
           </div>
+        </div>
+
+        {/* Commission */}
+        <div className="mt-3 flex items-center justify-between border-t border-[#ededed] pt-3">
+          <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-[#929292]">
+            Commission Estimate
+          </p>
+
+          <p className="text-[13px] font-bold text-[#171717]">
+            {formatCurrency(assignment.commissionEstimate)}
+          </p>
         </div>
       </button>
 

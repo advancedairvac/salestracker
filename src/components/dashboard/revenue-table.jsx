@@ -1,3 +1,4 @@
+
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -17,10 +18,10 @@ function formatCurrency(amount, currency) {
 
 function formatSource(source) {
   if (source === "SELF_GENERATED") {
-    return "Self-generated";
+    return "Self Generated";
   }
 
-  if (source === "COMPANY_GENERATED") {
+  if (source === "COMPANY") {
     return "Company";
   }
 
@@ -94,7 +95,7 @@ export default function RevenueTable({
   return (
     <section className={`w-full ${className}`}>
       <div className="w-full overflow-x-auto">
-        <table className="w-full min-w-[700px] border-collapse text-left">
+        <table className="w-full min-w-[850px] border-collapse text-left">
           <thead>
             <tr className="bg-[#d9d9d9]">
               <th className="whitespace-nowrap px-4 py-2.5 text-[11px] font-bold uppercase tracking-wide text-black sm:text-xs">
@@ -111,6 +112,10 @@ export default function RevenueTable({
 
               <th className="whitespace-nowrap px-4 py-2.5 text-[11px] font-bold uppercase tracking-wide text-black sm:text-xs">
                 Source
+              </th>
+
+              <th className="whitespace-nowrap px-4 py-2.5 text-[11px] font-bold uppercase tracking-wide text-black sm:text-xs">
+                Salesman
               </th>
 
               <th className="whitespace-nowrap px-4 py-2.5 text-[11px] font-bold uppercase tracking-wide text-black sm:text-xs">
@@ -143,6 +148,10 @@ export default function RevenueTable({
                   </td>
 
                   <td className="whitespace-nowrap px-4 py-2 text-sm text-black sm:text-base">
+                    {sale.salesmanName || "—"}
+                  </td>
+
+                  <td className="whitespace-nowrap px-4 py-2 text-sm text-black sm:text-base">
                     {formatCurrency(sale.commissionEstimate, currency)}
                   </td>
                 </tr>
@@ -150,7 +159,7 @@ export default function RevenueTable({
             ) : (
               <tr>
                 <td
-                  colSpan={5}
+                  colSpan={6}
                   className="px-4 py-10 text-center text-sm text-[#777]"
                 >
                   No completed jobs found for this date range.

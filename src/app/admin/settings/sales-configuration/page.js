@@ -1,235 +1,146 @@
 
-import { prisma } from "@/lib/prisma";
+import { Suspense } from "react";
 
-import {
-  getAllJobs,
-  getAllServiceTitanCustomers,
-  getJobType,
-} from "@/lib/integrations/servicetitan";
+import { getSalesConfigurationData } from "@/lib/dashboard/sales-configuration-data";
 
 import JobCardsList from "@/components/settings/sales-configuration/job-cards-list";
 
 export const dynamic = "force-dynamic";
 
-function getJobList(result) {
-  if (Array.isArray(result)) return result;
+// ============================================
+// JOB CARD SKELETON
+// ============================================
 
-  if (Array.isArray(result?.jobs)) return result.jobs;
-
-  if (Array.isArray(result?.data)) return result.data;
-
-  if (Array.isArray(result?.data?.jobs)) return result.data.jobs;
-
-  return [];
-}
-
-function getCustomerList(result) {
-  if (Array.isArray(result)) return result;
-
-  if (Array.isArray(result?.customers)) return result.customers;
-
-  if (Array.isArray(result?.data)) return result.data;
-
-  return [];
-}
-
-function getCustomerName(customer) {
-  if (!customer) return "—";
-
-  const firstName = customer.firstName?.trim() || "";
-  const lastName = customer.lastName?.trim() || "";
-
-  const fullName = [firstName, lastName].filter(Boolean).join(" ");
-
+function JobCardSkeleton() {
   return (
-    customer.pocName ||
-    fullName ||
-    customer.name ||
-    customer.businessName ||
-    "—"
+    <div className="animate-pulse border border-[#d5d5d5] bg-white p-4 sm:p-[18px]">
+      {/* Header */}
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex-1 space-y-3">
+          <div className="h-4 w-3/4 rounded bg-[#e5e5e5]" />
+          <div className="h-3 w-1/2 rounded bg-[#eeeeee]" />
+        </div>
+
+        <div className="size-8 shrink-0 rounded-full bg-[#eeeeee]" />
+      </div>
+
+      <div className="my-4 border-t border-[#ededed]" />
+
+      {/* Customer and Value */}
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <div className="h-2.5 w-16 rounded bg-[#e5e5e5]" />
+          <div className="h-3.5 w-28 rounded bg-[#eeeeee]" />
+        </div>
+
+        <div className="space-y-2">
+          <div className="h-2.5 w-16 rounded bg-[#e5e5e5]" />
+          <div className="h-3.5 w-24 rounded bg-[#eeeeee]" />
+        </div>
+      </div>
+
+      {/* Assignment */}
+      <div className="mt-4 grid grid-cols-2 gap-4 border-t border-[#ededed] pt-3">
+        <div className="space-y-2">
+          <div className="h-2.5 w-12 rounded bg-[#e5e5e5]" />
+          <div className="h-3.5 w-24 rounded bg-[#eeeeee]" />
+        </div>
+
+        <div className="space-y-2">
+          <div className="h-2.5 w-16 rounded bg-[#e5e5e5]" />
+          <div className="h-3.5 w-24 rounded bg-[#eeeeee]" />
+        </div>
+      </div>
+    </div>
   );
 }
 
-function getJobTypeName(result) {
-  if (!result) return "";
+// ============================================
+// JOB CARDS SKELETON
+// ============================================
 
-  return result.name || result.jobType?.name || result.data?.name || "";
-}
-
-function getJobCity(job, customer) {
-  // Use data already included in the fetched records.
-  // No additional Customer or Location API requests.
+function JobCardsSkeleton() {
   return (
-    job.location?.city ||
-    job.city ||
-    job.locationName?.city ||
-    customer?.city ||
-    customer?.address?.city ||
-    customer?.locations?.[0]?.city ||
-    ""
+    <section>
+      <div className="mb-3">
+        <h2 className="text-base font-semibold text-black">
+          ServiceTitan Jobs
+        </h2>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {Array.from({ length: 9 }).map((_, index) => (
+          <JobCardSkeleton key={index} />
+        ))}
+      </div>
+    </section>
   );
 }
 
-function getJobValue(job) {
-  const value = Number(job.total ?? job.saleValue ?? 0);
+// ============================================
+// SALES CONFIGURATION DATA SECTION
+// ============================================
 
-  return Number.isFinite(value) ? value : 0;
-}
-
-function formatJob(job, customerMap, jobTypeMap, saleMap) {
-  const jobId = String(job.id);
-
-  const customerId = String(job.customerId || "");
-
-  const customer = customerMap.get(customerId);
-
-  const customerName =
-    getCustomerName(customer) !== "—"
-      ? getCustomerName(customer)
-      : job.customerName || "—";
-
-  const jobTypeName = jobTypeMap.get(String(job.jobTypeId)) || "";
-
-  const city = getJobCity(job, customer);
-
-  const jobNumber = String(job.jobNumber || job.id);
-
-  const titleParts = [
-    `Job #${jobNumber}:`,
-    jobTypeName,
-    city ? `in ${city}` : "",
-  ].filter(Boolean);
-
-  const existingSale = saleMap.get(jobId);
-
-  return {
-    serviceTitanJobId: jobId,
-    jobNumber,
-
-    title: titleParts.join(" "),
-
-    customerName,
-
-    saleValue: getJobValue(job),
-
-    jobStatus: job.jobStatus || "",
-
-    createdOn: job.createdOn || null,
-
-    completedOn: job.completedOn || null,
-
-    source: existingSale?.source || null,
-
-    salesmanId: existingSale?.salesmanId || null,
-
-    salesmanName: existingSale?.salesman?.name || null,
-  };
-}
-
-export default async function SalesConfigurationPage() {
-  let jobs = [];
-  let salesmen = [];
-  let errorMessage = "";
-
+async function SalesConfigurationSection({ searchParams }) {
   try {
-    // Fetch ServiceTitan Jobs, Customers and active Salespersons.
-    const [jobsResult, customersResult, salesmenResult] = await Promise.all([
-      getAllJobs({
-        pageSize: 100,
-        maxPages: 100,
-      }),
+    const { jobs, salesmen, pagination } =
+      await getSalesConfigurationData(searchParams);
 
-      getAllServiceTitanCustomers({
-        pageSize: 100,
-        maxPages: 100,
-      }),
+    return (
+      <section>
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-base font-semibold text-black">
+            ServiceTitan Jobs
+          </h2>
 
-      prisma.user.findMany({
-        where: {
-          role: "SALESPERSON",
-          isActive: true,
-        },
-        select: {
-          id: true,
-          name: true,
-        },
-        orderBy: {
-          name: "asc",
-        },
-      }),
-    ]);
+          <span className="text-sm text-[#777]">
+            {pagination.totalItems} Jobs
+          </span>
+        </div>
 
-    const serviceTitanJobs = getJobList(jobsResult);
+        {jobs.length > 0 ? (
+          <JobCardsList
+            jobs={jobs}
+            salesmen={salesmen}
+            currentPage={pagination.currentPage}
+            pageSize={pagination.pageSize}
+            totalItems={pagination.totalItems}
+          />
+        ) : (
+          <div className="border border-[#d5d5d5] bg-white px-5 py-12 text-center">
+            <h2 className="text-[15px] font-bold uppercase tracking-wide text-[#171717]">
+              No Jobs Found
+            </h2>
 
-    const serviceTitanCustomers = getCustomerList(customersResult);
-
-    salesmen = salesmenResult;
-
-    // Customer lookup map.
-    const customerMap = new Map(
-      serviceTitanCustomers.map((customer) => [String(customer.id), customer]),
+            <p className="mt-2 text-[13px] text-[#737373]">
+              No ServiceTitan Jobs are currently available.
+            </p>
+          </div>
+        )}
+      </section>
     );
-
-    // Collect unique Job Type IDs.
-    const jobTypeIds = [
-      ...new Set(
-        serviceTitanJobs
-          .map((job) => job.jobTypeId)
-          .filter(Boolean)
-          .map(String),
-      ),
-    ];
-
-    // Fetch each unique Job Type only once.
-    const jobTypeResults = await Promise.all(
-      jobTypeIds.map(async (jobTypeId) => {
-        const result = await getJobType(jobTypeId);
-
-        return [jobTypeId, getJobTypeName(result)];
-      }),
-    );
-
-    const jobTypeMap = new Map(jobTypeResults);
-
-    // Fetch saved CRM assignments.
-    const savedSales = await prisma.sale.findMany({
-      select: {
-        serviceTitanJobId: true,
-        source: true,
-        salesmanId: true,
-        salesman: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-      },
-    });
-
-    const saleMap = new Map(
-      savedSales.map((sale) => [String(sale.serviceTitanJobId), sale]),
-    );
-
-    // Format all valid ServiceTitan Jobs.
-    jobs = serviceTitanJobs
-      .filter(
-        (job) =>
-          job.id !== undefined && job.id !== null && getJobValue(job) > 0,
-      )
-      .map((job) => formatJob(job, customerMap, jobTypeMap, saleMap))
-      // Latest created Jobs first.
-      .sort((a, b) => {
-        const dateA = a.createdOn ? new Date(a.createdOn).getTime() : 0;
-
-        const dateB = b.createdOn ? new Date(b.createdOn).getTime() : 0;
-
-        return dateB - dateA;
-      });
   } catch (error) {
     console.error("Sales Configuration Page Error:", error);
 
-    errorMessage = "Unable to load ServiceTitan Jobs. Please try again later.";
+    return (
+      <div className="border border-red-200 bg-red-50 p-4 text-[13px] text-red-700">
+        Unable to load ServiceTitan Jobs. Please try again later.
+      </div>
+    );
   }
+}
+
+// ============================================
+// SALES CONFIGURATION PAGE
+// ============================================
+
+export default async function SalesConfigurationPage({ searchParams }) {
+  const params = await searchParams;
+
+  const tableKey = [
+    params.page || "1",
+    params.pageSize || "9",
+  ].join("-");
 
   return (
     <div className="w-full space-y-6">
@@ -248,41 +159,15 @@ export default async function SalesConfigurationPage() {
             Manage job sources and salesperson assignments.
           </p>
         </div>
-
-        <div className="flex items-center gap-2">
-          <span className="text-[12px] text-[#737373]">Total Jobs</span>
-
-          <span className="flex h-8 min-w-8 items-center justify-center rounded-md border border-[#d5d5d5] bg-white px-2 text-[13px] font-bold text-[#171717]">
-            {jobs.length}
-          </span>
-        </div>
       </div>
 
-      {/* Error */}
-      {errorMessage && (
-        <div className="border border-red-200 bg-red-50 p-4 text-[13px] text-red-700">
-          {errorMessage}
-        </div>
-      )}
-
-      {/* Empty State */}
-      {!errorMessage && jobs.length === 0 && (
-        <div className="border border-[#d5d5d5] bg-white px-5 py-12 text-center">
-          <h2 className="text-[15px] font-bold uppercase tracking-wide text-[#171717]">
-            No Jobs Found
-          </h2>
-
-          <p className="mt-2 text-[13px] text-[#737373]">
-            No ServiceTitan Jobs with a value greater than zero are currently
-            available.
-          </p>
-        </div>
-      )}
-
-      {/* Job Cards with Pagination */}
-      {jobs.length > 0 && (
-        <JobCardsList jobs={jobs} salesmen={salesmen} />
-      )}
+      {/* JOB CARDS */}
+      <Suspense
+        key={tableKey}
+        fallback={<JobCardsSkeleton />}
+      >
+        <SalesConfigurationSection searchParams={params} />
+      </Suspense>
     </div>
   );
 }

@@ -332,8 +332,8 @@ function getSourceLabel(source) {
     case "SELF_GENERATED":
       return "Self Generated";
 
-    case "COMPANY_GENERATED":
-      return "Company Generated";
+    case "COMPANY":
+      return "Company";
 
     default:
       return "—";
@@ -361,6 +361,7 @@ async function getRevenueSaleAssignments(serviceTitanJobIds = []) {
       serviceTitanJobId: true,
       source: true,
       salesmanId: true,
+      commissionEstimate: true,
 
       salesman: {
         select: {
@@ -409,7 +410,7 @@ function buildRevenueTableData({
 
       salesmanName: savedSale?.salesman?.name || "—",
 
-      commissionEstimate: 0,
+      commissionEstimate: Number(savedSale?.commissionEstimate ?? 0),
     };
   });
 }

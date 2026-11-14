@@ -1,41 +1,46 @@
-
 "use client";
 
-import { useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import JobCard from "@/components/settings/sales-configuration/job-card";
 import TablePagination from "@/components/dashboard/table-pagination";
 
-export default function JobCardsList({ jobs, salesmen }) {
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+export default function JobCardsList({
+  jobs = [],
+  salesmen = [],
+  currentPage = 1,
+  pageSize = 10,
+  totalItems = 0,
+}) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
-  const totalItems = jobs.length;
+  function updatePagination(page, size) {
+    const params = new URLSearchParams(searchParams.toString());
 
-  const startIndex = (currentPage - 1) * pageSize;
-  const endIndex = startIndex + pageSize;
+    params.set("page", String(page));
+    params.set("pageSize", String(size));
 
-  const currentJobs = jobs.slice(startIndex, endIndex);
+    router.push(`${pathname}?${params.toString()}`, {
+      scroll: false,
+    });
+  }
 
   function handlePageChange(page) {
-    setCurrentPage(page);
+    updatePagination(page, pageSize);
   }
 
   function handlePageSizeChange(size) {
-    setPageSize(size);
-    setCurrentPage(1);
+    updatePagination(1, size);
   }
 
   return (
     <div className="space-y-4">
       {/* Job Cards */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {currentJobs.map((job) => (
-          <JobCard
-            key={job.serviceTitanJobId}
-            job={job}
-            salesmen={salesmen}
-          />
+        {jobs.map((job) => (
+          <JobCard key={job.serviceTitanJobId} job={job} salesmen={salesmen} />
         ))}
       </div>
 
