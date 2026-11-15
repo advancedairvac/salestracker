@@ -1,4 +1,3 @@
-
 "use server";
 
 import { revalidatePath } from "next/cache";
@@ -6,9 +5,7 @@ import { redirect } from "next/navigation";
 
 import { getAuthenticatedUser } from "@/lib/auth";
 
-import {
-  updateOpportunityService,
-} from "@/lib/opportunities/opportunity-service";
+import { updateOpportunityService } from "@/lib/opportunities/opportunity-service";
 
 import {
   closeOpportunityService,
@@ -100,6 +97,13 @@ export async function updateOpportunityStatus(
     };
   }
 
+  if (!opportunityId) {
+    return {
+      success: false,
+      error: "Opportunity ID is required.",
+    };
+  }
+
   const result = await closeOpportunityService({
     user,
     opportunityId,
@@ -132,6 +136,13 @@ export async function updateFollowUpMode(
     };
   }
 
+  if (!opportunityId) {
+    return {
+      success: false,
+      error: "Opportunity ID is required.",
+    };
+  }
+
   const result = await updateFollowUpModeService({
     user,
     opportunityId,
@@ -139,7 +150,6 @@ export async function updateFollowUpMode(
     manualDateTime,
   });
 
-  // No database change is made when needsDate is true.
   if (result.success && !result.needsDate) {
     revalidateOpportunityPages(opportunityId);
   }

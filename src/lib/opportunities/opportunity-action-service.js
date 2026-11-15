@@ -14,9 +14,7 @@ async function getAuthorizedOpportunity(user, opportunityId) {
   }
 
   const opportunity = await prisma.opportunity.findUnique({
-    where: {
-      id: opportunityId,
-    },
+    where: { id: opportunityId },
     select: {
       id: true,
       assignedToId: true,
@@ -28,7 +26,6 @@ async function getAuthorizedOpportunity(user, opportunityId) {
     throw new Error("Opportunity not found.");
   }
 
-  // Salesperson can only manage their own assigned opportunity.
   if (user.role === "SALESPERSON" && opportunity.assignedToId !== user.id) {
     throw new Error("You are not authorized to manage this opportunity.");
   }
@@ -41,7 +38,7 @@ async function getAuthorizedOpportunity(user, opportunityId) {
 }
 
 // ============================================
-// DATE HELPERS
+// DATE HELPER
 // ============================================
 
 function parseDateTime(value) {
@@ -50,12 +47,11 @@ function parseDateTime(value) {
   }
 
   const date = new Date(value);
-
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
 // ============================================
-// CLOSE OPPORTUNITY SERVICE
+// CLOSE OPPORTUNITY SERVICE — ADMIN ONLY
 // ============================================
 
 export async function closeOpportunityService({
@@ -65,6 +61,14 @@ export async function closeOpportunityService({
   payload = {},
 }) {
   try {
+    // This closing workflow is Admin-only for now.
+    if (!user || user.role !== "ADMIN") {
+      return {
+        success: false,
+        error: "Only Admin users can close opportunities.",
+      };
+    }
+
     const opportunity = await getAuthorizedOpportunity(user, opportunityId);
 
     if (action !== "CLOSE") {
@@ -75,28 +79,39 @@ export async function closeOpportunityService({
     }
 
     const closeType = payload.closeType;
-
     const note = typeof payload.note === "string" ? payload.note.trim() : "";
 
-    // Map closing type to opportunity status.
-    const closeStatuses = {
-      TEMPORARY: "TEMPORARILY_CLOSED",
-      SCHEDULE_REOPEN: "SCHEDULED_TO_REOPEN",
-    };
+    const allowedCloseTypes = ["WON", "LOST", "SCHEDULE_REOPEN"];
 
-    const nextStatus = closeStatuses[closeType];
-
-    if (!nextStatus) {
+    if (!allowedCloseTypes.includes(closeType)) {
       return {
         success: false,
-        error: "Please select a valid closing option.",
+        error: "Please select a valid closing type.",
       };
     }
 
     const now = new Date();
     let reopenAt = null;
+    let titanJobId = null;
 
-    // Validate scheduled reopening date.
+    // ======================================
+    // WON — OPTIONAL TITAN JOB ID
+    // ======================================
+
+    if (closeType === "WON") {
+      titanJobId =
+        typeof payload.titanJobId === "string" ? payload.titanJobId.trim() : "";
+
+      // An empty value does not clear an existing Titan Job ID.
+      if (!titanJobId) {
+        titanJobId = undefined;
+      }
+    }
+
+    // ======================================
+    // SCHEDULE REOPEN — REQUIRED DATE
+    // ======================================
+
     if (closeType === "SCHEDULE_REOPEN") {
       reopenAt = parseDateTime(payload.reopenAt);
 
@@ -115,19 +130,43 @@ export async function closeOpportunityService({
       }
     }
 
-    // Build activity description only for the selected close type.
-    // This prevents calling toLocaleString() when reopenAt is null.
-    const descriptions = {
-      TEMPORARY: "Opportunity temporarily closed.",
-      SCHEDULE_REOPEN: `Opportunity scheduled to reopen on ${reopenAt?.toLocaleString() || "the selected date"}.`,
+    // ======================================
+    // STATUS AND ACTIVITY DESCRIPTION
+    // ======================================
+
+    const statusMap = {
+      WON: "WON",
+      LOST: "LOST",
+      SCHEDULE_REOPEN: "SCHEDULED_TO_REOPEN",
     };
 
-    const activityDescription = note
-      ? `${descriptions[closeType]} Note: ${note}`
-      : descriptions[closeType];
+    const nextStatus = statusMap[closeType];
+
+    let activityDescription = "";
+
+    switch (closeType) {
+      case "WON":
+        activityDescription = "Opportunity marked as WON.";
+        break;
+
+      case "LOST":
+        activityDescription = "Opportunity marked as LOST.";
+        break;
+
+      case "SCHEDULE_REOPEN":
+        activityDescription = `Opportunity scheduled to reopen on ${reopenAt.toLocaleString()}.`;
+        break;
+    }
+
+    if (note) {
+      activityDescription += ` Note: ${note}`;
+    }
+
+    // ======================================
+    // DATABASE TRANSACTION
+    // ======================================
 
     await prisma.$transaction(async (tx) => {
-      // Update opportunity status.
       await tx.opportunity.update({
         where: {
           id: opportunity.id,
@@ -138,10 +177,14 @@ export async function closeOpportunityService({
           closedAt: now,
           closedById: user.id,
           reopenAt,
+          ...(closeType === "WON" && titanJobId !== undefined
+            ? { titanJobId }
+            : {}),
         },
       });
 
-      // Record opportunity status change.
+      // Keep the closing note in the Activity record.
+      // Do not overwrite existing Opportunity.notes.
       await tx.activity.create({
         data: {
           opportunityId: opportunity.id,
@@ -151,7 +194,7 @@ export async function closeOpportunityService({
         },
       });
 
-      // Deactivate all active pending follow-ups.
+      // Deactivate pending follow-ups.
       await tx.followUp.updateMany({
         where: {
           opportunityId: opportunity.id,
@@ -175,17 +218,29 @@ export async function closeOpportunityService({
       });
     });
 
+    const messages = {
+      WON: "Opportunity marked as WON successfully.",
+      LOST: "Opportunity marked as LOST successfully.",
+      SCHEDULE_REOPEN:
+        "Opportunity closed and scheduled to reopen successfully.",
+    };
+
     return {
       success: true,
       action: "CLOSE",
       status: nextStatus,
-      message:
-        closeType === "TEMPORARY"
-          ? "Opportunity temporarily closed successfully."
-          : "Opportunity closed and scheduled to reopen successfully.",
+      message: messages[closeType],
     };
   } catch (error) {
     console.error("Close opportunity service failed:", error);
+
+    // A Titan Job ID is unique in the Opportunity table.
+    if (error.code === "P2002") {
+      return {
+        success: false,
+        error: "This Titan Job ID is already linked to another opportunity.",
+      };
+    }
 
     return {
       success: false,
@@ -207,7 +262,6 @@ export async function updateFollowUpModeService({
   try {
     const opportunity = await getAuthorizedOpportunity(user, opportunityId);
 
-    // Validate follow-up mode.
     if (!["STANDARD", "MANUAL"].includes(mode)) {
       return {
         success: false,
@@ -217,7 +271,6 @@ export async function updateFollowUpModeService({
 
     let manualFollowUpDate = null;
 
-    // Validate manual follow-up date when provided.
     if (mode === "MANUAL" && manualDateTime) {
       manualFollowUpDate = parseDateTime(manualDateTime);
 
@@ -237,7 +290,6 @@ export async function updateFollowUpModeService({
     }
 
     const result = await prisma.$transaction(async (tx) => {
-      // Find the active follow-up schedule.
       const schedule = await tx.followUpSchedule.findFirst({
         where: {
           opportunityId: opportunity.id,
@@ -257,7 +309,6 @@ export async function updateFollowUpModeService({
       // ======================================
 
       if (mode === "STANDARD") {
-        // Activate pending standard follow-ups.
         await tx.followUp.updateMany({
           where: {
             opportunityId: opportunity.id,
@@ -270,7 +321,6 @@ export async function updateFollowUpModeService({
           },
         });
 
-        // Deactivate pending manual follow-ups.
         await tx.followUp.updateMany({
           where: {
             opportunityId: opportunity.id,
@@ -283,11 +333,8 @@ export async function updateFollowUpModeService({
           },
         });
 
-        // Update schedule mode.
         await tx.followUpSchedule.update({
-          where: {
-            id: schedule.id,
-          },
+          where: { id: schedule.id },
           data: {
             mode: "STANDARD",
             isActive: true,
@@ -300,7 +347,6 @@ export async function updateFollowUpModeService({
       // ======================================
 
       if (mode === "MANUAL") {
-        // Find the latest pending manual follow-up.
         const existingManual = await tx.followUp.findFirst({
           where: {
             opportunityId: opportunity.id,
@@ -313,10 +359,7 @@ export async function updateFollowUpModeService({
           },
         });
 
-        // --------------------------------------
-        // Activate previously saved manual date
-        // --------------------------------------
-
+        // Activate previously saved manual date.
         if (!manualFollowUpDate) {
           if (!existingManual?.dueAt) {
             return {
@@ -326,17 +369,11 @@ export async function updateFollowUpModeService({
             };
           }
 
-          // Activate the existing manual follow-up.
           await tx.followUp.update({
-            where: {
-              id: existingManual.id,
-            },
-            data: {
-              isActive: true,
-            },
+            where: { id: existingManual.id },
+            data: { isActive: true },
           });
 
-          // Deactivate standard follow-ups.
           await tx.followUp.updateMany({
             where: {
               opportunityId: opportunity.id,
@@ -344,32 +381,22 @@ export async function updateFollowUpModeService({
               scheduleType: "STANDARD",
               status: "PENDING",
             },
-            data: {
-              isActive: false,
-            },
+            data: { isActive: false },
           });
 
-          // Deactivate other pending manual follow-ups.
           await tx.followUp.updateMany({
             where: {
               opportunityId: opportunity.id,
               scheduleId: schedule.id,
               scheduleType: "MANUAL",
               status: "PENDING",
-              id: {
-                not: existingManual.id,
-              },
+              id: { not: existingManual.id },
             },
-            data: {
-              isActive: false,
-            },
+            data: { isActive: false },
           });
 
-          // Update schedule mode.
           await tx.followUpSchedule.update({
-            where: {
-              id: schedule.id,
-            },
+            where: { id: schedule.id },
             data: {
               mode: "MANUAL",
               isActive: true,
@@ -377,12 +404,8 @@ export async function updateFollowUpModeService({
           });
         }
 
-        // --------------------------------------
-        // Create or update manual follow-up date
-        // --------------------------------------
-
+        // Create or update manual follow-up date.
         if (manualFollowUpDate) {
-          // Deactivate standard follow-ups.
           await tx.followUp.updateMany({
             where: {
               opportunityId: opportunity.id,
@@ -390,17 +413,12 @@ export async function updateFollowUpModeService({
               scheduleType: "STANDARD",
               status: "PENDING",
             },
-            data: {
-              isActive: false,
-            },
+            data: { isActive: false },
           });
 
           if (existingManual) {
-            // Update the existing manual follow-up.
             await tx.followUp.update({
-              where: {
-                id: existingManual.id,
-              },
+              where: { id: existingManual.id },
               data: {
                 dueAt: manualFollowUpDate,
                 assignedToId: opportunity.assignedToId,
@@ -409,23 +427,17 @@ export async function updateFollowUpModeService({
               },
             });
 
-            // Deactivate other pending manual follow-ups.
             await tx.followUp.updateMany({
               where: {
                 opportunityId: opportunity.id,
                 scheduleId: schedule.id,
                 scheduleType: "MANUAL",
                 status: "PENDING",
-                id: {
-                  not: existingManual.id,
-                },
+                id: { not: existingManual.id },
               },
-              data: {
-                isActive: false,
-              },
+              data: { isActive: false },
             });
           } else {
-            // Create a new manual follow-up.
             await tx.followUp.create({
               data: {
                 opportunityId: opportunity.id,
@@ -440,11 +452,8 @@ export async function updateFollowUpModeService({
             });
           }
 
-          // Update schedule mode.
           await tx.followUpSchedule.update({
-            where: {
-              id: schedule.id,
-            },
+            where: { id: schedule.id },
             data: {
               mode: "MANUAL",
               isActive: true,
@@ -463,18 +472,9 @@ export async function updateFollowUpModeService({
           scheduleId: schedule.id,
           isActive: true,
           status: "PENDING",
-          dueAt: {
-            not: null,
-          },
+          dueAt: { not: null },
         },
-        orderBy: [
-          {
-            dueAt: "asc",
-          },
-          {
-            createdAt: "asc",
-          },
-        ],
+        orderBy: [{ dueAt: "asc" }, { createdAt: "asc" }],
         select: {
           dueAt: true,
         },
@@ -488,7 +488,6 @@ export async function updateFollowUpModeService({
       };
     });
 
-    // Manual mode requires a date when no saved date exists.
     if (result.needsDate) {
       return {
         success: true,

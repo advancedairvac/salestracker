@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect } from "react";
@@ -6,13 +7,11 @@ import Link from "next/link";
 import OpportunityActions from "@/components/dashboard/opportunity-actions";
 import { useMobileEditAction } from "@/components/layout/app-shell";
 
-// Admin Server Actions
 import {
   updateFollowUpMode as updateAdminFollowUpMode,
   updateOpportunityStatus as updateAdminOpportunityStatus,
 } from "@/app/admin/opportunities/[id]/actions";
 
-// Salesperson Server Actions
 import {
   updateFollowUpMode as updateSalespersonFollowUpMode,
   updateOpportunityStatus as updateSalespersonOpportunityStatus,
@@ -76,19 +75,11 @@ export default function OpportunityDetails({
 
   const isSalesperson = role === "SALESPERSON";
 
-  // ============================================
-  // ROLE-BASED ROUTES
-  // ============================================
-
   const basePath = isSalesperson
     ? "/salesperson/opportunities"
     : "/admin/opportunities";
 
   const editHref = `${basePath}/${opportunity.id}/edit`;
-
-  // ============================================
-  // ROLE-BASED SERVER ACTIONS
-  // ============================================
 
   const updateFollowUpModeAction = isSalesperson
     ? updateSalespersonFollowUpMode
@@ -98,17 +89,8 @@ export default function OpportunityDetails({
     ? updateSalespersonOpportunityStatus
     : updateAdminOpportunityStatus;
 
-  // ============================================
-  // OPPORTUNITY STATE
-  // ============================================
-
   const canEdit = opportunity.status === "OPEN";
-
   const nextFollowUpAt = getNextFollowUp(opportunity.followUps || []);
-
-  // ============================================
-  // MOBILE EDIT ACTION
-  // ============================================
 
   useEffect(() => {
     setMobileEditHref(canEdit ? editHref : null);
@@ -117,10 +99,6 @@ export default function OpportunityDetails({
       setMobileEditHref(null);
     };
   }, [setMobileEditHref, canEdit, editHref]);
-
-  // ============================================
-  // RENDER
-  // ============================================
 
   return (
     <section className="w-full max-w-3xl text-black">
@@ -136,8 +114,6 @@ export default function OpportunityDetails({
             {opportunity.jobType}
           </p>
         </div>
-
-        {/* DESKTOP EDIT BUTTON */}
 
         {canEdit && (
           <Link
@@ -177,7 +153,7 @@ export default function OpportunityDetails({
         )}
       </div>
 
-      {/* NEXT FOLLOW-UP DATE AND TIME */}
+      {/* NEXT FOLLOW-UP */}
 
       {nextFollowUpAt && (
         <div className="mt-3 space-y-1 text-sm leading-5 text-neutral-900">
@@ -199,6 +175,7 @@ export default function OpportunityDetails({
       <OpportunityActions
         opportunity={opportunity}
         schedule={schedule}
+        role={role}
         updateFollowUpModeAction={updateFollowUpModeAction}
         updateOpportunityStatusAction={updateOpportunityStatusAction}
       />
