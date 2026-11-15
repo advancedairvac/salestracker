@@ -4,6 +4,7 @@ export async function findOrCreateOpportunityCustomer(
   values,
   {
     nameMatch = "any",
+    matchNames = true,
     updateMode = "preserve",
   } = {},
 ) {
@@ -19,16 +20,22 @@ export async function findOrCreateOpportunityCustomer(
 
   let customer = null;
 
-  // 1. Match by ServiceTitan Customer ID.
+  // ============================================
+  // 1. MATCH BY SERVICETITAN CUSTOMER ID
+  // ============================================
+
   if (stCustomerId) {
     customer = await tx.customer.findUnique({
       where: {
-        stCustomerId,
+        stCustomerId: String(stCustomerId),
       },
     });
   }
 
-  // 2. Match by local Customer ID.
+  // ============================================
+  // 2. MATCH BY LOCAL CUSTOMER ID
+  // ============================================
+
   if (!customer && customerId) {
     customer = await tx.customer.findUnique({
       where: {
@@ -37,8 +44,15 @@ export async function findOrCreateOpportunityCustomer(
     });
   }
 
-  // 3. Fallback matching by customer names.
-  if (!customer && (businessName || pocName)) {
+  // ============================================
+  // 3. OPTIONAL NAME-BASED MATCHING
+  // ============================================
+
+  if (
+    !customer &&
+    matchNames &&
+    (businessName || pocName)
+  ) {
     const customerConditions = [];
 
     if (businessName) {
@@ -62,14 +76,12 @@ export async function findOrCreateOpportunityCustomer(
     let nameWhere = null;
 
     if (nameMatch === "both") {
-      // Match only when both names are provided and match.
       if (businessName && pocName) {
         nameWhere = {
           AND: customerConditions,
         };
       }
     } else {
-      // Match when either provided name matches.
       nameWhere = {
         OR: customerConditions,
       };
@@ -85,7 +97,10 @@ export async function findOrCreateOpportunityCustomer(
     }
   }
 
-  // 4. Update existing customer.
+  // ============================================
+  // 4. UPDATE EXISTING CUSTOMER
+  // ============================================
+
   if (customer) {
     const preserveExistingValues = updateMode === "preserve";
 
@@ -94,7 +109,9 @@ export async function findOrCreateOpportunityCustomer(
         id: customer.id,
       },
       data: {
-        stCustomerId: stCustomerId || customer.stCustomerId || null,
+        stCustomerId: stCustomerId
+          ? String(stCustomerId)
+          : customer.stCustomerId || null,
 
         businessName: preserveExistingValues
           ? businessName || customer.businessName || null
@@ -119,10 +136,16 @@ export async function findOrCreateOpportunityCustomer(
     });
   }
 
-  // 5. Create new customer.
+  // ============================================
+  // 5. CREATE NEW CUSTOMER
+  // ============================================
+
   return tx.customer.create({
     data: {
-      stCustomerId: stCustomerId || null,
+      stCustomerId: stCustomerId
+        ? String(stCustomerId)
+        : null,
+
       businessName: businessName || null,
       pocName: pocName || null,
       phone: phone || null,

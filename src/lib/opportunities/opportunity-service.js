@@ -1,4 +1,3 @@
-
 import { prisma } from "@/lib/prisma";
 
 import {
@@ -121,7 +120,6 @@ async function getUpdatedAssignedToId(user, requestedAssignedToId) {
     return user.id;
   }
 
-  // Preserve existing Edit behavior:
   // Admin can assign to an active Salesperson.
   const assignedUser = await prisma.user.findFirst({
     where: {
@@ -144,20 +142,17 @@ async function getUpdatedAssignedToId(user, requestedAssignedToId) {
 export async function createOpportunityService({ user, formData }) {
   const values = getFormValues(formData);
 
+  // Role validation.
   if (!user || !["ADMIN", "SALESPERSON"].includes(user.role)) {
     return getErrorState("permission", values);
   }
 
   const {
-    stCustomerId,
     opportunityDate: opportunityDateInput,
     pocName,
-    businessName,
     jobType,
     email,
     textMessage,
-    phone,
-    location,
     value: valueInput,
     assignedToId: requestedAssignedToId,
     followUpDate: followUpDateInput,
@@ -199,6 +194,10 @@ export async function createOpportunityService({ user, formData }) {
     return getErrorState("date", values);
   }
 
+  // ============================================
+  // MANUAL FOLLOW-UP VALIDATION
+  // ============================================
+
   const manualFollowUpDate = followUpDateInput
     ? parseManualFollowUpDate(followUpDateInput)
     : null;
@@ -215,10 +214,7 @@ export async function createOpportunityService({ user, formData }) {
   // ASSIGNMENT VALIDATION
   // ============================================
 
-  const assignedToId = await getAssignedToId(
-    user,
-    requestedAssignedToId,
-  );
+  const assignedToId = await getAssignedToId(user, requestedAssignedToId);
 
   if (!assignedToId) {
     return getErrorState("assignment", values);
@@ -228,16 +224,11 @@ export async function createOpportunityService({ user, formData }) {
   // OPPORTUNITY SETTINGS
   // ============================================
 
-  const source =
-    assignedToId === user.id ? "SELF_GENERATED" : "COMPANY_GENERATED";
+  const source = assignedToId === user.id ? "SELF_GENERATED" : "COMPANY";
 
   const hasManualFollowUp = Boolean(manualFollowUpDate);
 
   const activeScheduleMode = hasManualFollowUp ? "MANUAL" : "STANDARD";
-
-  const title = [businessName || pocName, jobType]
-    .filter(Boolean)
-    .join(" - ");
 
   // ============================================
   // DATABASE TRANSACTION
@@ -246,22 +237,16 @@ export async function createOpportunityService({ user, formData }) {
   try {
     await prisma.$transaction(async (tx) => {
       // Find or create customer.
-      // Preserve the previous Create matching behavior:
-      // ServiceTitan ID -> local Customer ID -> both names.
-      const customer = await findOrCreateOpportunityCustomer(
-        tx,
-        values,
-        {
-          nameMatch: "both",
-          updateMode: "preserve",
-        },
-      );
+      // Create does not perform name-based duplicate matching.
+      const customer = await findOrCreateOpportunityCustomer(tx, values, {
+        matchNames: false,
+        updateMode: "preserve",
+      });
 
       // Create opportunity.
       const opportunity = await tx.opportunity.create({
         data: {
           customerId: customer.id,
-          title,
           opportunityDate,
           jobType: jobType || null,
           textMessage: textMessage || null,
@@ -366,15 +351,11 @@ export async function updateOpportunityService({ user, formData }) {
   // ============================================
 
   const {
-    stCustomerId,
     opportunityDate: opportunityDateInput,
     pocName,
-    businessName,
     jobType,
     email,
     textMessage,
-    phone,
-    location,
     value: valueInput,
   } = values;
 
@@ -431,12 +412,7 @@ export async function updateOpportunityService({ user, formData }) {
   // OPPORTUNITY SETTINGS
   // ============================================
 
-  const source =
-    assignedToId === user.id ? "SELF_GENERATED" : "COMPANY_GENERATED";
-
-  const title = [businessName || pocName, jobType]
-    .filter(Boolean)
-    .join(" - ");
+  const source = assignedToId === user.id ? "SELF_GENERATED" : "COMPANY";
 
   // ============================================
   // DATABASE TRANSACTION
@@ -468,10 +444,7 @@ export async function updateOpportunityService({ user, formData }) {
       }
 
       // Salesperson can only edit their own opportunities.
-      if (
-        user.role === "SALESPERSON" &&
-        opportunity.assignedToId !== user.id
-      ) {
+      if (user.role === "SALESPERSON" && opportunity.assignedToId !== user.id) {
         throw new Error("OPPORTUNITY_PERMISSION_DENIED");
       }
 
@@ -486,12 +459,7 @@ export async function updateOpportunityService({ user, formData }) {
           customerId: opportunity.customerId,
         },
         {
-          // Update uses the existing Opportunity customer ID
-          // when no matching ServiceTitan customer is found.
           nameMatch: "both",
-
-          // Preserve the previous Edit behavior:
-          // submitted empty fields become null.
           updateMode: "replace",
         },
       );
@@ -506,7 +474,6 @@ export async function updateOpportunityService({ user, formData }) {
         },
         data: {
           customerId: customer.id,
-          title,
           opportunityDate,
           jobType: jobType || null,
           textMessage: textMessage || null,

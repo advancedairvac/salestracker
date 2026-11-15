@@ -38,6 +38,7 @@ function prepareInitialValues(today, initialValues, user) {
   return {
     opportunityDate: formatDateInput(initialValues?.opportunityDate || today),
     pocName: "",
+    customerId: "",
     stCustomerId: "",
     businessName: "",
     jobType: "",
@@ -197,7 +198,7 @@ export default function NewEditOpportunity({
   const isEdit = mode === "edit";
   const isAdmin = user?.role === "ADMIN";
 
-  // Select action based on form mode
+  // Select action based on form mode.
   const action = isEdit ? updateAction : createAction;
 
   const [state, formAction, pending] = useActionState(
@@ -250,8 +251,18 @@ export default function NewEditOpportunity({
       ...previous,
       [name]: value,
 
-      // Reset ServiceTitan ID when POC Name is manually changed.
-      ...(name === "pocName" ? { stCustomerId: "" } : {}),
+      // Clear previously selected customer data
+      // when POC Name is manually changed.
+      ...(name === "pocName"
+        ? {
+            customerId: "",
+            stCustomerId: "",
+            businessName: "",
+            email: "",
+            phone: "",
+            location: "",
+          }
+        : {}),
     }));
   }
 
@@ -262,8 +273,13 @@ export default function NewEditOpportunity({
   function handleCustomerSelect(customer) {
     setValues((previous) => ({
       ...previous,
+
+      // Keep ServiceTitan ID separate from local Prisma ID.
+      customerId: "",
       stCustomerId: customer.stCustomerId || "",
+
       pocName: customer.pocName || "",
+      businessName: customer.businessName || "",
       email: customer.email || "",
       phone: customer.phone || "",
       location: customer.location || "",
@@ -318,6 +334,14 @@ export default function NewEditOpportunity({
         {isEdit && (
           <input type="hidden" name="opportunityId" value={opportunityId} />
         )}
+
+        {/* LOCAL CUSTOMER ID */}
+
+        <input
+          type="hidden"
+          name="customerId"
+          value={values.customerId || ""}
+        />
 
         {/* SERVICETITAN CUSTOMER ID */}
 

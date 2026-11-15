@@ -19,7 +19,7 @@ export type UserRole = (typeof UserRole)[keyof typeof UserRole]
 
 export const LeadSource = {
   SELF_GENERATED: 'SELF_GENERATED',
-  COMPANY_GENERATED: 'COMPANY_GENERATED'
+  COMPANY: 'COMPANY'
 } as const
 
 export type LeadSource = (typeof LeadSource)[keyof typeof LeadSource]
@@ -27,8 +27,8 @@ export type LeadSource = (typeof LeadSource)[keyof typeof LeadSource]
 
 export const OpportunityStatus = {
   OPEN: 'OPEN',
-  PERMANENTLY_CLOSED: 'PERMANENTLY_CLOSED',
-  TEMPORARILY_CLOSED: 'TEMPORARILY_CLOSED',
+  WON: 'WON',
+  LOST: 'LOST',
   SCHEDULED_TO_REOPEN: 'SCHEDULED_TO_REOPEN'
 } as const
 

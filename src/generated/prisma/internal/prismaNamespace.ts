@@ -1016,9 +1016,9 @@ export type CustomerScalarFieldEnum = (typeof CustomerScalarFieldEnum)[keyof typ
 
 export const OpportunityScalarFieldEnum = {
   id: 'id',
-  serviceTitanEstimateId: 'serviceTitanEstimateId',
+  titanEstimateId: 'titanEstimateId',
+  titanJobId: 'titanJobId',
   customerId: 'customerId',
-  title: 'title',
   opportunityDate: 'opportunityDate',
   jobType: 'jobType',
   textMessage: 'textMessage',
