@@ -11,7 +11,10 @@ import {
   parseManualFollowUpDate,
 } from "@/lib/opportunities/date-helpers";
 
-import { getStandardFollowUps } from "@/lib/opportunities/follow-up-schedule";
+import {
+  getStandardFollowUps,
+  getManualFollowUp,
+} from "@/lib/opportunities/follow-up-schedule";
 
 import { findOrCreateOpportunityCustomer } from "@/lib/opportunities/customer-helpers";
 
@@ -265,6 +268,7 @@ export async function createOpportunityService({ user, formData }) {
           mode: activeScheduleMode,
           isActive: true,
           presentationAt: opportunityDate,
+          startedAt: new Date(),
         },
       });
 
@@ -275,26 +279,32 @@ export async function createOpportunityService({ user, formData }) {
         opportunityId: opportunity.id,
         scheduleId: schedule.id,
         assignedToId,
+        eventType: item.eventType,
+        type: item.type,
+        sequence: item.sequence,
         dueAt: item.dueAt,
         status: "PENDING",
         scheduleType: "STANDARD",
-        sequence: item.sequence,
         isActive: !hasManualFollowUp,
         notes: "Automatically scheduled standard follow-up.",
       }));
 
       // Add manual follow-up record.
+      const manualFollowUp = getManualFollowUp(manualFollowUpDate);
+
       followUpRecords.push({
         opportunityId: opportunity.id,
         scheduleId: schedule.id,
         assignedToId,
-        dueAt: manualFollowUpDate,
+        eventType: manualFollowUp.eventType,
+        type: manualFollowUp.type,
+        sequence: manualFollowUp.sequence,
+        dueAt: manualFollowUp.dueAt,
         status: "PENDING",
         scheduleType: "MANUAL",
-        sequence: 0,
         isActive: hasManualFollowUp,
         notes: hasManualFollowUp
-          ? "Manually scheduled follow-up."
+          ? "Manually scheduled CALL follow-up."
           : "Manual follow-up not scheduled.",
       });
 
@@ -484,16 +494,53 @@ export async function updateOpportunityService({ user, formData }) {
       });
 
       // ============================================
-      // UPDATE PENDING FOLLOW-UPS
+      // RECALCULATE PENDING STANDARD FOLLOW-UPS
+      // ============================================
+
+      const updatedStandardFollowUps = getStandardFollowUps(opportunityDate);
+
+      for (const item of updatedStandardFollowUps) {
+        await tx.followUp.updateMany({
+          where: {
+            opportunityId,
+            sequence: item.sequence,
+            scheduleType: "STANDARD",
+            status: "PENDING",
+          },
+          data: {
+            eventType: item.eventType,
+            type: item.type,
+            dueAt: item.dueAt,
+            assignedToId,
+          },
+        });
+      }
+
+      // ============================================
+      // UPDATE PENDING MANUAL FOLLOW-UP ASSIGNMENT
       // ============================================
 
       await tx.followUp.updateMany({
         where: {
           opportunityId,
+          scheduleType: "MANUAL",
           status: "PENDING",
         },
         data: {
           assignedToId,
+        },
+      });
+
+      // ============================================
+      // UPDATE FOLLOW-UP SCHEDULE PRESENTATION DATE
+      // ============================================
+
+      await tx.followUpSchedule.updateMany({
+        where: {
+          opportunityId,
+        },
+        data: {
+          presentationAt: opportunityDate,
         },
       });
     });

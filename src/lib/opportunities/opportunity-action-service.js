@@ -1,5 +1,7 @@
 import { prisma } from "@/lib/prisma";
 
+import { getStandardFollowUps } from "@/lib/opportunities/follow-up-schedule";
+
 // ============================================
 // SHARED ACCESS VALIDATION
 // ============================================
@@ -18,6 +20,7 @@ async function getAuthorizedOpportunity(user, opportunityId) {
     select: {
       id: true,
       assignedToId: true,
+      opportunityDate: true,
       status: true,
     },
   });
@@ -47,6 +50,7 @@ function parseDateTime(value) {
   }
 
   const date = new Date(value);
+
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
@@ -91,6 +95,7 @@ export async function closeOpportunityService({
     }
 
     const now = new Date();
+
     let reopenAt = null;
     let titanJobId = null;
 
@@ -167,7 +172,7 @@ export async function closeOpportunityService({
     // ======================================
 
     await prisma.$transaction(async (tx) => {
-      await tx.opportunity.update({
+      const updateResult = await tx.opportunity.updateMany({
         where: {
           id: opportunity.id,
           status: "OPEN",
@@ -182,6 +187,10 @@ export async function closeOpportunityService({
             : {}),
         },
       });
+
+      if (updateResult.count !== 1) {
+        throw new Error("OPPORTUNITY_ALREADY_UPDATED");
+      }
 
       // Keep the closing note in the Activity record.
       // Do not overwrite existing Opportunity.notes.
@@ -242,6 +251,13 @@ export async function closeOpportunityService({
       };
     }
 
+    if (error.message === "OPPORTUNITY_ALREADY_UPDATED") {
+      return {
+        success: false,
+        error: "This opportunity has already been updated.",
+      };
+    }
+
     return {
       success: false,
       error: error.message || "Unable to close opportunity.",
@@ -271,6 +287,10 @@ export async function updateFollowUpModeService({
 
     let manualFollowUpDate = null;
 
+    // ======================================
+    // MANUAL DATE VALIDATION
+    // ======================================
+
     if (mode === "MANUAL" && manualDateTime) {
       manualFollowUpDate = parseDateTime(manualDateTime);
 
@@ -288,6 +308,10 @@ export async function updateFollowUpModeService({
         };
       }
     }
+
+    // ======================================
+    // DATABASE TRANSACTION
+    // ======================================
 
     const result = await prisma.$transaction(async (tx) => {
       const schedule = await tx.followUpSchedule.findFirst({
@@ -309,18 +333,32 @@ export async function updateFollowUpModeService({
       // ======================================
 
       if (mode === "STANDARD") {
-        await tx.followUp.updateMany({
-          where: {
-            opportunityId: opportunity.id,
-            scheduleId: schedule.id,
-            scheduleType: "STANDARD",
-            status: "PENDING",
-          },
-          data: {
-            isActive: true,
-          },
-        });
+        // Recalculate standard follow-up dates using
+        // the current opportunity presentation date.
+        const standardFollowUps = getStandardFollowUps(
+          opportunity.opportunityDate,
+        );
 
+        for (const item of standardFollowUps) {
+          await tx.followUp.updateMany({
+            where: {
+              opportunityId: opportunity.id,
+              scheduleId: schedule.id,
+              scheduleType: "STANDARD",
+              sequence: item.sequence,
+              status: "PENDING",
+            },
+            data: {
+              eventType: item.eventType,
+              type: item.type,
+              dueAt: item.dueAt,
+              assignedToId: opportunity.assignedToId,
+              isActive: true,
+            },
+          });
+        }
+
+        // Deactivate pending manual follow-ups.
         await tx.followUp.updateMany({
           where: {
             opportunityId: opportunity.id,
@@ -333,8 +371,11 @@ export async function updateFollowUpModeService({
           },
         });
 
+        // Update schedule mode.
         await tx.followUpSchedule.update({
-          where: { id: schedule.id },
+          where: {
+            id: schedule.id,
+          },
           data: {
             mode: "STANDARD",
             isActive: true,
@@ -347,19 +388,21 @@ export async function updateFollowUpModeService({
       // ======================================
 
       if (mode === "MANUAL") {
+        // Manual follow-up always uses sequence 6.
+        // Find the existing record regardless of status
+        // to prevent duplicate sequence records.
         const existingManual = await tx.followUp.findFirst({
           where: {
-            opportunityId: opportunity.id,
             scheduleId: schedule.id,
+            sequence: 6,
             scheduleType: "MANUAL",
-            status: "PENDING",
-          },
-          orderBy: {
-            createdAt: "desc",
           },
         });
 
-        // Activate previously saved manual date.
+        // ======================================
+        // MANUAL MODE WITHOUT A NEW DATE
+        // ======================================
+
         if (!manualFollowUpDate) {
           if (!existingManual?.dueAt) {
             return {
@@ -369,43 +412,33 @@ export async function updateFollowUpModeService({
             };
           }
 
+          // Do not reactivate completed or cancelled records.
+          if (existingManual.status !== "PENDING") {
+            throw new Error(
+              "The existing manual follow-up is no longer pending. A new manual follow-up cannot be created in this schedule.",
+            );
+          }
+
           await tx.followUp.update({
-            where: { id: existingManual.id },
-            data: { isActive: true },
-          });
-
-          await tx.followUp.updateMany({
             where: {
-              opportunityId: opportunity.id,
-              scheduleId: schedule.id,
-              scheduleType: "STANDARD",
-              status: "PENDING",
+              id: existingManual.id,
             },
-            data: { isActive: false },
-          });
-
-          await tx.followUp.updateMany({
-            where: {
-              opportunityId: opportunity.id,
-              scheduleId: schedule.id,
-              scheduleType: "MANUAL",
-              status: "PENDING",
-              id: { not: existingManual.id },
-            },
-            data: { isActive: false },
-          });
-
-          await tx.followUpSchedule.update({
-            where: { id: schedule.id },
             data: {
-              mode: "MANUAL",
+              eventType: "MANUAL",
+              type: "CALL",
+              sequence: 6,
+              assignedToId: opportunity.assignedToId,
               isActive: true,
             },
           });
         }
 
-        // Create or update manual follow-up date.
+        // ======================================
+        // MANUAL MODE WITH A NEW DATE
+        // ======================================
+
         if (manualFollowUpDate) {
+          // Deactivate pending standard follow-ups.
           await tx.followUp.updateMany({
             where: {
               opportunityId: opportunity.id,
@@ -413,29 +446,32 @@ export async function updateFollowUpModeService({
               scheduleType: "STANDARD",
               status: "PENDING",
             },
-            data: { isActive: false },
+            data: {
+              isActive: false,
+            },
           });
 
           if (existingManual) {
+            // Do not overwrite completed or cancelled records.
+            if (existingManual.status !== "PENDING") {
+              throw new Error(
+                "The existing manual follow-up is no longer pending. A new manual follow-up cannot be created in this schedule.",
+              );
+            }
+
             await tx.followUp.update({
-              where: { id: existingManual.id },
+              where: {
+                id: existingManual.id,
+              },
               data: {
+                eventType: "MANUAL",
+                type: "CALL",
+                sequence: 6,
                 dueAt: manualFollowUpDate,
                 assignedToId: opportunity.assignedToId,
                 isActive: true,
-                notes: "Manual follow-up scheduled.",
+                notes: "Manual CALL follow-up scheduled.",
               },
-            });
-
-            await tx.followUp.updateMany({
-              where: {
-                opportunityId: opportunity.id,
-                scheduleId: schedule.id,
-                scheduleType: "MANUAL",
-                status: "PENDING",
-                id: { not: existingManual.id },
-              },
-              data: { isActive: false },
             });
           } else {
             await tx.followUp.create({
@@ -443,23 +479,29 @@ export async function updateFollowUpModeService({
                 opportunityId: opportunity.id,
                 scheduleId: schedule.id,
                 assignedToId: opportunity.assignedToId,
+                eventType: "MANUAL",
+                type: "CALL",
+                sequence: 6,
                 dueAt: manualFollowUpDate,
                 status: "PENDING",
                 scheduleType: "MANUAL",
                 isActive: true,
-                notes: "Manual follow-up scheduled.",
+                notes: "Manual CALL follow-up scheduled.",
               },
             });
           }
-
-          await tx.followUpSchedule.update({
-            where: { id: schedule.id },
-            data: {
-              mode: "MANUAL",
-              isActive: true,
-            },
-          });
         }
+
+        // Update schedule mode.
+        await tx.followUpSchedule.update({
+          where: {
+            id: schedule.id,
+          },
+          data: {
+            mode: "MANUAL",
+            isActive: true,
+          },
+        });
       }
 
       // ======================================
@@ -472,9 +514,18 @@ export async function updateFollowUpModeService({
           scheduleId: schedule.id,
           isActive: true,
           status: "PENDING",
-          dueAt: { not: null },
+          dueAt: {
+            not: null,
+          },
         },
-        orderBy: [{ dueAt: "asc" }, { createdAt: "asc" }],
+        orderBy: [
+          {
+            dueAt: "asc",
+          },
+          {
+            createdAt: "asc",
+          },
+        ],
         select: {
           dueAt: true,
         },
@@ -488,6 +539,10 @@ export async function updateFollowUpModeService({
       };
     });
 
+    // ======================================
+    // MANUAL DATE REQUIRED
+    // ======================================
+
     if (result.needsDate) {
       return {
         success: true,
@@ -497,6 +552,10 @@ export async function updateFollowUpModeService({
         manualDateTime: null,
       };
     }
+
+    // ======================================
+    // SUCCESS RESPONSE
+    // ======================================
 
     return {
       success: true,
