@@ -1,4 +1,3 @@
-
 import "dotenv/config";
 import bcrypt from "bcryptjs";
 import { prisma } from "../src/lib/prisma.js";
@@ -12,9 +11,6 @@ const users = [
     email: "admin@advanced-sales-tracker.com",
     role: "ADMIN",
     title: "CCO",
-    annualGoal: 120000,
-    quarterlyGoal: 30000,
-    monthlyGoal: 10000,
   },
   {
     name: "Easton Meier",
@@ -22,9 +18,6 @@ const users = [
     email: "easton.meier@advanced-sales-tracker.com",
     role: "SALESPERSON",
     title: "Director of Operations",
-    annualGoal: 92000,
-    quarterlyGoal: 23000,
-    monthlyGoal: 7666.67,
   },
   {
     name: "David Garcia",
@@ -32,9 +25,6 @@ const users = [
     email: "david.garcia@advanced-sales-tracker.com",
     role: "SALESPERSON",
     title: "Imperial Valley",
-    annualGoal: 80000,
-    quarterlyGoal: 20000,
-    monthlyGoal: 6666.67,
   },
   {
     name: "David Hunt",
@@ -42,9 +32,6 @@ const users = [
     email: "david.hunt@advanced-sales-tracker.com",
     role: "SALESPERSON",
     title: "Account Advisor AZ/NV",
-    annualGoal: 100000,
-    quarterlyGoal: 25000,
-    monthlyGoal: 8333.33,
   },
   {
     name: "Brian Rosas",
@@ -52,9 +39,6 @@ const users = [
     email: "brian.rosas@advanced-sales-tracker.com",
     role: "SALESPERSON",
     title: "Automotive",
-    annualGoal: 75000,
-    quarterlyGoal: 18750,
-    monthlyGoal: 6250,
   },
 ];
 
@@ -69,12 +53,18 @@ async function main() {
       update: {
         ...data,
         passwordHash,
+        monthlyGoal: 200000,
+        quarterlyGoal: 600000,
+        annualGoal: 2400000,
         isActive: true,
       },
       create: {
         ...data,
         username,
         passwordHash,
+        monthlyGoal: 200000,
+        quarterlyGoal: 600000,
+        annualGoal: 2400000,
         isActive: true,
       },
     });

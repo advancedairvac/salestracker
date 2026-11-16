@@ -1,4 +1,3 @@
-
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
@@ -48,6 +47,22 @@ enum FollowUpScheduleType {
   MANUAL
 }
 
+enum FollowUpEventType {
+  H24
+  H36
+  W1
+  W2
+  M1
+  MANUAL
+}
+
+enum NotificationStatus {
+  PENDING
+  PROCESSING
+  SENT
+  FAILED
+}
+
 enum ActivityType {
   CALL
   EMAIL
@@ -89,6 +104,9 @@ model User {
   // Follow-ups
   assignedFollowUps FollowUp[] @relation("FollowUpAssignedTo")
 
+  // Email Templates
+  emailTemplates EmailTemplate[]
+
   // Activities
   activities Activity[]
 
@@ -107,7 +125,6 @@ model Customer {
   id String @id @default(cuid())
 
   // Optional ServiceTitan customer reference
-  // Null for manually created customers
   stCustomerId String? @unique
 
   pocName      String?
@@ -138,7 +155,6 @@ model Opportunity {
   titanJobId      String? @unique
 
   // Customer relationship
-  // Always references the internal Prisma Customer ID
   customerId String
   customer   Customer @relation(fields: [customerId], references: [id], onDelete: Restrict)
 
@@ -154,15 +170,15 @@ model Opportunity {
 
   // Assigned salesperson
   assignedToId String?
-  assignedTo   User? @relation("OpportunityAssignedTo", fields: [assignedToId], references: [id], onDelete: SetNull)
+  assignedTo   User?   @relation("OpportunityAssignedTo", fields: [assignedToId], references: [id], onDelete: SetNull)
 
   // Creator
   createdById String
-  createdBy   User @relation("OpportunityCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  createdBy   User   @relation("OpportunityCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
 
   // Closing information
   closedById String?
-  closedBy   User? @relation("OpportunityClosedBy", fields: [closedById], references: [id], onDelete: SetNull)
+  closedBy   User?   @relation("OpportunityClosedBy", fields: [closedById], references: [id], onDelete: SetNull)
 
   notes    String?
   closedAt DateTime?
@@ -172,9 +188,9 @@ model Opportunity {
   updatedAt DateTime @updatedAt
 
   // Related records
-  followUpSchedules FollowUpSchedule[]
-  followUps         FollowUp[]
-  activities        Activity[]
+  followUpSchedule FollowUpSchedule?
+  followUps        FollowUp[]
+  activities       Activity[]
 
   @@index([customerId])
   @@index([assignedToId])
@@ -186,12 +202,14 @@ model Opportunity {
 
 // ============================================
 // FOLLOW-UP SCHEDULE
+// One schedule per Opportunity
+// Controls STANDARD / MANUAL mode
 // ============================================
 
 model FollowUpSchedule {
   id String @id @default(cuid())
 
-  opportunityId String
+  opportunityId String      @unique
   opportunity   Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
 
   mode     FollowUpScheduleType @default(STANDARD)
@@ -199,18 +217,21 @@ model FollowUpSchedule {
 
   presentationAt DateTime?
   startedAt      DateTime?
+  completedAt    DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  followUps FollowUp[]
+  followUps        FollowUp[]
+  notificationLogs NotificationLog[]
 
-  @@index([opportunityId])
-  @@index([isActive])
+  @@index([isActive, mode])
 }
 
 // ============================================
 // FOLLOW-UP
+// Six independent rows per Opportunity
+// H24, H36, W1, W2, M1, MANUAL
 // ============================================
 
 model FollowUp {
@@ -219,39 +240,144 @@ model FollowUp {
   opportunityId String
   opportunity   Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
 
-  scheduleId String?
-  schedule   FollowUpSchedule? @relation(fields: [scheduleId], references: [id], onDelete: SetNull)
+  scheduleId String
+  schedule   FollowUpSchedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
 
   assignedToId String?
-  assignedTo   User? @relation("FollowUpAssignedTo", fields: [assignedToId], references: [id], onDelete: SetNull)
+  assignedTo   User?   @relation("FollowUpAssignedTo", fields: [assignedToId], references: [id], onDelete: SetNull)
 
+  // Follow-up configuration
+  eventType    FollowUpEventType
+  scheduleType FollowUpScheduleType @default(STANDARD)
+  type         FollowUpType
+
+  // 1 = H24, 2 = H36, 3 = W1,
+  // 4 = W2, 5 = M1, 6 = MANUAL
+  sequence Int
+
+  // Manual follow-up can initially have no due date
   dueAt DateTime?
 
-  status       FollowUpStatus       @default(PENDING)
-  type         FollowUpType?
-  scheduleType FollowUpScheduleType @default(STANDARD)
+  status   FollowUpStatus @default(PENDING)
+  isActive Boolean        @default(true)
 
-  sequence Int     @default(0)
-  isActive Boolean @default(true)
-
+  // Completion information
   notes       String?
   completedAt DateTime?
 
-  notificationSentAt   DateTime?
-  notificationAttempts Int       @default(0)
+  // Independent notification retry tracking
+  notificationSentAt    DateTime?
+  notificationAttempts  Int       @default(0)
+  maxAttempts           Int       @default(3)
+  nextRetryAt           DateTime?
+  lastNotificationError String?   @db.Text
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // Notification history
+  notificationLogs NotificationLog[]
+
+  @@unique([scheduleId, sequence])
   @@index([opportunityId])
   @@index([scheduleId])
   @@index([assignedToId])
   @@index([status])
-  @@index([dueAt])
+  @@index([isActive, status, dueAt])
+  @@index([isActive, status, nextRetryAt])
+  @@index([eventType])
+}
+
+// ============================================
+// NOTIFICATION LOG
+// Individual notification attempt history
+// ============================================
+
+model NotificationLog {
+  id String @id @default(cuid())
+
+  // Related follow-up
+  followUpId String
+  followUp   FollowUp @relation(fields: [followUpId], references: [id], onDelete: Cascade)
+
+  // Related schedule
+  scheduleId String
+  schedule   FollowUpSchedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+
+  // Used email template (null for CALL/TEXT)
+  templateId String?
+  template   EmailTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
+
+  // Idempotency key
+  eventKey String @unique
+
+  // Notification event
+  eventType     FollowUpEventType
+  attemptNumber Int
+
+  // Recipient
+  recipientEmail String?
+
+  // Notification status
+  status NotificationStatus @default(PENDING)
+
+  // Attempt timing
+  scheduledAt DateTime
+  sentAt      DateTime?
+
+  // Snapshot of sent email
+  subjectSnapshot String?
+  bodySnapshot    String? @db.Text
+
+  // Provider information
+  providerMessageId String?
+  errorMessage      String? @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([followUpId, attemptNumber])
+  @@index([scheduleId])
+  @@index([followUpId])
+  @@index([status, scheduledAt])
+  @@index([eventType])
+}
+
+// ============================================
+// EMAIL TEMPLATE
+// Global defaults and salesperson templates
+// ============================================
+
+model EmailTemplate {
+  id String @id @default(cuid())
+
+  // Null = Global default
+  // User ID = Salesperson custom template
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  eventType FollowUpEventType
+
+  name    String
+  subject String
+  body    String @db.Text
+
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  notificationLogs NotificationLog[]
+
+  // One template per user and event type
+  @@unique([userId, eventType])
+  @@index([eventType])
+  @@index([userId])
 }
 
 // ============================================
 // ACTIVITY
+// UNCHANGED
 // ============================================
 
 model Activity {
@@ -261,7 +387,7 @@ model Activity {
   opportunity   Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
 
   userId String
-  user   User @relation(fields: [userId], references: [id], onDelete: Restrict)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Restrict)
 
   type        ActivityType
   description String
@@ -277,6 +403,7 @@ model Activity {
 
 // ============================================
 // SALE / REVENUE ASSIGNMENT
+// UNCHANGED
 // ============================================
 
 model Sale {
@@ -287,7 +414,7 @@ model Sale {
 
   // Admin-managed assignment fields
   salesmanId String?
-  salesman   User? @relation("SaleAssignedTo", fields: [salesmanId], references: [id], onDelete: SetNull)
+  salesman   User?   @relation("SaleAssignedTo", fields: [salesmanId], references: [id], onDelete: SetNull)
 
   source LeadSource?
 

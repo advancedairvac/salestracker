@@ -243,18 +243,18 @@ export type EnumFollowUpScheduleTypeWithAggregatesFilter<$PrismaModel = never> =
   _max?: Prisma.NestedEnumFollowUpScheduleTypeFilter<$PrismaModel>
 }
 
-export type EnumFollowUpStatusFilter<$PrismaModel = never> = {
-  equals?: $Enums.FollowUpStatus | Prisma.EnumFollowUpStatusFieldRefInput<$PrismaModel>
-  in?: $Enums.FollowUpStatus[] | Prisma.ListEnumFollowUpStatusFieldRefInput<$PrismaModel>
-  notIn?: $Enums.FollowUpStatus[] | Prisma.ListEnumFollowUpStatusFieldRefInput<$PrismaModel>
-  not?: Prisma.NestedEnumFollowUpStatusFilter<$PrismaModel> | $Enums.FollowUpStatus
+export type EnumFollowUpEventTypeFilter<$PrismaModel = never> = {
+  equals?: $Enums.FollowUpEventType | Prisma.EnumFollowUpEventTypeFieldRefInput<$PrismaModel>
+  in?: $Enums.FollowUpEventType[] | Prisma.ListEnumFollowUpEventTypeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.FollowUpEventType[] | Prisma.ListEnumFollowUpEventTypeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumFollowUpEventTypeFilter<$PrismaModel> | $Enums.FollowUpEventType
 }
 
-export type EnumFollowUpTypeNullableFilter<$PrismaModel = never> = {
-  equals?: $Enums.FollowUpType | Prisma.EnumFollowUpTypeFieldRefInput<$PrismaModel> | null
-  in?: $Enums.FollowUpType[] | Prisma.ListEnumFollowUpTypeFieldRefInput<$PrismaModel> | null
-  notIn?: $Enums.FollowUpType[] | Prisma.ListEnumFollowUpTypeFieldRefInput<$PrismaModel> | null
-  not?: Prisma.NestedEnumFollowUpTypeNullableFilter<$PrismaModel> | $Enums.FollowUpType | null
+export type EnumFollowUpTypeFilter<$PrismaModel = never> = {
+  equals?: $Enums.FollowUpType | Prisma.EnumFollowUpTypeFieldRefInput<$PrismaModel>
+  in?: $Enums.FollowUpType[] | Prisma.ListEnumFollowUpTypeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.FollowUpType[] | Prisma.ListEnumFollowUpTypeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumFollowUpTypeFilter<$PrismaModel> | $Enums.FollowUpType
 }
 
 export type IntFilter<$PrismaModel = never> = {
@@ -268,24 +268,31 @@ export type IntFilter<$PrismaModel = never> = {
   not?: Prisma.NestedIntFilter<$PrismaModel> | number
 }
 
-export type EnumFollowUpStatusWithAggregatesFilter<$PrismaModel = never> = {
+export type EnumFollowUpStatusFilter<$PrismaModel = never> = {
   equals?: $Enums.FollowUpStatus | Prisma.EnumFollowUpStatusFieldRefInput<$PrismaModel>
   in?: $Enums.FollowUpStatus[] | Prisma.ListEnumFollowUpStatusFieldRefInput<$PrismaModel>
   notIn?: $Enums.FollowUpStatus[] | Prisma.ListEnumFollowUpStatusFieldRefInput<$PrismaModel>
-  not?: Prisma.NestedEnumFollowUpStatusWithAggregatesFilter<$PrismaModel> | $Enums.FollowUpStatus
-  _count?: Prisma.NestedIntFilter<$PrismaModel>
-  _min?: Prisma.NestedEnumFollowUpStatusFilter<$PrismaModel>
-  _max?: Prisma.NestedEnumFollowUpStatusFilter<$PrismaModel>
+  not?: Prisma.NestedEnumFollowUpStatusFilter<$PrismaModel> | $Enums.FollowUpStatus
 }
 
-export type EnumFollowUpTypeNullableWithAggregatesFilter<$PrismaModel = never> = {
-  equals?: $Enums.FollowUpType | Prisma.EnumFollowUpTypeFieldRefInput<$PrismaModel> | null
-  in?: $Enums.FollowUpType[] | Prisma.ListEnumFollowUpTypeFieldRefInput<$PrismaModel> | null
-  notIn?: $Enums.FollowUpType[] | Prisma.ListEnumFollowUpTypeFieldRefInput<$PrismaModel> | null
-  not?: Prisma.NestedEnumFollowUpTypeNullableWithAggregatesFilter<$PrismaModel> | $Enums.FollowUpType | null
-  _count?: Prisma.NestedIntNullableFilter<$PrismaModel>
-  _min?: Prisma.NestedEnumFollowUpTypeNullableFilter<$PrismaModel>
-  _max?: Prisma.NestedEnumFollowUpTypeNullableFilter<$PrismaModel>
+export type EnumFollowUpEventTypeWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.FollowUpEventType | Prisma.EnumFollowUpEventTypeFieldRefInput<$PrismaModel>
+  in?: $Enums.FollowUpEventType[] | Prisma.ListEnumFollowUpEventTypeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.FollowUpEventType[] | Prisma.ListEnumFollowUpEventTypeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumFollowUpEventTypeWithAggregatesFilter<$PrismaModel> | $Enums.FollowUpEventType
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumFollowUpEventTypeFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumFollowUpEventTypeFilter<$PrismaModel>
+}
+
+export type EnumFollowUpTypeWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.FollowUpType | Prisma.EnumFollowUpTypeFieldRefInput<$PrismaModel>
+  in?: $Enums.FollowUpType[] | Prisma.ListEnumFollowUpTypeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.FollowUpType[] | Prisma.ListEnumFollowUpTypeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumFollowUpTypeWithAggregatesFilter<$PrismaModel> | $Enums.FollowUpType
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumFollowUpTypeFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumFollowUpTypeFilter<$PrismaModel>
 }
 
 export type IntWithAggregatesFilter<$PrismaModel = never> = {
@@ -302,6 +309,33 @@ export type IntWithAggregatesFilter<$PrismaModel = never> = {
   _sum?: Prisma.NestedIntFilter<$PrismaModel>
   _min?: Prisma.NestedIntFilter<$PrismaModel>
   _max?: Prisma.NestedIntFilter<$PrismaModel>
+}
+
+export type EnumFollowUpStatusWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.FollowUpStatus | Prisma.EnumFollowUpStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.FollowUpStatus[] | Prisma.ListEnumFollowUpStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.FollowUpStatus[] | Prisma.ListEnumFollowUpStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumFollowUpStatusWithAggregatesFilter<$PrismaModel> | $Enums.FollowUpStatus
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumFollowUpStatusFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumFollowUpStatusFilter<$PrismaModel>
+}
+
+export type EnumNotificationStatusFilter<$PrismaModel = never> = {
+  equals?: $Enums.NotificationStatus | Prisma.EnumNotificationStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.NotificationStatus[] | Prisma.ListEnumNotificationStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.NotificationStatus[] | Prisma.ListEnumNotificationStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumNotificationStatusFilter<$PrismaModel> | $Enums.NotificationStatus
+}
+
+export type EnumNotificationStatusWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.NotificationStatus | Prisma.EnumNotificationStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.NotificationStatus[] | Prisma.ListEnumNotificationStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.NotificationStatus[] | Prisma.ListEnumNotificationStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumNotificationStatusWithAggregatesFilter<$PrismaModel> | $Enums.NotificationStatus
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumNotificationStatusFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumNotificationStatusFilter<$PrismaModel>
 }
 
 export type EnumActivityTypeFilter<$PrismaModel = never> = {
@@ -607,6 +641,20 @@ export type NestedEnumFollowUpScheduleTypeWithAggregatesFilter<$PrismaModel = ne
   _max?: Prisma.NestedEnumFollowUpScheduleTypeFilter<$PrismaModel>
 }
 
+export type NestedEnumFollowUpEventTypeFilter<$PrismaModel = never> = {
+  equals?: $Enums.FollowUpEventType | Prisma.EnumFollowUpEventTypeFieldRefInput<$PrismaModel>
+  in?: $Enums.FollowUpEventType[] | Prisma.ListEnumFollowUpEventTypeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.FollowUpEventType[] | Prisma.ListEnumFollowUpEventTypeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumFollowUpEventTypeFilter<$PrismaModel> | $Enums.FollowUpEventType
+}
+
+export type NestedEnumFollowUpTypeFilter<$PrismaModel = never> = {
+  equals?: $Enums.FollowUpType | Prisma.EnumFollowUpTypeFieldRefInput<$PrismaModel>
+  in?: $Enums.FollowUpType[] | Prisma.ListEnumFollowUpTypeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.FollowUpType[] | Prisma.ListEnumFollowUpTypeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumFollowUpTypeFilter<$PrismaModel> | $Enums.FollowUpType
+}
+
 export type NestedEnumFollowUpStatusFilter<$PrismaModel = never> = {
   equals?: $Enums.FollowUpStatus | Prisma.EnumFollowUpStatusFieldRefInput<$PrismaModel>
   in?: $Enums.FollowUpStatus[] | Prisma.ListEnumFollowUpStatusFieldRefInput<$PrismaModel>
@@ -614,31 +662,24 @@ export type NestedEnumFollowUpStatusFilter<$PrismaModel = never> = {
   not?: Prisma.NestedEnumFollowUpStatusFilter<$PrismaModel> | $Enums.FollowUpStatus
 }
 
-export type NestedEnumFollowUpTypeNullableFilter<$PrismaModel = never> = {
-  equals?: $Enums.FollowUpType | Prisma.EnumFollowUpTypeFieldRefInput<$PrismaModel> | null
-  in?: $Enums.FollowUpType[] | Prisma.ListEnumFollowUpTypeFieldRefInput<$PrismaModel> | null
-  notIn?: $Enums.FollowUpType[] | Prisma.ListEnumFollowUpTypeFieldRefInput<$PrismaModel> | null
-  not?: Prisma.NestedEnumFollowUpTypeNullableFilter<$PrismaModel> | $Enums.FollowUpType | null
-}
-
-export type NestedEnumFollowUpStatusWithAggregatesFilter<$PrismaModel = never> = {
-  equals?: $Enums.FollowUpStatus | Prisma.EnumFollowUpStatusFieldRefInput<$PrismaModel>
-  in?: $Enums.FollowUpStatus[] | Prisma.ListEnumFollowUpStatusFieldRefInput<$PrismaModel>
-  notIn?: $Enums.FollowUpStatus[] | Prisma.ListEnumFollowUpStatusFieldRefInput<$PrismaModel>
-  not?: Prisma.NestedEnumFollowUpStatusWithAggregatesFilter<$PrismaModel> | $Enums.FollowUpStatus
+export type NestedEnumFollowUpEventTypeWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.FollowUpEventType | Prisma.EnumFollowUpEventTypeFieldRefInput<$PrismaModel>
+  in?: $Enums.FollowUpEventType[] | Prisma.ListEnumFollowUpEventTypeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.FollowUpEventType[] | Prisma.ListEnumFollowUpEventTypeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumFollowUpEventTypeWithAggregatesFilter<$PrismaModel> | $Enums.FollowUpEventType
   _count?: Prisma.NestedIntFilter<$PrismaModel>
-  _min?: Prisma.NestedEnumFollowUpStatusFilter<$PrismaModel>
-  _max?: Prisma.NestedEnumFollowUpStatusFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumFollowUpEventTypeFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumFollowUpEventTypeFilter<$PrismaModel>
 }
 
-export type NestedEnumFollowUpTypeNullableWithAggregatesFilter<$PrismaModel = never> = {
-  equals?: $Enums.FollowUpType | Prisma.EnumFollowUpTypeFieldRefInput<$PrismaModel> | null
-  in?: $Enums.FollowUpType[] | Prisma.ListEnumFollowUpTypeFieldRefInput<$PrismaModel> | null
-  notIn?: $Enums.FollowUpType[] | Prisma.ListEnumFollowUpTypeFieldRefInput<$PrismaModel> | null
-  not?: Prisma.NestedEnumFollowUpTypeNullableWithAggregatesFilter<$PrismaModel> | $Enums.FollowUpType | null
-  _count?: Prisma.NestedIntNullableFilter<$PrismaModel>
-  _min?: Prisma.NestedEnumFollowUpTypeNullableFilter<$PrismaModel>
-  _max?: Prisma.NestedEnumFollowUpTypeNullableFilter<$PrismaModel>
+export type NestedEnumFollowUpTypeWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.FollowUpType | Prisma.EnumFollowUpTypeFieldRefInput<$PrismaModel>
+  in?: $Enums.FollowUpType[] | Prisma.ListEnumFollowUpTypeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.FollowUpType[] | Prisma.ListEnumFollowUpTypeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumFollowUpTypeWithAggregatesFilter<$PrismaModel> | $Enums.FollowUpType
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumFollowUpTypeFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumFollowUpTypeFilter<$PrismaModel>
 }
 
 export type NestedIntWithAggregatesFilter<$PrismaModel = never> = {
@@ -666,6 +707,33 @@ export type NestedFloatFilter<$PrismaModel = never> = {
   gt?: number | Prisma.FloatFieldRefInput<$PrismaModel>
   gte?: number | Prisma.FloatFieldRefInput<$PrismaModel>
   not?: Prisma.NestedFloatFilter<$PrismaModel> | number
+}
+
+export type NestedEnumFollowUpStatusWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.FollowUpStatus | Prisma.EnumFollowUpStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.FollowUpStatus[] | Prisma.ListEnumFollowUpStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.FollowUpStatus[] | Prisma.ListEnumFollowUpStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumFollowUpStatusWithAggregatesFilter<$PrismaModel> | $Enums.FollowUpStatus
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumFollowUpStatusFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumFollowUpStatusFilter<$PrismaModel>
+}
+
+export type NestedEnumNotificationStatusFilter<$PrismaModel = never> = {
+  equals?: $Enums.NotificationStatus | Prisma.EnumNotificationStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.NotificationStatus[] | Prisma.ListEnumNotificationStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.NotificationStatus[] | Prisma.ListEnumNotificationStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumNotificationStatusFilter<$PrismaModel> | $Enums.NotificationStatus
+}
+
+export type NestedEnumNotificationStatusWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.NotificationStatus | Prisma.EnumNotificationStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.NotificationStatus[] | Prisma.ListEnumNotificationStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.NotificationStatus[] | Prisma.ListEnumNotificationStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumNotificationStatusWithAggregatesFilter<$PrismaModel> | $Enums.NotificationStatus
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumNotificationStatusFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumNotificationStatusFilter<$PrismaModel>
 }
 
 export type NestedEnumActivityTypeFilter<$PrismaModel = never> = {

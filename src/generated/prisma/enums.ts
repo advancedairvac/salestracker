@@ -63,6 +63,28 @@ export const FollowUpScheduleType = {
 export type FollowUpScheduleType = (typeof FollowUpScheduleType)[keyof typeof FollowUpScheduleType]
 
 
+export const FollowUpEventType = {
+  H24: 'H24',
+  H36: 'H36',
+  W1: 'W1',
+  W2: 'W2',
+  M1: 'M1',
+  MANUAL: 'MANUAL'
+} as const
+
+export type FollowUpEventType = (typeof FollowUpEventType)[keyof typeof FollowUpEventType]
+
+
+export const NotificationStatus = {
+  PENDING: 'PENDING',
+  PROCESSING: 'PROCESSING',
+  SENT: 'SENT',
+  FAILED: 'FAILED'
+} as const
+
+export type NotificationStatus = (typeof NotificationStatus)[keyof typeof NotificationStatus]
+
+
 export const ActivityType = {
   CALL: 'CALL',
   EMAIL: 'EMAIL',

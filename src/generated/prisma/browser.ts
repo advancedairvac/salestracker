@@ -43,6 +43,16 @@ export type FollowUpSchedule = Prisma.FollowUpScheduleModel
  */
 export type FollowUp = Prisma.FollowUpModel
 /**
+ * Model NotificationLog
+ * 
+ */
+export type NotificationLog = Prisma.NotificationLogModel
+/**
+ * Model EmailTemplate
+ * 
+ */
+export type EmailTemplate = Prisma.EmailTemplateModel
+/**
  * Model Activity
  * 
  */

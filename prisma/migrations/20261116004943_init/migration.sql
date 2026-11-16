@@ -2,10 +2,10 @@
 CREATE TYPE "UserRole" AS ENUM ('ADMIN', 'SALESPERSON');
 
 -- CreateEnum
-CREATE TYPE "LeadSource" AS ENUM ('SELF_GENERATED', 'COMPANY_GENERATED');
+CREATE TYPE "LeadSource" AS ENUM ('SELF_GENERATED', 'COMPANY');
 
 -- CreateEnum
-CREATE TYPE "OpportunityStatus" AS ENUM ('OPEN', 'PERMANENTLY_CLOSED', 'TEMPORARILY_CLOSED', 'SCHEDULED_TO_REOPEN');
+CREATE TYPE "OpportunityStatus" AS ENUM ('OPEN', 'WON', 'LOST', 'SCHEDULED_TO_REOPEN');
 
 -- CreateEnum
 CREATE TYPE "FollowUpStatus" AS ENUM ('PENDING', 'COMPLETED', 'CANCELLED');
@@ -15,6 +15,12 @@ CREATE TYPE "FollowUpType" AS ENUM ('CALL', 'EMAIL', 'TEXT', 'MEETING', 'OTHER')
 
 -- CreateEnum
 CREATE TYPE "FollowUpScheduleType" AS ENUM ('STANDARD', 'MANUAL');
+
+-- CreateEnum
+CREATE TYPE "FollowUpEventType" AS ENUM ('H24', 'H36', 'W1', 'W2', 'M1', 'MANUAL');
+
+-- CreateEnum
+CREATE TYPE "NotificationStatus" AS ENUM ('PENDING', 'PROCESSING', 'SENT', 'FAILED');
 
 -- CreateEnum
 CREATE TYPE "ActivityType" AS ENUM ('CALL', 'EMAIL', 'TEXT', 'MEETING', 'NOTE', 'STATUS_CHANGE', 'FOLLOW_UP', 'OTHER');
@@ -56,14 +62,14 @@ CREATE TABLE "Customer" (
 -- CreateTable
 CREATE TABLE "Opportunity" (
     "id" TEXT NOT NULL,
-    "serviceTitanEstimateId" TEXT,
+    "titanEstimateId" TEXT,
+    "titanJobId" TEXT,
     "customerId" TEXT NOT NULL,
-    "title" TEXT NOT NULL,
     "opportunityDate" TIMESTAMP(3) NOT NULL,
     "jobType" TEXT,
     "textMessage" TEXT,
     "value" DECIMAL(12,2),
-    "source" "LeadSource" NOT NULL DEFAULT 'COMPANY_GENERATED',
+    "source" "LeadSource" NOT NULL DEFAULT 'COMPANY',
     "status" "OpportunityStatus" NOT NULL DEFAULT 'OPEN',
     "assignedToId" TEXT,
     "createdById" TEXT NOT NULL,
@@ -85,6 +91,7 @@ CREATE TABLE "FollowUpSchedule" (
     "isActive" BOOLEAN NOT NULL DEFAULT true,
     "presentationAt" TIMESTAMP(3),
     "startedAt" TIMESTAMP(3),
+    "completedAt" TIMESTAMP(3),
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -95,22 +102,64 @@ CREATE TABLE "FollowUpSchedule" (
 CREATE TABLE "FollowUp" (
     "id" TEXT NOT NULL,
     "opportunityId" TEXT NOT NULL,
-    "scheduleId" TEXT,
+    "scheduleId" TEXT NOT NULL,
     "assignedToId" TEXT,
+    "eventType" "FollowUpEventType" NOT NULL,
+    "scheduleType" "FollowUpScheduleType" NOT NULL DEFAULT 'STANDARD',
+    "type" "FollowUpType" NOT NULL,
+    "sequence" INTEGER NOT NULL,
     "dueAt" TIMESTAMP(3),
     "status" "FollowUpStatus" NOT NULL DEFAULT 'PENDING',
-    "type" "FollowUpType",
-    "scheduleType" "FollowUpScheduleType" NOT NULL DEFAULT 'STANDARD',
-    "sequence" INTEGER NOT NULL DEFAULT 0,
     "isActive" BOOLEAN NOT NULL DEFAULT true,
     "notes" TEXT,
     "completedAt" TIMESTAMP(3),
     "notificationSentAt" TIMESTAMP(3),
     "notificationAttempts" INTEGER NOT NULL DEFAULT 0,
+    "maxAttempts" INTEGER NOT NULL DEFAULT 3,
+    "nextRetryAt" TIMESTAMP(3),
+    "lastNotificationError" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "FollowUp_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "NotificationLog" (
+    "id" TEXT NOT NULL,
+    "followUpId" TEXT NOT NULL,
+    "scheduleId" TEXT NOT NULL,
+    "templateId" TEXT,
+    "eventKey" TEXT NOT NULL,
+    "eventType" "FollowUpEventType" NOT NULL,
+    "attemptNumber" INTEGER NOT NULL,
+    "recipientEmail" TEXT,
+    "status" "NotificationStatus" NOT NULL DEFAULT 'PENDING',
+    "scheduledAt" TIMESTAMP(3) NOT NULL,
+    "sentAt" TIMESTAMP(3),
+    "subjectSnapshot" TEXT,
+    "bodySnapshot" TEXT,
+    "providerMessageId" TEXT,
+    "errorMessage" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "NotificationLog_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "EmailTemplate" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT,
+    "eventType" "FollowUpEventType" NOT NULL,
+    "name" TEXT NOT NULL,
+    "subject" TEXT NOT NULL,
+    "body" TEXT NOT NULL,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "EmailTemplate_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -164,7 +213,10 @@ CREATE INDEX "Customer_phone_idx" ON "Customer"("phone");
 CREATE INDEX "Customer_email_idx" ON "Customer"("email");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Opportunity_serviceTitanEstimateId_key" ON "Opportunity"("serviceTitanEstimateId");
+CREATE UNIQUE INDEX "Opportunity_titanEstimateId_key" ON "Opportunity"("titanEstimateId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Opportunity_titanJobId_key" ON "Opportunity"("titanJobId");
 
 -- CreateIndex
 CREATE INDEX "Opportunity_customerId_idx" ON "Opportunity"("customerId");
@@ -185,10 +237,10 @@ CREATE INDEX "Opportunity_status_idx" ON "Opportunity"("status");
 CREATE INDEX "Opportunity_opportunityDate_idx" ON "Opportunity"("opportunityDate");
 
 -- CreateIndex
-CREATE INDEX "FollowUpSchedule_opportunityId_idx" ON "FollowUpSchedule"("opportunityId");
+CREATE UNIQUE INDEX "FollowUpSchedule_opportunityId_key" ON "FollowUpSchedule"("opportunityId");
 
 -- CreateIndex
-CREATE INDEX "FollowUpSchedule_isActive_idx" ON "FollowUpSchedule"("isActive");
+CREATE INDEX "FollowUpSchedule_isActive_mode_idx" ON "FollowUpSchedule"("isActive", "mode");
 
 -- CreateIndex
 CREATE INDEX "FollowUp_opportunityId_idx" ON "FollowUp"("opportunityId");
@@ -203,7 +255,43 @@ CREATE INDEX "FollowUp_assignedToId_idx" ON "FollowUp"("assignedToId");
 CREATE INDEX "FollowUp_status_idx" ON "FollowUp"("status");
 
 -- CreateIndex
-CREATE INDEX "FollowUp_dueAt_idx" ON "FollowUp"("dueAt");
+CREATE INDEX "FollowUp_isActive_status_dueAt_idx" ON "FollowUp"("isActive", "status", "dueAt");
+
+-- CreateIndex
+CREATE INDEX "FollowUp_isActive_status_nextRetryAt_idx" ON "FollowUp"("isActive", "status", "nextRetryAt");
+
+-- CreateIndex
+CREATE INDEX "FollowUp_eventType_idx" ON "FollowUp"("eventType");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "FollowUp_scheduleId_sequence_key" ON "FollowUp"("scheduleId", "sequence");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "NotificationLog_eventKey_key" ON "NotificationLog"("eventKey");
+
+-- CreateIndex
+CREATE INDEX "NotificationLog_scheduleId_idx" ON "NotificationLog"("scheduleId");
+
+-- CreateIndex
+CREATE INDEX "NotificationLog_followUpId_idx" ON "NotificationLog"("followUpId");
+
+-- CreateIndex
+CREATE INDEX "NotificationLog_status_scheduledAt_idx" ON "NotificationLog"("status", "scheduledAt");
+
+-- CreateIndex
+CREATE INDEX "NotificationLog_eventType_idx" ON "NotificationLog"("eventType");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "NotificationLog_followUpId_attemptNumber_key" ON "NotificationLog"("followUpId", "attemptNumber");
+
+-- CreateIndex
+CREATE INDEX "EmailTemplate_eventType_idx" ON "EmailTemplate"("eventType");
+
+-- CreateIndex
+CREATE INDEX "EmailTemplate_userId_idx" ON "EmailTemplate"("userId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "EmailTemplate_userId_eventType_key" ON "EmailTemplate"("userId", "eventType");
 
 -- CreateIndex
 CREATE INDEX "Activity_opportunityId_idx" ON "Activity"("opportunityId");
@@ -245,10 +333,22 @@ ALTER TABLE "FollowUpSchedule" ADD CONSTRAINT "FollowUpSchedule_opportunityId_fk
 ALTER TABLE "FollowUp" ADD CONSTRAINT "FollowUp_opportunityId_fkey" FOREIGN KEY ("opportunityId") REFERENCES "Opportunity"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "FollowUp" ADD CONSTRAINT "FollowUp_scheduleId_fkey" FOREIGN KEY ("scheduleId") REFERENCES "FollowUpSchedule"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "FollowUp" ADD CONSTRAINT "FollowUp_scheduleId_fkey" FOREIGN KEY ("scheduleId") REFERENCES "FollowUpSchedule"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "FollowUp" ADD CONSTRAINT "FollowUp_assignedToId_fkey" FOREIGN KEY ("assignedToId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "NotificationLog" ADD CONSTRAINT "NotificationLog_followUpId_fkey" FOREIGN KEY ("followUpId") REFERENCES "FollowUp"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "NotificationLog" ADD CONSTRAINT "NotificationLog_scheduleId_fkey" FOREIGN KEY ("scheduleId") REFERENCES "FollowUpSchedule"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "NotificationLog" ADD CONSTRAINT "NotificationLog_templateId_fkey" FOREIGN KEY ("templateId") REFERENCES "EmailTemplate"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "EmailTemplate" ADD CONSTRAINT "EmailTemplate_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Activity" ADD CONSTRAINT "Activity_opportunityId_fkey" FOREIGN KEY ("opportunityId") REFERENCES "Opportunity"("id") ON DELETE CASCADE ON UPDATE CASCADE;

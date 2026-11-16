@@ -56,6 +56,8 @@ export const ModelName = {
   Opportunity: 'Opportunity',
   FollowUpSchedule: 'FollowUpSchedule',
   FollowUp: 'FollowUp',
+  NotificationLog: 'NotificationLog',
+  EmailTemplate: 'EmailTemplate',
   Activity: 'Activity',
   Sale: 'Sale'
 } as const
@@ -141,6 +143,7 @@ export const FollowUpScheduleScalarFieldEnum = {
   isActive: 'isActive',
   presentationAt: 'presentationAt',
   startedAt: 'startedAt',
+  completedAt: 'completedAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -153,21 +156,63 @@ export const FollowUpScalarFieldEnum = {
   opportunityId: 'opportunityId',
   scheduleId: 'scheduleId',
   assignedToId: 'assignedToId',
+  eventType: 'eventType',
+  scheduleType: 'scheduleType',
+  type: 'type',
+  sequence: 'sequence',
   dueAt: 'dueAt',
   status: 'status',
-  type: 'type',
-  scheduleType: 'scheduleType',
-  sequence: 'sequence',
   isActive: 'isActive',
   notes: 'notes',
   completedAt: 'completedAt',
   notificationSentAt: 'notificationSentAt',
   notificationAttempts: 'notificationAttempts',
+  maxAttempts: 'maxAttempts',
+  nextRetryAt: 'nextRetryAt',
+  lastNotificationError: 'lastNotificationError',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
 
 export type FollowUpScalarFieldEnum = (typeof FollowUpScalarFieldEnum)[keyof typeof FollowUpScalarFieldEnum]
+
+
+export const NotificationLogScalarFieldEnum = {
+  id: 'id',
+  followUpId: 'followUpId',
+  scheduleId: 'scheduleId',
+  templateId: 'templateId',
+  eventKey: 'eventKey',
+  eventType: 'eventType',
+  attemptNumber: 'attemptNumber',
+  recipientEmail: 'recipientEmail',
+  status: 'status',
+  scheduledAt: 'scheduledAt',
+  sentAt: 'sentAt',
+  subjectSnapshot: 'subjectSnapshot',
+  bodySnapshot: 'bodySnapshot',
+  providerMessageId: 'providerMessageId',
+  errorMessage: 'errorMessage',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type NotificationLogScalarFieldEnum = (typeof NotificationLogScalarFieldEnum)[keyof typeof NotificationLogScalarFieldEnum]
+
+
+export const EmailTemplateScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  eventType: 'eventType',
+  name: 'name',
+  subject: 'subject',
+  body: 'body',
+  isActive: 'isActive',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type EmailTemplateScalarFieldEnum = (typeof EmailTemplateScalarFieldEnum)[keyof typeof EmailTemplateScalarFieldEnum]
 
 
 export const ActivityScalarFieldEnum = {

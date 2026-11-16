@@ -292,6 +292,7 @@ export type UserWhereInput = {
   createdOpportunities?: Prisma.OpportunityListRelationFilter
   closedOpportunities?: Prisma.OpportunityListRelationFilter
   assignedFollowUps?: Prisma.FollowUpListRelationFilter
+  emailTemplates?: Prisma.EmailTemplateListRelationFilter
   activities?: Prisma.ActivityListRelationFilter
   assignedSales?: Prisma.SaleListRelationFilter
 }
@@ -314,6 +315,7 @@ export type UserOrderByWithRelationInput = {
   createdOpportunities?: Prisma.OpportunityOrderByRelationAggregateInput
   closedOpportunities?: Prisma.OpportunityOrderByRelationAggregateInput
   assignedFollowUps?: Prisma.FollowUpOrderByRelationAggregateInput
+  emailTemplates?: Prisma.EmailTemplateOrderByRelationAggregateInput
   activities?: Prisma.ActivityOrderByRelationAggregateInput
   assignedSales?: Prisma.SaleOrderByRelationAggregateInput
 }
@@ -339,6 +341,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   createdOpportunities?: Prisma.OpportunityListRelationFilter
   closedOpportunities?: Prisma.OpportunityListRelationFilter
   assignedFollowUps?: Prisma.FollowUpListRelationFilter
+  emailTemplates?: Prisma.EmailTemplateListRelationFilter
   activities?: Prisma.ActivityListRelationFilter
   assignedSales?: Prisma.SaleListRelationFilter
 }, "id" | "username" | "email">
@@ -401,6 +404,7 @@ export type UserCreateInput = {
   createdOpportunities?: Prisma.OpportunityCreateNestedManyWithoutCreatedByInput
   closedOpportunities?: Prisma.OpportunityCreateNestedManyWithoutClosedByInput
   assignedFollowUps?: Prisma.FollowUpCreateNestedManyWithoutAssignedToInput
+  emailTemplates?: Prisma.EmailTemplateCreateNestedManyWithoutUserInput
   activities?: Prisma.ActivityCreateNestedManyWithoutUserInput
   assignedSales?: Prisma.SaleCreateNestedManyWithoutSalesmanInput
 }
@@ -423,6 +427,7 @@ export type UserUncheckedCreateInput = {
   createdOpportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutCreatedByInput
   closedOpportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutClosedByInput
   assignedFollowUps?: Prisma.FollowUpUncheckedCreateNestedManyWithoutAssignedToInput
+  emailTemplates?: Prisma.EmailTemplateUncheckedCreateNestedManyWithoutUserInput
   activities?: Prisma.ActivityUncheckedCreateNestedManyWithoutUserInput
   assignedSales?: Prisma.SaleUncheckedCreateNestedManyWithoutSalesmanInput
 }
@@ -445,6 +450,7 @@ export type UserUpdateInput = {
   createdOpportunities?: Prisma.OpportunityUpdateManyWithoutCreatedByNestedInput
   closedOpportunities?: Prisma.OpportunityUpdateManyWithoutClosedByNestedInput
   assignedFollowUps?: Prisma.FollowUpUpdateManyWithoutAssignedToNestedInput
+  emailTemplates?: Prisma.EmailTemplateUpdateManyWithoutUserNestedInput
   activities?: Prisma.ActivityUpdateManyWithoutUserNestedInput
   assignedSales?: Prisma.SaleUpdateManyWithoutSalesmanNestedInput
 }
@@ -467,6 +473,7 @@ export type UserUncheckedUpdateInput = {
   createdOpportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutCreatedByNestedInput
   closedOpportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutClosedByNestedInput
   assignedFollowUps?: Prisma.FollowUpUncheckedUpdateManyWithoutAssignedToNestedInput
+  emailTemplates?: Prisma.EmailTemplateUncheckedUpdateManyWithoutUserNestedInput
   activities?: Prisma.ActivityUncheckedUpdateManyWithoutUserNestedInput
   assignedSales?: Prisma.SaleUncheckedUpdateManyWithoutSalesmanNestedInput
 }
@@ -679,6 +686,22 @@ export type UserUpdateOneWithoutAssignedFollowUpsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutAssignedFollowUpsInput, Prisma.UserUpdateWithoutAssignedFollowUpsInput>, Prisma.UserUncheckedUpdateWithoutAssignedFollowUpsInput>
 }
 
+export type UserCreateNestedOneWithoutEmailTemplatesInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutEmailTemplatesInput, Prisma.UserUncheckedCreateWithoutEmailTemplatesInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutEmailTemplatesInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneWithoutEmailTemplatesNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutEmailTemplatesInput, Prisma.UserUncheckedCreateWithoutEmailTemplatesInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutEmailTemplatesInput
+  upsert?: Prisma.UserUpsertWithoutEmailTemplatesInput
+  disconnect?: Prisma.UserWhereInput | boolean
+  delete?: Prisma.UserWhereInput | boolean
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutEmailTemplatesInput, Prisma.UserUpdateWithoutEmailTemplatesInput>, Prisma.UserUncheckedUpdateWithoutEmailTemplatesInput>
+}
+
 export type UserCreateNestedOneWithoutActivitiesInput = {
   create?: Prisma.XOR<Prisma.UserCreateWithoutActivitiesInput, Prisma.UserUncheckedCreateWithoutActivitiesInput>
   connectOrCreate?: Prisma.UserCreateOrConnectWithoutActivitiesInput
@@ -726,6 +749,7 @@ export type UserCreateWithoutAssignedOpportunitiesInput = {
   createdOpportunities?: Prisma.OpportunityCreateNestedManyWithoutCreatedByInput
   closedOpportunities?: Prisma.OpportunityCreateNestedManyWithoutClosedByInput
   assignedFollowUps?: Prisma.FollowUpCreateNestedManyWithoutAssignedToInput
+  emailTemplates?: Prisma.EmailTemplateCreateNestedManyWithoutUserInput
   activities?: Prisma.ActivityCreateNestedManyWithoutUserInput
   assignedSales?: Prisma.SaleCreateNestedManyWithoutSalesmanInput
 }
@@ -747,6 +771,7 @@ export type UserUncheckedCreateWithoutAssignedOpportunitiesInput = {
   createdOpportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutCreatedByInput
   closedOpportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutClosedByInput
   assignedFollowUps?: Prisma.FollowUpUncheckedCreateNestedManyWithoutAssignedToInput
+  emailTemplates?: Prisma.EmailTemplateUncheckedCreateNestedManyWithoutUserInput
   activities?: Prisma.ActivityUncheckedCreateNestedManyWithoutUserInput
   assignedSales?: Prisma.SaleUncheckedCreateNestedManyWithoutSalesmanInput
 }
@@ -773,6 +798,7 @@ export type UserCreateWithoutCreatedOpportunitiesInput = {
   assignedOpportunities?: Prisma.OpportunityCreateNestedManyWithoutAssignedToInput
   closedOpportunities?: Prisma.OpportunityCreateNestedManyWithoutClosedByInput
   assignedFollowUps?: Prisma.FollowUpCreateNestedManyWithoutAssignedToInput
+  emailTemplates?: Prisma.EmailTemplateCreateNestedManyWithoutUserInput
   activities?: Prisma.ActivityCreateNestedManyWithoutUserInput
   assignedSales?: Prisma.SaleCreateNestedManyWithoutSalesmanInput
 }
@@ -794,6 +820,7 @@ export type UserUncheckedCreateWithoutCreatedOpportunitiesInput = {
   assignedOpportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutAssignedToInput
   closedOpportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutClosedByInput
   assignedFollowUps?: Prisma.FollowUpUncheckedCreateNestedManyWithoutAssignedToInput
+  emailTemplates?: Prisma.EmailTemplateUncheckedCreateNestedManyWithoutUserInput
   activities?: Prisma.ActivityUncheckedCreateNestedManyWithoutUserInput
   assignedSales?: Prisma.SaleUncheckedCreateNestedManyWithoutSalesmanInput
 }
@@ -820,6 +847,7 @@ export type UserCreateWithoutClosedOpportunitiesInput = {
   assignedOpportunities?: Prisma.OpportunityCreateNestedManyWithoutAssignedToInput
   createdOpportunities?: Prisma.OpportunityCreateNestedManyWithoutCreatedByInput
   assignedFollowUps?: Prisma.FollowUpCreateNestedManyWithoutAssignedToInput
+  emailTemplates?: Prisma.EmailTemplateCreateNestedManyWithoutUserInput
   activities?: Prisma.ActivityCreateNestedManyWithoutUserInput
   assignedSales?: Prisma.SaleCreateNestedManyWithoutSalesmanInput
 }
@@ -841,6 +869,7 @@ export type UserUncheckedCreateWithoutClosedOpportunitiesInput = {
   assignedOpportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutAssignedToInput
   createdOpportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutCreatedByInput
   assignedFollowUps?: Prisma.FollowUpUncheckedCreateNestedManyWithoutAssignedToInput
+  emailTemplates?: Prisma.EmailTemplateUncheckedCreateNestedManyWithoutUserInput
   activities?: Prisma.ActivityUncheckedCreateNestedManyWithoutUserInput
   assignedSales?: Prisma.SaleUncheckedCreateNestedManyWithoutSalesmanInput
 }
@@ -878,6 +907,7 @@ export type UserUpdateWithoutAssignedOpportunitiesInput = {
   createdOpportunities?: Prisma.OpportunityUpdateManyWithoutCreatedByNestedInput
   closedOpportunities?: Prisma.OpportunityUpdateManyWithoutClosedByNestedInput
   assignedFollowUps?: Prisma.FollowUpUpdateManyWithoutAssignedToNestedInput
+  emailTemplates?: Prisma.EmailTemplateUpdateManyWithoutUserNestedInput
   activities?: Prisma.ActivityUpdateManyWithoutUserNestedInput
   assignedSales?: Prisma.SaleUpdateManyWithoutSalesmanNestedInput
 }
@@ -899,6 +929,7 @@ export type UserUncheckedUpdateWithoutAssignedOpportunitiesInput = {
   createdOpportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutCreatedByNestedInput
   closedOpportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutClosedByNestedInput
   assignedFollowUps?: Prisma.FollowUpUncheckedUpdateManyWithoutAssignedToNestedInput
+  emailTemplates?: Prisma.EmailTemplateUncheckedUpdateManyWithoutUserNestedInput
   activities?: Prisma.ActivityUncheckedUpdateManyWithoutUserNestedInput
   assignedSales?: Prisma.SaleUncheckedUpdateManyWithoutSalesmanNestedInput
 }
@@ -931,6 +962,7 @@ export type UserUpdateWithoutCreatedOpportunitiesInput = {
   assignedOpportunities?: Prisma.OpportunityUpdateManyWithoutAssignedToNestedInput
   closedOpportunities?: Prisma.OpportunityUpdateManyWithoutClosedByNestedInput
   assignedFollowUps?: Prisma.FollowUpUpdateManyWithoutAssignedToNestedInput
+  emailTemplates?: Prisma.EmailTemplateUpdateManyWithoutUserNestedInput
   activities?: Prisma.ActivityUpdateManyWithoutUserNestedInput
   assignedSales?: Prisma.SaleUpdateManyWithoutSalesmanNestedInput
 }
@@ -952,6 +984,7 @@ export type UserUncheckedUpdateWithoutCreatedOpportunitiesInput = {
   assignedOpportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutAssignedToNestedInput
   closedOpportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutClosedByNestedInput
   assignedFollowUps?: Prisma.FollowUpUncheckedUpdateManyWithoutAssignedToNestedInput
+  emailTemplates?: Prisma.EmailTemplateUncheckedUpdateManyWithoutUserNestedInput
   activities?: Prisma.ActivityUncheckedUpdateManyWithoutUserNestedInput
   assignedSales?: Prisma.SaleUncheckedUpdateManyWithoutSalesmanNestedInput
 }
@@ -984,6 +1017,7 @@ export type UserUpdateWithoutClosedOpportunitiesInput = {
   assignedOpportunities?: Prisma.OpportunityUpdateManyWithoutAssignedToNestedInput
   createdOpportunities?: Prisma.OpportunityUpdateManyWithoutCreatedByNestedInput
   assignedFollowUps?: Prisma.FollowUpUpdateManyWithoutAssignedToNestedInput
+  emailTemplates?: Prisma.EmailTemplateUpdateManyWithoutUserNestedInput
   activities?: Prisma.ActivityUpdateManyWithoutUserNestedInput
   assignedSales?: Prisma.SaleUpdateManyWithoutSalesmanNestedInput
 }
@@ -1005,6 +1039,7 @@ export type UserUncheckedUpdateWithoutClosedOpportunitiesInput = {
   assignedOpportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutAssignedToNestedInput
   createdOpportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutCreatedByNestedInput
   assignedFollowUps?: Prisma.FollowUpUncheckedUpdateManyWithoutAssignedToNestedInput
+  emailTemplates?: Prisma.EmailTemplateUncheckedUpdateManyWithoutUserNestedInput
   activities?: Prisma.ActivityUncheckedUpdateManyWithoutUserNestedInput
   assignedSales?: Prisma.SaleUncheckedUpdateManyWithoutSalesmanNestedInput
 }
@@ -1026,6 +1061,7 @@ export type UserCreateWithoutAssignedFollowUpsInput = {
   assignedOpportunities?: Prisma.OpportunityCreateNestedManyWithoutAssignedToInput
   createdOpportunities?: Prisma.OpportunityCreateNestedManyWithoutCreatedByInput
   closedOpportunities?: Prisma.OpportunityCreateNestedManyWithoutClosedByInput
+  emailTemplates?: Prisma.EmailTemplateCreateNestedManyWithoutUserInput
   activities?: Prisma.ActivityCreateNestedManyWithoutUserInput
   assignedSales?: Prisma.SaleCreateNestedManyWithoutSalesmanInput
 }
@@ -1047,6 +1083,7 @@ export type UserUncheckedCreateWithoutAssignedFollowUpsInput = {
   assignedOpportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutAssignedToInput
   createdOpportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutCreatedByInput
   closedOpportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutClosedByInput
+  emailTemplates?: Prisma.EmailTemplateUncheckedCreateNestedManyWithoutUserInput
   activities?: Prisma.ActivityUncheckedCreateNestedManyWithoutUserInput
   assignedSales?: Prisma.SaleUncheckedCreateNestedManyWithoutSalesmanInput
 }
@@ -1084,6 +1121,7 @@ export type UserUpdateWithoutAssignedFollowUpsInput = {
   assignedOpportunities?: Prisma.OpportunityUpdateManyWithoutAssignedToNestedInput
   createdOpportunities?: Prisma.OpportunityUpdateManyWithoutCreatedByNestedInput
   closedOpportunities?: Prisma.OpportunityUpdateManyWithoutClosedByNestedInput
+  emailTemplates?: Prisma.EmailTemplateUpdateManyWithoutUserNestedInput
   activities?: Prisma.ActivityUpdateManyWithoutUserNestedInput
   assignedSales?: Prisma.SaleUpdateManyWithoutSalesmanNestedInput
 }
@@ -1105,6 +1143,111 @@ export type UserUncheckedUpdateWithoutAssignedFollowUpsInput = {
   assignedOpportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutAssignedToNestedInput
   createdOpportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutCreatedByNestedInput
   closedOpportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutClosedByNestedInput
+  emailTemplates?: Prisma.EmailTemplateUncheckedUpdateManyWithoutUserNestedInput
+  activities?: Prisma.ActivityUncheckedUpdateManyWithoutUserNestedInput
+  assignedSales?: Prisma.SaleUncheckedUpdateManyWithoutSalesmanNestedInput
+}
+
+export type UserCreateWithoutEmailTemplatesInput = {
+  id?: string
+  name: string
+  username?: string | null
+  email: string
+  passwordHash?: string | null
+  title?: string | null
+  monthlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  quarterlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  annualGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  role?: $Enums.UserRole
+  isActive?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  assignedOpportunities?: Prisma.OpportunityCreateNestedManyWithoutAssignedToInput
+  createdOpportunities?: Prisma.OpportunityCreateNestedManyWithoutCreatedByInput
+  closedOpportunities?: Prisma.OpportunityCreateNestedManyWithoutClosedByInput
+  assignedFollowUps?: Prisma.FollowUpCreateNestedManyWithoutAssignedToInput
+  activities?: Prisma.ActivityCreateNestedManyWithoutUserInput
+  assignedSales?: Prisma.SaleCreateNestedManyWithoutSalesmanInput
+}
+
+export type UserUncheckedCreateWithoutEmailTemplatesInput = {
+  id?: string
+  name: string
+  username?: string | null
+  email: string
+  passwordHash?: string | null
+  title?: string | null
+  monthlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  quarterlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  annualGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  role?: $Enums.UserRole
+  isActive?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  assignedOpportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutAssignedToInput
+  createdOpportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutCreatedByInput
+  closedOpportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutClosedByInput
+  assignedFollowUps?: Prisma.FollowUpUncheckedCreateNestedManyWithoutAssignedToInput
+  activities?: Prisma.ActivityUncheckedCreateNestedManyWithoutUserInput
+  assignedSales?: Prisma.SaleUncheckedCreateNestedManyWithoutSalesmanInput
+}
+
+export type UserCreateOrConnectWithoutEmailTemplatesInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutEmailTemplatesInput, Prisma.UserUncheckedCreateWithoutEmailTemplatesInput>
+}
+
+export type UserUpsertWithoutEmailTemplatesInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutEmailTemplatesInput, Prisma.UserUncheckedUpdateWithoutEmailTemplatesInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutEmailTemplatesInput, Prisma.UserUncheckedCreateWithoutEmailTemplatesInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutEmailTemplatesInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutEmailTemplatesInput, Prisma.UserUncheckedUpdateWithoutEmailTemplatesInput>
+}
+
+export type UserUpdateWithoutEmailTemplatesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  monthlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  quarterlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  annualGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  assignedOpportunities?: Prisma.OpportunityUpdateManyWithoutAssignedToNestedInput
+  createdOpportunities?: Prisma.OpportunityUpdateManyWithoutCreatedByNestedInput
+  closedOpportunities?: Prisma.OpportunityUpdateManyWithoutClosedByNestedInput
+  assignedFollowUps?: Prisma.FollowUpUpdateManyWithoutAssignedToNestedInput
+  activities?: Prisma.ActivityUpdateManyWithoutUserNestedInput
+  assignedSales?: Prisma.SaleUpdateManyWithoutSalesmanNestedInput
+}
+
+export type UserUncheckedUpdateWithoutEmailTemplatesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  monthlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  quarterlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  annualGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  assignedOpportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutAssignedToNestedInput
+  createdOpportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutCreatedByNestedInput
+  closedOpportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutClosedByNestedInput
+  assignedFollowUps?: Prisma.FollowUpUncheckedUpdateManyWithoutAssignedToNestedInput
   activities?: Prisma.ActivityUncheckedUpdateManyWithoutUserNestedInput
   assignedSales?: Prisma.SaleUncheckedUpdateManyWithoutSalesmanNestedInput
 }
@@ -1127,6 +1270,7 @@ export type UserCreateWithoutActivitiesInput = {
   createdOpportunities?: Prisma.OpportunityCreateNestedManyWithoutCreatedByInput
   closedOpportunities?: Prisma.OpportunityCreateNestedManyWithoutClosedByInput
   assignedFollowUps?: Prisma.FollowUpCreateNestedManyWithoutAssignedToInput
+  emailTemplates?: Prisma.EmailTemplateCreateNestedManyWithoutUserInput
   assignedSales?: Prisma.SaleCreateNestedManyWithoutSalesmanInput
 }
 
@@ -1148,6 +1292,7 @@ export type UserUncheckedCreateWithoutActivitiesInput = {
   createdOpportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutCreatedByInput
   closedOpportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutClosedByInput
   assignedFollowUps?: Prisma.FollowUpUncheckedCreateNestedManyWithoutAssignedToInput
+  emailTemplates?: Prisma.EmailTemplateUncheckedCreateNestedManyWithoutUserInput
   assignedSales?: Prisma.SaleUncheckedCreateNestedManyWithoutSalesmanInput
 }
 
@@ -1185,6 +1330,7 @@ export type UserUpdateWithoutActivitiesInput = {
   createdOpportunities?: Prisma.OpportunityUpdateManyWithoutCreatedByNestedInput
   closedOpportunities?: Prisma.OpportunityUpdateManyWithoutClosedByNestedInput
   assignedFollowUps?: Prisma.FollowUpUpdateManyWithoutAssignedToNestedInput
+  emailTemplates?: Prisma.EmailTemplateUpdateManyWithoutUserNestedInput
   assignedSales?: Prisma.SaleUpdateManyWithoutSalesmanNestedInput
 }
 
@@ -1206,6 +1352,7 @@ export type UserUncheckedUpdateWithoutActivitiesInput = {
   createdOpportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutCreatedByNestedInput
   closedOpportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutClosedByNestedInput
   assignedFollowUps?: Prisma.FollowUpUncheckedUpdateManyWithoutAssignedToNestedInput
+  emailTemplates?: Prisma.EmailTemplateUncheckedUpdateManyWithoutUserNestedInput
   assignedSales?: Prisma.SaleUncheckedUpdateManyWithoutSalesmanNestedInput
 }
 
@@ -1227,6 +1374,7 @@ export type UserCreateWithoutAssignedSalesInput = {
   createdOpportunities?: Prisma.OpportunityCreateNestedManyWithoutCreatedByInput
   closedOpportunities?: Prisma.OpportunityCreateNestedManyWithoutClosedByInput
   assignedFollowUps?: Prisma.FollowUpCreateNestedManyWithoutAssignedToInput
+  emailTemplates?: Prisma.EmailTemplateCreateNestedManyWithoutUserInput
   activities?: Prisma.ActivityCreateNestedManyWithoutUserInput
 }
 
@@ -1248,6 +1396,7 @@ export type UserUncheckedCreateWithoutAssignedSalesInput = {
   createdOpportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutCreatedByInput
   closedOpportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutClosedByInput
   assignedFollowUps?: Prisma.FollowUpUncheckedCreateNestedManyWithoutAssignedToInput
+  emailTemplates?: Prisma.EmailTemplateUncheckedCreateNestedManyWithoutUserInput
   activities?: Prisma.ActivityUncheckedCreateNestedManyWithoutUserInput
 }
 
@@ -1285,6 +1434,7 @@ export type UserUpdateWithoutAssignedSalesInput = {
   createdOpportunities?: Prisma.OpportunityUpdateManyWithoutCreatedByNestedInput
   closedOpportunities?: Prisma.OpportunityUpdateManyWithoutClosedByNestedInput
   assignedFollowUps?: Prisma.FollowUpUpdateManyWithoutAssignedToNestedInput
+  emailTemplates?: Prisma.EmailTemplateUpdateManyWithoutUserNestedInput
   activities?: Prisma.ActivityUpdateManyWithoutUserNestedInput
 }
 
@@ -1306,6 +1456,7 @@ export type UserUncheckedUpdateWithoutAssignedSalesInput = {
   createdOpportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutCreatedByNestedInput
   closedOpportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutClosedByNestedInput
   assignedFollowUps?: Prisma.FollowUpUncheckedUpdateManyWithoutAssignedToNestedInput
+  emailTemplates?: Prisma.EmailTemplateUncheckedUpdateManyWithoutUserNestedInput
   activities?: Prisma.ActivityUncheckedUpdateManyWithoutUserNestedInput
 }
 
@@ -1319,6 +1470,7 @@ export type UserCountOutputType = {
   createdOpportunities: number
   closedOpportunities: number
   assignedFollowUps: number
+  emailTemplates: number
   activities: number
   assignedSales: number
 }
@@ -1328,6 +1480,7 @@ export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.I
   createdOpportunities?: boolean | UserCountOutputTypeCountCreatedOpportunitiesArgs
   closedOpportunities?: boolean | UserCountOutputTypeCountClosedOpportunitiesArgs
   assignedFollowUps?: boolean | UserCountOutputTypeCountAssignedFollowUpsArgs
+  emailTemplates?: boolean | UserCountOutputTypeCountEmailTemplatesArgs
   activities?: boolean | UserCountOutputTypeCountActivitiesArgs
   assignedSales?: boolean | UserCountOutputTypeCountAssignedSalesArgs
 }
@@ -1373,6 +1526,13 @@ export type UserCountOutputTypeCountAssignedFollowUpsArgs<ExtArgs extends runtim
 /**
  * UserCountOutputType without action
  */
+export type UserCountOutputTypeCountEmailTemplatesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.EmailTemplateWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
 export type UserCountOutputTypeCountActivitiesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.ActivityWhereInput
 }
@@ -1403,6 +1563,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   createdOpportunities?: boolean | Prisma.User$createdOpportunitiesArgs<ExtArgs>
   closedOpportunities?: boolean | Prisma.User$closedOpportunitiesArgs<ExtArgs>
   assignedFollowUps?: boolean | Prisma.User$assignedFollowUpsArgs<ExtArgs>
+  emailTemplates?: boolean | Prisma.User$emailTemplatesArgs<ExtArgs>
   activities?: boolean | Prisma.User$activitiesArgs<ExtArgs>
   assignedSales?: boolean | Prisma.User$assignedSalesArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
@@ -1462,6 +1623,7 @@ export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   createdOpportunities?: boolean | Prisma.User$createdOpportunitiesArgs<ExtArgs>
   closedOpportunities?: boolean | Prisma.User$closedOpportunitiesArgs<ExtArgs>
   assignedFollowUps?: boolean | Prisma.User$assignedFollowUpsArgs<ExtArgs>
+  emailTemplates?: boolean | Prisma.User$emailTemplatesArgs<ExtArgs>
   activities?: boolean | Prisma.User$activitiesArgs<ExtArgs>
   assignedSales?: boolean | Prisma.User$assignedSalesArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
@@ -1476,6 +1638,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     createdOpportunities: Prisma.$OpportunityPayload<ExtArgs>[]
     closedOpportunities: Prisma.$OpportunityPayload<ExtArgs>[]
     assignedFollowUps: Prisma.$FollowUpPayload<ExtArgs>[]
+    emailTemplates: Prisma.$EmailTemplatePayload<ExtArgs>[]
     activities: Prisma.$ActivityPayload<ExtArgs>[]
     assignedSales: Prisma.$SalePayload<ExtArgs>[]
   }
@@ -1891,6 +2054,7 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   createdOpportunities<T extends Prisma.User$createdOpportunitiesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$createdOpportunitiesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$OpportunityPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   closedOpportunities<T extends Prisma.User$closedOpportunitiesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$closedOpportunitiesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$OpportunityPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   assignedFollowUps<T extends Prisma.User$assignedFollowUpsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$assignedFollowUpsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$FollowUpPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  emailTemplates<T extends Prisma.User$emailTemplatesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$emailTemplatesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$EmailTemplatePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   activities<T extends Prisma.User$activitiesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$activitiesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ActivityPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   assignedSales<T extends Prisma.User$assignedSalesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$assignedSalesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$SalePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
@@ -2421,6 +2585,30 @@ export type User$assignedFollowUpsArgs<ExtArgs extends runtime.Types.Extensions.
   take?: number
   skip?: number
   distinct?: Prisma.FollowUpScalarFieldEnum | Prisma.FollowUpScalarFieldEnum[]
+}
+
+/**
+ * User.emailTemplates
+ */
+export type User$emailTemplatesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the EmailTemplate
+   */
+  select?: Prisma.EmailTemplateSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the EmailTemplate
+   */
+  omit?: Prisma.EmailTemplateOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.EmailTemplateInclude<ExtArgs> | null
+  where?: Prisma.EmailTemplateWhereInput
+  orderBy?: Prisma.EmailTemplateOrderByWithRelationInput | Prisma.EmailTemplateOrderByWithRelationInput[]
+  cursor?: Prisma.EmailTemplateWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.EmailTemplateScalarFieldEnum | Prisma.EmailTemplateScalarFieldEnum[]
 }
 
 /**

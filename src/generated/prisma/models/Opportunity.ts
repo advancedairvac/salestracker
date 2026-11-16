@@ -324,7 +324,7 @@ export type OpportunityWhereInput = {
   assignedTo?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
   createdBy?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   closedBy?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
-  followUpSchedules?: Prisma.FollowUpScheduleListRelationFilter
+  followUpSchedule?: Prisma.XOR<Prisma.FollowUpScheduleNullableScalarRelationFilter, Prisma.FollowUpScheduleWhereInput> | null
   followUps?: Prisma.FollowUpListRelationFilter
   activities?: Prisma.ActivityListRelationFilter
 }
@@ -352,7 +352,7 @@ export type OpportunityOrderByWithRelationInput = {
   assignedTo?: Prisma.UserOrderByWithRelationInput
   createdBy?: Prisma.UserOrderByWithRelationInput
   closedBy?: Prisma.UserOrderByWithRelationInput
-  followUpSchedules?: Prisma.FollowUpScheduleOrderByRelationAggregateInput
+  followUpSchedule?: Prisma.FollowUpScheduleOrderByWithRelationInput
   followUps?: Prisma.FollowUpOrderByRelationAggregateInput
   activities?: Prisma.ActivityOrderByRelationAggregateInput
 }
@@ -383,7 +383,7 @@ export type OpportunityWhereUniqueInput = Prisma.AtLeast<{
   assignedTo?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
   createdBy?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   closedBy?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
-  followUpSchedules?: Prisma.FollowUpScheduleListRelationFilter
+  followUpSchedule?: Prisma.XOR<Prisma.FollowUpScheduleNullableScalarRelationFilter, Prisma.FollowUpScheduleWhereInput> | null
   followUps?: Prisma.FollowUpListRelationFilter
   activities?: Prisma.ActivityListRelationFilter
 }, "id" | "titanEstimateId" | "titanJobId">
@@ -457,7 +457,7 @@ export type OpportunityCreateInput = {
   assignedTo?: Prisma.UserCreateNestedOneWithoutAssignedOpportunitiesInput
   createdBy: Prisma.UserCreateNestedOneWithoutCreatedOpportunitiesInput
   closedBy?: Prisma.UserCreateNestedOneWithoutClosedOpportunitiesInput
-  followUpSchedules?: Prisma.FollowUpScheduleCreateNestedManyWithoutOpportunityInput
+  followUpSchedule?: Prisma.FollowUpScheduleCreateNestedOneWithoutOpportunityInput
   followUps?: Prisma.FollowUpCreateNestedManyWithoutOpportunityInput
   activities?: Prisma.ActivityCreateNestedManyWithoutOpportunityInput
 }
@@ -481,7 +481,7 @@ export type OpportunityUncheckedCreateInput = {
   reopenAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  followUpSchedules?: Prisma.FollowUpScheduleUncheckedCreateNestedManyWithoutOpportunityInput
+  followUpSchedule?: Prisma.FollowUpScheduleUncheckedCreateNestedOneWithoutOpportunityInput
   followUps?: Prisma.FollowUpUncheckedCreateNestedManyWithoutOpportunityInput
   activities?: Prisma.ActivityUncheckedCreateNestedManyWithoutOpportunityInput
 }
@@ -505,7 +505,7 @@ export type OpportunityUpdateInput = {
   assignedTo?: Prisma.UserUpdateOneWithoutAssignedOpportunitiesNestedInput
   createdBy?: Prisma.UserUpdateOneRequiredWithoutCreatedOpportunitiesNestedInput
   closedBy?: Prisma.UserUpdateOneWithoutClosedOpportunitiesNestedInput
-  followUpSchedules?: Prisma.FollowUpScheduleUpdateManyWithoutOpportunityNestedInput
+  followUpSchedule?: Prisma.FollowUpScheduleUpdateOneWithoutOpportunityNestedInput
   followUps?: Prisma.FollowUpUpdateManyWithoutOpportunityNestedInput
   activities?: Prisma.ActivityUpdateManyWithoutOpportunityNestedInput
 }
@@ -529,7 +529,7 @@ export type OpportunityUncheckedUpdateInput = {
   reopenAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  followUpSchedules?: Prisma.FollowUpScheduleUncheckedUpdateManyWithoutOpportunityNestedInput
+  followUpSchedule?: Prisma.FollowUpScheduleUncheckedUpdateOneWithoutOpportunityNestedInput
   followUps?: Prisma.FollowUpUncheckedUpdateManyWithoutOpportunityNestedInput
   activities?: Prisma.ActivityUncheckedUpdateManyWithoutOpportunityNestedInput
 }
@@ -859,18 +859,18 @@ export type NullableDateTimeFieldUpdateOperationsInput = {
   set?: Date | string | null
 }
 
-export type OpportunityCreateNestedOneWithoutFollowUpSchedulesInput = {
-  create?: Prisma.XOR<Prisma.OpportunityCreateWithoutFollowUpSchedulesInput, Prisma.OpportunityUncheckedCreateWithoutFollowUpSchedulesInput>
-  connectOrCreate?: Prisma.OpportunityCreateOrConnectWithoutFollowUpSchedulesInput
+export type OpportunityCreateNestedOneWithoutFollowUpScheduleInput = {
+  create?: Prisma.XOR<Prisma.OpportunityCreateWithoutFollowUpScheduleInput, Prisma.OpportunityUncheckedCreateWithoutFollowUpScheduleInput>
+  connectOrCreate?: Prisma.OpportunityCreateOrConnectWithoutFollowUpScheduleInput
   connect?: Prisma.OpportunityWhereUniqueInput
 }
 
-export type OpportunityUpdateOneRequiredWithoutFollowUpSchedulesNestedInput = {
-  create?: Prisma.XOR<Prisma.OpportunityCreateWithoutFollowUpSchedulesInput, Prisma.OpportunityUncheckedCreateWithoutFollowUpSchedulesInput>
-  connectOrCreate?: Prisma.OpportunityCreateOrConnectWithoutFollowUpSchedulesInput
-  upsert?: Prisma.OpportunityUpsertWithoutFollowUpSchedulesInput
+export type OpportunityUpdateOneRequiredWithoutFollowUpScheduleNestedInput = {
+  create?: Prisma.XOR<Prisma.OpportunityCreateWithoutFollowUpScheduleInput, Prisma.OpportunityUncheckedCreateWithoutFollowUpScheduleInput>
+  connectOrCreate?: Prisma.OpportunityCreateOrConnectWithoutFollowUpScheduleInput
+  upsert?: Prisma.OpportunityUpsertWithoutFollowUpScheduleInput
   connect?: Prisma.OpportunityWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.OpportunityUpdateToOneWithWhereWithoutFollowUpSchedulesInput, Prisma.OpportunityUpdateWithoutFollowUpSchedulesInput>, Prisma.OpportunityUncheckedUpdateWithoutFollowUpSchedulesInput>
+  update?: Prisma.XOR<Prisma.XOR<Prisma.OpportunityUpdateToOneWithWhereWithoutFollowUpScheduleInput, Prisma.OpportunityUpdateWithoutFollowUpScheduleInput>, Prisma.OpportunityUncheckedUpdateWithoutFollowUpScheduleInput>
 }
 
 export type OpportunityCreateNestedOneWithoutFollowUpsInput = {
@@ -919,7 +919,7 @@ export type OpportunityCreateWithoutAssignedToInput = {
   customer: Prisma.CustomerCreateNestedOneWithoutOpportunitiesInput
   createdBy: Prisma.UserCreateNestedOneWithoutCreatedOpportunitiesInput
   closedBy?: Prisma.UserCreateNestedOneWithoutClosedOpportunitiesInput
-  followUpSchedules?: Prisma.FollowUpScheduleCreateNestedManyWithoutOpportunityInput
+  followUpSchedule?: Prisma.FollowUpScheduleCreateNestedOneWithoutOpportunityInput
   followUps?: Prisma.FollowUpCreateNestedManyWithoutOpportunityInput
   activities?: Prisma.ActivityCreateNestedManyWithoutOpportunityInput
 }
@@ -942,7 +942,7 @@ export type OpportunityUncheckedCreateWithoutAssignedToInput = {
   reopenAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  followUpSchedules?: Prisma.FollowUpScheduleUncheckedCreateNestedManyWithoutOpportunityInput
+  followUpSchedule?: Prisma.FollowUpScheduleUncheckedCreateNestedOneWithoutOpportunityInput
   followUps?: Prisma.FollowUpUncheckedCreateNestedManyWithoutOpportunityInput
   activities?: Prisma.ActivityUncheckedCreateNestedManyWithoutOpportunityInput
 }
@@ -975,7 +975,7 @@ export type OpportunityCreateWithoutCreatedByInput = {
   customer: Prisma.CustomerCreateNestedOneWithoutOpportunitiesInput
   assignedTo?: Prisma.UserCreateNestedOneWithoutAssignedOpportunitiesInput
   closedBy?: Prisma.UserCreateNestedOneWithoutClosedOpportunitiesInput
-  followUpSchedules?: Prisma.FollowUpScheduleCreateNestedManyWithoutOpportunityInput
+  followUpSchedule?: Prisma.FollowUpScheduleCreateNestedOneWithoutOpportunityInput
   followUps?: Prisma.FollowUpCreateNestedManyWithoutOpportunityInput
   activities?: Prisma.ActivityCreateNestedManyWithoutOpportunityInput
 }
@@ -998,7 +998,7 @@ export type OpportunityUncheckedCreateWithoutCreatedByInput = {
   reopenAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  followUpSchedules?: Prisma.FollowUpScheduleUncheckedCreateNestedManyWithoutOpportunityInput
+  followUpSchedule?: Prisma.FollowUpScheduleUncheckedCreateNestedOneWithoutOpportunityInput
   followUps?: Prisma.FollowUpUncheckedCreateNestedManyWithoutOpportunityInput
   activities?: Prisma.ActivityUncheckedCreateNestedManyWithoutOpportunityInput
 }
@@ -1031,7 +1031,7 @@ export type OpportunityCreateWithoutClosedByInput = {
   customer: Prisma.CustomerCreateNestedOneWithoutOpportunitiesInput
   assignedTo?: Prisma.UserCreateNestedOneWithoutAssignedOpportunitiesInput
   createdBy: Prisma.UserCreateNestedOneWithoutCreatedOpportunitiesInput
-  followUpSchedules?: Prisma.FollowUpScheduleCreateNestedManyWithoutOpportunityInput
+  followUpSchedule?: Prisma.FollowUpScheduleCreateNestedOneWithoutOpportunityInput
   followUps?: Prisma.FollowUpCreateNestedManyWithoutOpportunityInput
   activities?: Prisma.ActivityCreateNestedManyWithoutOpportunityInput
 }
@@ -1054,7 +1054,7 @@ export type OpportunityUncheckedCreateWithoutClosedByInput = {
   reopenAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  followUpSchedules?: Prisma.FollowUpScheduleUncheckedCreateNestedManyWithoutOpportunityInput
+  followUpSchedule?: Prisma.FollowUpScheduleUncheckedCreateNestedOneWithoutOpportunityInput
   followUps?: Prisma.FollowUpUncheckedCreateNestedManyWithoutOpportunityInput
   activities?: Prisma.ActivityUncheckedCreateNestedManyWithoutOpportunityInput
 }
@@ -1159,7 +1159,7 @@ export type OpportunityCreateWithoutCustomerInput = {
   assignedTo?: Prisma.UserCreateNestedOneWithoutAssignedOpportunitiesInput
   createdBy: Prisma.UserCreateNestedOneWithoutCreatedOpportunitiesInput
   closedBy?: Prisma.UserCreateNestedOneWithoutClosedOpportunitiesInput
-  followUpSchedules?: Prisma.FollowUpScheduleCreateNestedManyWithoutOpportunityInput
+  followUpSchedule?: Prisma.FollowUpScheduleCreateNestedOneWithoutOpportunityInput
   followUps?: Prisma.FollowUpCreateNestedManyWithoutOpportunityInput
   activities?: Prisma.ActivityCreateNestedManyWithoutOpportunityInput
 }
@@ -1182,7 +1182,7 @@ export type OpportunityUncheckedCreateWithoutCustomerInput = {
   reopenAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  followUpSchedules?: Prisma.FollowUpScheduleUncheckedCreateNestedManyWithoutOpportunityInput
+  followUpSchedule?: Prisma.FollowUpScheduleUncheckedCreateNestedOneWithoutOpportunityInput
   followUps?: Prisma.FollowUpUncheckedCreateNestedManyWithoutOpportunityInput
   activities?: Prisma.ActivityUncheckedCreateNestedManyWithoutOpportunityInput
 }
@@ -1213,7 +1213,7 @@ export type OpportunityUpdateManyWithWhereWithoutCustomerInput = {
   data: Prisma.XOR<Prisma.OpportunityUpdateManyMutationInput, Prisma.OpportunityUncheckedUpdateManyWithoutCustomerInput>
 }
 
-export type OpportunityCreateWithoutFollowUpSchedulesInput = {
+export type OpportunityCreateWithoutFollowUpScheduleInput = {
   id?: string
   titanEstimateId?: string | null
   titanJobId?: string | null
@@ -1236,7 +1236,7 @@ export type OpportunityCreateWithoutFollowUpSchedulesInput = {
   activities?: Prisma.ActivityCreateNestedManyWithoutOpportunityInput
 }
 
-export type OpportunityUncheckedCreateWithoutFollowUpSchedulesInput = {
+export type OpportunityUncheckedCreateWithoutFollowUpScheduleInput = {
   id?: string
   titanEstimateId?: string | null
   titanJobId?: string | null
@@ -1259,23 +1259,23 @@ export type OpportunityUncheckedCreateWithoutFollowUpSchedulesInput = {
   activities?: Prisma.ActivityUncheckedCreateNestedManyWithoutOpportunityInput
 }
 
-export type OpportunityCreateOrConnectWithoutFollowUpSchedulesInput = {
+export type OpportunityCreateOrConnectWithoutFollowUpScheduleInput = {
   where: Prisma.OpportunityWhereUniqueInput
-  create: Prisma.XOR<Prisma.OpportunityCreateWithoutFollowUpSchedulesInput, Prisma.OpportunityUncheckedCreateWithoutFollowUpSchedulesInput>
+  create: Prisma.XOR<Prisma.OpportunityCreateWithoutFollowUpScheduleInput, Prisma.OpportunityUncheckedCreateWithoutFollowUpScheduleInput>
 }
 
-export type OpportunityUpsertWithoutFollowUpSchedulesInput = {
-  update: Prisma.XOR<Prisma.OpportunityUpdateWithoutFollowUpSchedulesInput, Prisma.OpportunityUncheckedUpdateWithoutFollowUpSchedulesInput>
-  create: Prisma.XOR<Prisma.OpportunityCreateWithoutFollowUpSchedulesInput, Prisma.OpportunityUncheckedCreateWithoutFollowUpSchedulesInput>
+export type OpportunityUpsertWithoutFollowUpScheduleInput = {
+  update: Prisma.XOR<Prisma.OpportunityUpdateWithoutFollowUpScheduleInput, Prisma.OpportunityUncheckedUpdateWithoutFollowUpScheduleInput>
+  create: Prisma.XOR<Prisma.OpportunityCreateWithoutFollowUpScheduleInput, Prisma.OpportunityUncheckedCreateWithoutFollowUpScheduleInput>
   where?: Prisma.OpportunityWhereInput
 }
 
-export type OpportunityUpdateToOneWithWhereWithoutFollowUpSchedulesInput = {
+export type OpportunityUpdateToOneWithWhereWithoutFollowUpScheduleInput = {
   where?: Prisma.OpportunityWhereInput
-  data: Prisma.XOR<Prisma.OpportunityUpdateWithoutFollowUpSchedulesInput, Prisma.OpportunityUncheckedUpdateWithoutFollowUpSchedulesInput>
+  data: Prisma.XOR<Prisma.OpportunityUpdateWithoutFollowUpScheduleInput, Prisma.OpportunityUncheckedUpdateWithoutFollowUpScheduleInput>
 }
 
-export type OpportunityUpdateWithoutFollowUpSchedulesInput = {
+export type OpportunityUpdateWithoutFollowUpScheduleInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   titanEstimateId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   titanJobId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1298,7 +1298,7 @@ export type OpportunityUpdateWithoutFollowUpSchedulesInput = {
   activities?: Prisma.ActivityUpdateManyWithoutOpportunityNestedInput
 }
 
-export type OpportunityUncheckedUpdateWithoutFollowUpSchedulesInput = {
+export type OpportunityUncheckedUpdateWithoutFollowUpScheduleInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   titanEstimateId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   titanJobId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1340,7 +1340,7 @@ export type OpportunityCreateWithoutFollowUpsInput = {
   assignedTo?: Prisma.UserCreateNestedOneWithoutAssignedOpportunitiesInput
   createdBy: Prisma.UserCreateNestedOneWithoutCreatedOpportunitiesInput
   closedBy?: Prisma.UserCreateNestedOneWithoutClosedOpportunitiesInput
-  followUpSchedules?: Prisma.FollowUpScheduleCreateNestedManyWithoutOpportunityInput
+  followUpSchedule?: Prisma.FollowUpScheduleCreateNestedOneWithoutOpportunityInput
   activities?: Prisma.ActivityCreateNestedManyWithoutOpportunityInput
 }
 
@@ -1363,7 +1363,7 @@ export type OpportunityUncheckedCreateWithoutFollowUpsInput = {
   reopenAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  followUpSchedules?: Prisma.FollowUpScheduleUncheckedCreateNestedManyWithoutOpportunityInput
+  followUpSchedule?: Prisma.FollowUpScheduleUncheckedCreateNestedOneWithoutOpportunityInput
   activities?: Prisma.ActivityUncheckedCreateNestedManyWithoutOpportunityInput
 }
 
@@ -1402,7 +1402,7 @@ export type OpportunityUpdateWithoutFollowUpsInput = {
   assignedTo?: Prisma.UserUpdateOneWithoutAssignedOpportunitiesNestedInput
   createdBy?: Prisma.UserUpdateOneRequiredWithoutCreatedOpportunitiesNestedInput
   closedBy?: Prisma.UserUpdateOneWithoutClosedOpportunitiesNestedInput
-  followUpSchedules?: Prisma.FollowUpScheduleUpdateManyWithoutOpportunityNestedInput
+  followUpSchedule?: Prisma.FollowUpScheduleUpdateOneWithoutOpportunityNestedInput
   activities?: Prisma.ActivityUpdateManyWithoutOpportunityNestedInput
 }
 
@@ -1425,7 +1425,7 @@ export type OpportunityUncheckedUpdateWithoutFollowUpsInput = {
   reopenAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  followUpSchedules?: Prisma.FollowUpScheduleUncheckedUpdateManyWithoutOpportunityNestedInput
+  followUpSchedule?: Prisma.FollowUpScheduleUncheckedUpdateOneWithoutOpportunityNestedInput
   activities?: Prisma.ActivityUncheckedUpdateManyWithoutOpportunityNestedInput
 }
 
@@ -1448,7 +1448,7 @@ export type OpportunityCreateWithoutActivitiesInput = {
   assignedTo?: Prisma.UserCreateNestedOneWithoutAssignedOpportunitiesInput
   createdBy: Prisma.UserCreateNestedOneWithoutCreatedOpportunitiesInput
   closedBy?: Prisma.UserCreateNestedOneWithoutClosedOpportunitiesInput
-  followUpSchedules?: Prisma.FollowUpScheduleCreateNestedManyWithoutOpportunityInput
+  followUpSchedule?: Prisma.FollowUpScheduleCreateNestedOneWithoutOpportunityInput
   followUps?: Prisma.FollowUpCreateNestedManyWithoutOpportunityInput
 }
 
@@ -1471,7 +1471,7 @@ export type OpportunityUncheckedCreateWithoutActivitiesInput = {
   reopenAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  followUpSchedules?: Prisma.FollowUpScheduleUncheckedCreateNestedManyWithoutOpportunityInput
+  followUpSchedule?: Prisma.FollowUpScheduleUncheckedCreateNestedOneWithoutOpportunityInput
   followUps?: Prisma.FollowUpUncheckedCreateNestedManyWithoutOpportunityInput
 }
 
@@ -1510,7 +1510,7 @@ export type OpportunityUpdateWithoutActivitiesInput = {
   assignedTo?: Prisma.UserUpdateOneWithoutAssignedOpportunitiesNestedInput
   createdBy?: Prisma.UserUpdateOneRequiredWithoutCreatedOpportunitiesNestedInput
   closedBy?: Prisma.UserUpdateOneWithoutClosedOpportunitiesNestedInput
-  followUpSchedules?: Prisma.FollowUpScheduleUpdateManyWithoutOpportunityNestedInput
+  followUpSchedule?: Prisma.FollowUpScheduleUpdateOneWithoutOpportunityNestedInput
   followUps?: Prisma.FollowUpUpdateManyWithoutOpportunityNestedInput
 }
 
@@ -1533,7 +1533,7 @@ export type OpportunityUncheckedUpdateWithoutActivitiesInput = {
   reopenAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  followUpSchedules?: Prisma.FollowUpScheduleUncheckedUpdateManyWithoutOpportunityNestedInput
+  followUpSchedule?: Prisma.FollowUpScheduleUncheckedUpdateOneWithoutOpportunityNestedInput
   followUps?: Prisma.FollowUpUncheckedUpdateManyWithoutOpportunityNestedInput
 }
 
@@ -1615,7 +1615,7 @@ export type OpportunityUpdateWithoutAssignedToInput = {
   customer?: Prisma.CustomerUpdateOneRequiredWithoutOpportunitiesNestedInput
   createdBy?: Prisma.UserUpdateOneRequiredWithoutCreatedOpportunitiesNestedInput
   closedBy?: Prisma.UserUpdateOneWithoutClosedOpportunitiesNestedInput
-  followUpSchedules?: Prisma.FollowUpScheduleUpdateManyWithoutOpportunityNestedInput
+  followUpSchedule?: Prisma.FollowUpScheduleUpdateOneWithoutOpportunityNestedInput
   followUps?: Prisma.FollowUpUpdateManyWithoutOpportunityNestedInput
   activities?: Prisma.ActivityUpdateManyWithoutOpportunityNestedInput
 }
@@ -1638,7 +1638,7 @@ export type OpportunityUncheckedUpdateWithoutAssignedToInput = {
   reopenAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  followUpSchedules?: Prisma.FollowUpScheduleUncheckedUpdateManyWithoutOpportunityNestedInput
+  followUpSchedule?: Prisma.FollowUpScheduleUncheckedUpdateOneWithoutOpportunityNestedInput
   followUps?: Prisma.FollowUpUncheckedUpdateManyWithoutOpportunityNestedInput
   activities?: Prisma.ActivityUncheckedUpdateManyWithoutOpportunityNestedInput
 }
@@ -1681,7 +1681,7 @@ export type OpportunityUpdateWithoutCreatedByInput = {
   customer?: Prisma.CustomerUpdateOneRequiredWithoutOpportunitiesNestedInput
   assignedTo?: Prisma.UserUpdateOneWithoutAssignedOpportunitiesNestedInput
   closedBy?: Prisma.UserUpdateOneWithoutClosedOpportunitiesNestedInput
-  followUpSchedules?: Prisma.FollowUpScheduleUpdateManyWithoutOpportunityNestedInput
+  followUpSchedule?: Prisma.FollowUpScheduleUpdateOneWithoutOpportunityNestedInput
   followUps?: Prisma.FollowUpUpdateManyWithoutOpportunityNestedInput
   activities?: Prisma.ActivityUpdateManyWithoutOpportunityNestedInput
 }
@@ -1704,7 +1704,7 @@ export type OpportunityUncheckedUpdateWithoutCreatedByInput = {
   reopenAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  followUpSchedules?: Prisma.FollowUpScheduleUncheckedUpdateManyWithoutOpportunityNestedInput
+  followUpSchedule?: Prisma.FollowUpScheduleUncheckedUpdateOneWithoutOpportunityNestedInput
   followUps?: Prisma.FollowUpUncheckedUpdateManyWithoutOpportunityNestedInput
   activities?: Prisma.ActivityUncheckedUpdateManyWithoutOpportunityNestedInput
 }
@@ -1747,7 +1747,7 @@ export type OpportunityUpdateWithoutClosedByInput = {
   customer?: Prisma.CustomerUpdateOneRequiredWithoutOpportunitiesNestedInput
   assignedTo?: Prisma.UserUpdateOneWithoutAssignedOpportunitiesNestedInput
   createdBy?: Prisma.UserUpdateOneRequiredWithoutCreatedOpportunitiesNestedInput
-  followUpSchedules?: Prisma.FollowUpScheduleUpdateManyWithoutOpportunityNestedInput
+  followUpSchedule?: Prisma.FollowUpScheduleUpdateOneWithoutOpportunityNestedInput
   followUps?: Prisma.FollowUpUpdateManyWithoutOpportunityNestedInput
   activities?: Prisma.ActivityUpdateManyWithoutOpportunityNestedInput
 }
@@ -1770,7 +1770,7 @@ export type OpportunityUncheckedUpdateWithoutClosedByInput = {
   reopenAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  followUpSchedules?: Prisma.FollowUpScheduleUncheckedUpdateManyWithoutOpportunityNestedInput
+  followUpSchedule?: Prisma.FollowUpScheduleUncheckedUpdateOneWithoutOpportunityNestedInput
   followUps?: Prisma.FollowUpUncheckedUpdateManyWithoutOpportunityNestedInput
   activities?: Prisma.ActivityUncheckedUpdateManyWithoutOpportunityNestedInput
 }
@@ -1833,7 +1833,7 @@ export type OpportunityUpdateWithoutCustomerInput = {
   assignedTo?: Prisma.UserUpdateOneWithoutAssignedOpportunitiesNestedInput
   createdBy?: Prisma.UserUpdateOneRequiredWithoutCreatedOpportunitiesNestedInput
   closedBy?: Prisma.UserUpdateOneWithoutClosedOpportunitiesNestedInput
-  followUpSchedules?: Prisma.FollowUpScheduleUpdateManyWithoutOpportunityNestedInput
+  followUpSchedule?: Prisma.FollowUpScheduleUpdateOneWithoutOpportunityNestedInput
   followUps?: Prisma.FollowUpUpdateManyWithoutOpportunityNestedInput
   activities?: Prisma.ActivityUpdateManyWithoutOpportunityNestedInput
 }
@@ -1856,7 +1856,7 @@ export type OpportunityUncheckedUpdateWithoutCustomerInput = {
   reopenAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  followUpSchedules?: Prisma.FollowUpScheduleUncheckedUpdateManyWithoutOpportunityNestedInput
+  followUpSchedule?: Prisma.FollowUpScheduleUncheckedUpdateOneWithoutOpportunityNestedInput
   followUps?: Prisma.FollowUpUncheckedUpdateManyWithoutOpportunityNestedInput
   activities?: Prisma.ActivityUncheckedUpdateManyWithoutOpportunityNestedInput
 }
@@ -1887,13 +1887,11 @@ export type OpportunityUncheckedUpdateManyWithoutCustomerInput = {
  */
 
 export type OpportunityCountOutputType = {
-  followUpSchedules: number
   followUps: number
   activities: number
 }
 
 export type OpportunityCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  followUpSchedules?: boolean | OpportunityCountOutputTypeCountFollowUpSchedulesArgs
   followUps?: boolean | OpportunityCountOutputTypeCountFollowUpsArgs
   activities?: boolean | OpportunityCountOutputTypeCountActivitiesArgs
 }
@@ -1906,13 +1904,6 @@ export type OpportunityCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.
    * Select specific fields to fetch from the OpportunityCountOutputType
    */
   select?: Prisma.OpportunityCountOutputTypeSelect<ExtArgs> | null
-}
-
-/**
- * OpportunityCountOutputType without action
- */
-export type OpportunityCountOutputTypeCountFollowUpSchedulesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.FollowUpScheduleWhereInput
 }
 
 /**
@@ -1953,7 +1944,7 @@ export type OpportunitySelect<ExtArgs extends runtime.Types.Extensions.InternalA
   assignedTo?: boolean | Prisma.Opportunity$assignedToArgs<ExtArgs>
   createdBy?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   closedBy?: boolean | Prisma.Opportunity$closedByArgs<ExtArgs>
-  followUpSchedules?: boolean | Prisma.Opportunity$followUpSchedulesArgs<ExtArgs>
+  followUpSchedule?: boolean | Prisma.Opportunity$followUpScheduleArgs<ExtArgs>
   followUps?: boolean | Prisma.Opportunity$followUpsArgs<ExtArgs>
   activities?: boolean | Prisma.Opportunity$activitiesArgs<ExtArgs>
   _count?: boolean | Prisma.OpportunityCountOutputTypeDefaultArgs<ExtArgs>
@@ -2036,7 +2027,7 @@ export type OpportunityInclude<ExtArgs extends runtime.Types.Extensions.Internal
   assignedTo?: boolean | Prisma.Opportunity$assignedToArgs<ExtArgs>
   createdBy?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   closedBy?: boolean | Prisma.Opportunity$closedByArgs<ExtArgs>
-  followUpSchedules?: boolean | Prisma.Opportunity$followUpSchedulesArgs<ExtArgs>
+  followUpSchedule?: boolean | Prisma.Opportunity$followUpScheduleArgs<ExtArgs>
   followUps?: boolean | Prisma.Opportunity$followUpsArgs<ExtArgs>
   activities?: boolean | Prisma.Opportunity$activitiesArgs<ExtArgs>
   _count?: boolean | Prisma.OpportunityCountOutputTypeDefaultArgs<ExtArgs>
@@ -2061,7 +2052,7 @@ export type $OpportunityPayload<ExtArgs extends runtime.Types.Extensions.Interna
     assignedTo: Prisma.$UserPayload<ExtArgs> | null
     createdBy: Prisma.$UserPayload<ExtArgs>
     closedBy: Prisma.$UserPayload<ExtArgs> | null
-    followUpSchedules: Prisma.$FollowUpSchedulePayload<ExtArgs>[]
+    followUpSchedule: Prisma.$FollowUpSchedulePayload<ExtArgs> | null
     followUps: Prisma.$FollowUpPayload<ExtArgs>[]
     activities: Prisma.$ActivityPayload<ExtArgs>[]
   }
@@ -2482,7 +2473,7 @@ export interface Prisma__OpportunityClient<T, Null = never, ExtArgs extends runt
   assignedTo<T extends Prisma.Opportunity$assignedToArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Opportunity$assignedToArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   createdBy<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   closedBy<T extends Prisma.Opportunity$closedByArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Opportunity$closedByArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
-  followUpSchedules<T extends Prisma.Opportunity$followUpSchedulesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Opportunity$followUpSchedulesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$FollowUpSchedulePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  followUpSchedule<T extends Prisma.Opportunity$followUpScheduleArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Opportunity$followUpScheduleArgs<ExtArgs>>): Prisma.Prisma__FollowUpScheduleClient<runtime.Types.Result.GetResult<Prisma.$FollowUpSchedulePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   followUps<T extends Prisma.Opportunity$followUpsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Opportunity$followUpsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$FollowUpPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   activities<T extends Prisma.Opportunity$activitiesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Opportunity$activitiesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ActivityPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
@@ -2971,9 +2962,9 @@ export type Opportunity$closedByArgs<ExtArgs extends runtime.Types.Extensions.In
 }
 
 /**
- * Opportunity.followUpSchedules
+ * Opportunity.followUpSchedule
  */
-export type Opportunity$followUpSchedulesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+export type Opportunity$followUpScheduleArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   /**
    * Select specific fields to fetch from the FollowUpSchedule
    */
@@ -2987,11 +2978,6 @@ export type Opportunity$followUpSchedulesArgs<ExtArgs extends runtime.Types.Exte
    */
   include?: Prisma.FollowUpScheduleInclude<ExtArgs> | null
   where?: Prisma.FollowUpScheduleWhereInput
-  orderBy?: Prisma.FollowUpScheduleOrderByWithRelationInput | Prisma.FollowUpScheduleOrderByWithRelationInput[]
-  cursor?: Prisma.FollowUpScheduleWhereUniqueInput
-  take?: number
-  skip?: number
-  distinct?: Prisma.FollowUpScheduleScalarFieldEnum | Prisma.FollowUpScheduleScalarFieldEnum[]
 }
 
 /**
