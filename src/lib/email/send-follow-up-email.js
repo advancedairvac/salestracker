@@ -16,8 +16,11 @@ export async function sendFollowUpEmail({
     throw new Error("Email subject is required.");
   }
 
-  if (typeof body !== "string" || !body.trim()) {
-    throw new Error("Email HTML content is required.");
+  const html = body?.trim();
+  const plainText = text?.trim();
+
+  if (!html && !plainText) {
+    throw new Error("Email body is required.");
   }
 
   const from = process.env.RESEND_FROM_EMAIL?.trim();
@@ -30,8 +33,9 @@ export async function sendFollowUpEmail({
     from,
     to: [recipient],
     subject: subject.trim(),
-    html: body,
-    text: typeof text === "string" && text.trim() ? text : undefined,
+
+    ...(html ? { html } : {}),
+    ...(plainText ? { text: plainText } : {}),
   });
 
   if (error) {
