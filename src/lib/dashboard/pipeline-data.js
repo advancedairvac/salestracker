@@ -50,7 +50,7 @@ async function getPipelineUsers() {
 // BUILD FOLLOW-UP QUERY
 // ============================================
 
-function buildFollowUpWhere(selectedFilter) {
+function buildFollowUpWhere(selectedFilter, salesmanId = null) {
   const isUserFilter = selectedFilter.startsWith("USER:");
 
   const selectedUserId = isUserFilter ? selectedFilter.slice(5) : null;
@@ -58,18 +58,29 @@ function buildFollowUpWhere(selectedFilter) {
   const where = {
     status: "PENDING",
     isActive: true,
+
+    // Follow-up must have a scheduled date.
+    dueAt: {
+      not: null,
+    },
+
+    // Only OPEN opportunities should appear.
+    opportunity: {
+      is: {
+        status: "OPEN",
+      },
+    },
   };
 
-  if (selectedUserId) {
+  // Explicit salesperson filter takes priority.
+  if (salesmanId) {
+    where.assignedToId = salesmanId;
+  } else if (selectedUserId) {
     where.assignedToId = selectedUserId;
   }
 
-  // ALL shows only upcoming follow-ups.
-  if (selectedFilter === "ALL") {
-    where.dueAt = {
-      gte: new Date(),
-    };
-  } else if (!isUserFilter) {
+  // ALL includes both upcoming and overdue follow-ups.
+  if (selectedFilter !== "ALL" && !isUserFilter) {
     const dateRange = getFollowUpDateRange(selectedFilter);
 
     if (dateRange) {
@@ -85,11 +96,12 @@ function buildFollowUpWhere(selectedFilter) {
 
 // ============================================
 // GET FOLLOW-UPS
+// One upcoming/overdue follow-up per opportunity
 // ============================================
 
-async function getPipelineFollowUps(selectedFilter) {
+async function getPipelineFollowUps(selectedFilter, salesmanId = null) {
   const followUps = await prisma.followUp.findMany({
-    where: buildFollowUpWhere(selectedFilter),
+    where: buildFollowUpWhere(selectedFilter, salesmanId),
 
     include: {
       opportunity: {
@@ -111,32 +123,60 @@ async function getPipelineFollowUps(selectedFilter) {
       },
     },
 
-    orderBy: {
-      dueAt: "asc",
-    },
+    // Earliest due date comes first.
+    orderBy: [
+      {
+        dueAt: "asc",
+      },
+      {
+        createdAt: "asc",
+      },
+    ],
   });
 
-  return followUps.map((followUp) => ({
-    ...followUp,
+  // ==========================================
+  // KEEP ONLY ONE FOLLOW-UP PER OPPORTUNITY
+  // ==========================================
 
-    commissionEstimate:
-      followUp.commissionEstimate !== null &&
-      followUp.commissionEstimate !== undefined
-        ? Number(followUp.commissionEstimate)
-        : 0,
+  const selectedFollowUps = [];
+  const processedOpportunityIds = new Set();
 
-    opportunity: followUp.opportunity
-      ? {
-          ...followUp.opportunity,
+  for (const followUp of followUps) {
+    const opportunityId = followUp.opportunityId;
 
-          value:
-            followUp.opportunity.value !== null &&
-            followUp.opportunity.value !== undefined
-              ? Number(followUp.opportunity.value)
-              : null,
-        }
-      : null,
-  }));
+    if (!opportunityId) continue;
+
+    // Skip if this opportunity already has
+    // its nearest eligible follow-up selected.
+    if (processedOpportunityIds.has(opportunityId)) {
+      continue;
+    }
+
+    processedOpportunityIds.add(opportunityId);
+
+    selectedFollowUps.push({
+      ...followUp,
+
+      // Temporary value.
+      // Commission calculation will be implemented
+      // later with the Commission Rule feature.
+      commissionEstimate: 0,
+
+      opportunity: followUp.opportunity
+        ? {
+            ...followUp.opportunity,
+
+            value:
+              followUp.opportunity.value !== null &&
+              followUp.opportunity.value !== undefined
+                ? Number(followUp.opportunity.value)
+                : null,
+          }
+        : null,
+    });
+  }
+
+  return selectedFollowUps;
 }
 
 // ============================================
@@ -211,7 +251,6 @@ function normalizePagination(page, pageSize) {
 // ============================================
 
 async function getPaginatedPipelineEstimates({ page, pageSize }) {
-  // Fetch only the requested ServiceTitan estimate page.
   const result = await getEstimates({
     page,
     pageSize,
@@ -220,21 +259,17 @@ async function getPaginatedPipelineEstimates({ page, pageSize }) {
 
   const serviceTitanEstimates = Array.isArray(result.data) ? result.data : [];
 
-  // Collect unique customer IDs from current-page estimates.
   const customerIds = getServiceTitanCustomerIds(serviceTitanEstimates);
 
-  // Fetch only current-page customers.
   const customerResult = customerIds.length
     ? await getServiceTitanCustomersByIds(customerIds)
     : {};
 
-  // Format current-page estimates.
   const estimates = formatPipelineEstimates(
     serviceTitanEstimates,
     customerResult,
   );
 
-  // ServiceTitan total count.
   const totalItems = Number(
     result.totalCount ?? result.totalItems ?? result.count ?? 0,
   );
@@ -274,12 +309,14 @@ export async function getPipelinePageData({ requestedFilter = "ALL" } = {}) {
 
 // ============================================
 // PIPELINE FOLLOW-UP DATA
+// Supports optional salesperson filtering
 // ============================================
 
 export async function getPipelineFollowUpsData({
   selectedFilter = "ALL",
+  salesmanId = null,
 } = {}) {
-  return getPipelineFollowUps(selectedFilter);
+  return getPipelineFollowUps(selectedFilter, salesmanId);
 }
 
 // ============================================

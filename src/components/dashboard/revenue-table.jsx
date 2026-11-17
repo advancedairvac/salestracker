@@ -1,4 +1,3 @@
-
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -39,6 +38,7 @@ export default function RevenueTable({
   totalItems = 0,
   currency = "$",
   className = "",
+  showSalesman = true,
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -88,6 +88,8 @@ export default function RevenueTable({
     });
   }
 
+  const columnCount = showSalesman ? 6 : 5;
+
   // ============================================
   // RENDER
   // ============================================
@@ -95,7 +97,7 @@ export default function RevenueTable({
   return (
     <section className={`w-full ${className}`}>
       <div className="w-full overflow-x-auto">
-        <table className="w-full min-w-[850px] border-collapse text-left">
+        <table className="w-full min-w-[750px] border-collapse text-left">
           <thead>
             <tr className="bg-[#d9d9d9]">
               <th className="whitespace-nowrap px-4 py-2.5 text-[11px] font-bold uppercase tracking-wide text-black sm:text-xs">
@@ -114,9 +116,11 @@ export default function RevenueTable({
                 Source
               </th>
 
-              <th className="whitespace-nowrap px-4 py-2.5 text-[11px] font-bold uppercase tracking-wide text-black sm:text-xs">
-                Salesman
-              </th>
+              {showSalesman && (
+                <th className="whitespace-nowrap px-4 py-2.5 text-[11px] font-bold uppercase tracking-wide text-black sm:text-xs">
+                  Salesman
+                </th>
+              )}
 
               <th className="whitespace-nowrap px-4 py-2.5 text-[11px] font-bold uppercase tracking-wide text-black sm:text-xs">
                 Comm. Est.
@@ -147,9 +151,11 @@ export default function RevenueTable({
                     {formatSource(sale.source)}
                   </td>
 
-                  <td className="whitespace-nowrap px-4 py-2 text-sm text-black sm:text-base">
-                    {sale.salesmanName || "—"}
-                  </td>
+                  {showSalesman && (
+                    <td className="whitespace-nowrap px-4 py-2 text-sm text-black sm:text-base">
+                      {sale.salesmanName || "—"}
+                    </td>
+                  )}
 
                   <td className="whitespace-nowrap px-4 py-2 text-sm text-black sm:text-base">
                     {formatCurrency(sale.commissionEstimate, currency)}
@@ -159,7 +165,7 @@ export default function RevenueTable({
             ) : (
               <tr>
                 <td
-                  colSpan={6}
+                  colSpan={columnCount}
                   className="px-4 py-10 text-center text-sm text-[#777]"
                 >
                   No completed jobs found for this date range.

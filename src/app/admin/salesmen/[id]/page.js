@@ -1,10 +1,16 @@
+import { Suspense } from "react";
 import { redirect, notFound } from "next/navigation";
 
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth";
 
-import { PRESETS, getInitialRange } from "@/lib/date/date-utils";
-import { getGoalConfiguration, calculateTeamGoal } from "@/lib/date/goal-utils";
+import {
+  getSalesRevenueDateRange,
+  getSalesRevenueSummaryData,
+  getSalesRevenueTableData,
+} from "@/lib/dashboard/revenue-data";
+
+import { getPipelineFollowUpsData } from "@/lib/dashboard/pipeline-data";
 
 import RevenueDateFilter from "@/components/dashboard/revenue-date-filter";
 import RevenueSummary from "@/components/dashboard/revenue-summary";
@@ -15,51 +21,140 @@ import FollowUpsTable from "@/components/dashboard/followUps-table";
 import Breadcrumbs from "@/components/ui/breadcrumbs";
 import PageTagline from "@/components/ui/page-tagline";
 
+import SummarySkeleton from "@/components/ui/skeleton/summary-skeleton";
+import TableSkeleton from "@/components/ui/skeleton/table-skeleton";
+
 export const metadata = {
   title: "Salesman Details",
 };
 
+export const dynamic = "force-dynamic";
+
 // ============================================
-// DATE HELPERS
+// SALESMAN REVENUE SUMMARY SECTION
 // ============================================
 
-function isValidDateString(value) {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value || "")) {
-    return false;
-  }
-
-  const [year, month, day] = value.split("-").map(Number);
-  const date = new Date(year, month - 1, day);
+async function SalesmanRevenueSummarySection({ dateRange, salesmanId }) {
+  const { totalRevenue, totalCommission, teamGoal, goalConfiguration } =
+    await getSalesRevenueSummaryData({
+      dateRange,
+      salesmanId,
+    });
 
   return (
-    !Number.isNaN(date.getTime()) &&
-    date.getFullYear() === year &&
-    date.getMonth() === month - 1 &&
-    date.getDate() === day
+    <RevenueSummary
+      revenue={totalRevenue}
+      goal={teamGoal}
+      goalLabel={goalConfiguration.label}
+      commissionAmount={totalCommission}
+    />
   );
 }
 
-function getDateRange(startDate, endDate) {
-  const [startYear, startMonth, startDay] = startDate.split("-").map(Number);
-  const [endYear, endMonth, endDay] = endDate.split("-").map(Number);
+// ============================================
+// SALESMAN REVENUE TABLE SECTION
+// ============================================
 
-  return {
-    start: new Date(startYear, startMonth - 1, startDay),
-    endExclusive: new Date(endYear, endMonth - 1, endDay + 1),
-  };
+async function SalesmanRevenueTableSection({
+  dateRange,
+  searchParams,
+  salesmanId,
+}) {
+  const { revenueData, pagination } = await getSalesRevenueTableData({
+    dateRange,
+    searchParams,
+    salesmanId,
+  });
+
+  return (
+    <section className="space-y-3">
+      <div className="flex items-center justify-between gap-3">
+        <h3 className="text-sm font-bold uppercase text-[#555]">
+          Revenue Details
+        </h3>
+
+        <span className="shrink-0 text-xs text-[#777]">
+          {pagination.totalItems} {pagination.totalItems === 1 ? "Job" : "Jobs"}
+        </span>
+      </div>
+
+      <RevenueTable
+        sales={revenueData}
+        currentPage={pagination.currentPage}
+        pageSize={pagination.pageSize}
+        totalItems={pagination.totalItems}
+        showSalesman={false}
+      />
+    </section>
+  );
 }
 
-function getLeadSourceLabel(source) {
-  switch (source) {
-    case "SELF_GENERATED":
-      return "Self-generated";
+// ============================================
+// SALESMAN FOLLOW-UPS SECTION
+// Reuses Pipeline follow-up data
+// ============================================
 
-    case "COMPANY_GENERATED":
-      return "Company-generated";
+async function SalesmanFollowUpsSection({ salesmanId }) {
+  const followUps = await getPipelineFollowUpsData({
+    selectedFilter: "ALL",
+    salesmanId,
+  });
 
-    default:
-      return "—";
-  }
+  return (
+    <section className="w-full">
+      <h2 className="mb-5 px-1 text-sm font-bold uppercase text-black sm:text-base">
+        Follow-ups
+      </h2>
+
+      <FollowUpsTable followUps={followUps} showSalesman={false} />
+    </section>
+  );
+}
+
+// ============================================
+// SECTION DIVIDER
+// ============================================
+
+function SectionDivider() {
+  return (
+    <div className="flex items-center gap-0 pt-2">
+      <div className="h-[4px] w-8 rounded-full bg-black" />
+
+      <div className="h-[3px] flex-1 rounded-full bg-[#eeeeee]" />
+    </div>
+  );
+}
+
+// ============================================
+// REVENUE TABLE FALLBACK
+// ============================================
+
+function RevenueTableFallback() {
+  return (
+    <section className="space-y-3">
+      <div className="flex items-center justify-between">
+        <div className="h-4 w-28 animate-pulse rounded bg-[#eeeeee]" />
+      </div>
+
+      <TableSkeleton rows={10} columns={5} />
+    </section>
+  );
+}
+
+// ============================================
+// FOLLOW-UPS FALLBACK
+// ============================================
+
+function FollowUpsFallback() {
+  return (
+    <section className="w-full">
+      <h2 className="mb-5 px-1 text-sm font-bold uppercase text-black sm:text-base">
+        Follow-ups
+      </h2>
+
+      <TableSkeleton rows={5} columns={5} />
+    </section>
+  );
 }
 
 // ============================================
@@ -86,35 +181,15 @@ export default async function SalesmanDetailsPage({ params, searchParams }) {
   // ============================================
 
   const { id } = await params;
-  const query = await searchParams;
+  const query = (await searchParams) || {};
 
-  const defaultRange = getInitialRange();
+  // ============================================
+  // SHARED REVENUE DATE RANGE
+  // ============================================
 
-  const requestedStartDate =
-    typeof query?.startDate === "string"
-      ? query.startDate
-      : defaultRange.startDate;
+  const dateRange = getSalesRevenueDateRange(query);
 
-  const requestedEndDate =
-    typeof query?.endDate === "string" ? query.endDate : defaultRange.endDate;
-
-  const validRange =
-    isValidDateString(requestedStartDate) &&
-    isValidDateString(requestedEndDate) &&
-    requestedStartDate <= requestedEndDate;
-
-  const startDate = validRange ? requestedStartDate : defaultRange.startDate;
-
-  const endDate = validRange ? requestedEndDate : defaultRange.endDate;
-
-  const requestedPreset =
-    typeof query?.preset === "string" ? query.preset : "MTD";
-
-  const selectedPreset = PRESETS.includes(requestedPreset)
-    ? requestedPreset
-    : "MTD";
-
-  const { start, endExclusive } = getDateRange(startDate, endDate);
+  const { preset: selectedPreset, startDate, endDate } = dateRange;
 
   // ============================================
   // SALESPERSON INFORMATION
@@ -127,13 +202,11 @@ export default async function SalesmanDetailsPage({ params, searchParams }) {
         in: ["ADMIN", "SALESPERSON"],
       },
     },
+
     select: {
       id: true,
       name: true,
       title: true,
-      monthlyGoal: true,
-      quarterlyGoal: true,
-      annualGoal: true,
     },
   });
 
@@ -142,171 +215,41 @@ export default async function SalesmanDetailsPage({ params, searchParams }) {
   }
 
   // ============================================
-  // GOAL CONFIGURATION
-  // ============================================
-
-  const goalConfiguration = getGoalConfiguration(
-    selectedPreset,
-    startDate,
-    endDate,
-  );
-
-  const selectedPeriodGoal = calculateTeamGoal(
-    [salesman],
-    goalConfiguration.goalType,
-  );
-
-  // ============================================
-  // FETCH DATA FROM POSTGRESQL
-  // ============================================
-
-  const [sales, opportunities, followUps] = await Promise.all([
-    // Sales assigned to this salesperson
-    prisma.sale.findMany({
-      where: {
-        salesmanId: salesman.id,
-        saleValue: {
-          gt: 0,
-        },
-        completedAt: {
-          gte: start,
-          lt: endExclusive,
-        },
-      },
-      orderBy: {
-        completedAt: "desc",
-      },
-      select: {
-        id: true,
-        serviceTitanJobId: true,
-        serviceTitanJobNumber: true,
-        customerName: true,
-        saleValue: true,
-        source: true,
-        completedAt: true,
-        customer: {
-          select: {
-            businessName: true,
-          },
-        },
-      },
-    }),
-
-    // Open opportunities assigned to this salesperson
-    prisma.opportunity.findMany({
-      where: {
-        assignedToId: salesman.id,
-        status: "OPEN",
-        opportunityDate: {
-          gte: start,
-          lt: endExclusive,
-        },
-      },
-      orderBy: {
-        updatedAt: "desc",
-      },
-      include: {
-        customer: {
-          select: {
-            businessName: true,
-          },
-        },
-        assignedTo: {
-          select: {
-            name: true,
-          },
-        },
-      },
-    }),
-
-    // Future pending follow-ups assigned to this salesperson
-    prisma.followUp.findMany({
-      where: {
-        assignedToId: salesman.id,
-        status: "PENDING",
-        isActive: true,
-        dueAt: {
-          gte: new Date(),
-        },
-      },
-      orderBy: {
-        dueAt: "asc",
-      },
-      include: {
-        opportunity: {
-          select: {
-            id: true,
-            title: true,
-            jobType: true,
-            customer: {
-              select: {
-                businessName: true,
-              },
-            },
-            assignedTo: {
-              select: {
-                id: true,
-                name: true,
-              },
-            },
-          },
-        },
-        assignedTo: {
-          select: {
-            name: true,
-          },
-        },
-      },
-    }),
-  ]);
-
-  // ============================================
-  // SERIALIZE OPPORTUNITIES
-  // ============================================
-
-  const opportunityData = opportunities.map((opportunity) => ({
-    ...opportunity,
-    value:
-      opportunity.value !== null && opportunity.value !== undefined
-        ? Number(opportunity.value)
-        : null,
-  }));
-
-  // ============================================
-  // SALESMAN REVENUE
-  // ============================================
-
-  const totalRevenue = sales.reduce(
-    (total, sale) => total + Number(sale.saleValue || 0),
-    0,
-  );
-
-  // ============================================
-  // REVENUE TABLE DATA
-  // ============================================
-
-  const revenueData = sales.map((sale) => ({
-    id: sale.id,
-    serviceTitanJobId: sale.serviceTitanJobNumber || sale.serviceTitanJobId,
-    customerName: sale.customerName || sale.customer?.businessName || "—",
-    saleValue: Number(sale.saleValue || 0),
-    source: getLeadSourceLabel(sale.source),
-    salesmanName: salesman.name,
-  }));
-
-  // ============================================
-  // REVENUE SUMMARY
-  // ============================================
-
-  const commissionRate = 5;
-
-  const estimatedCommission = (totalRevenue * commissionRate) / 100;
-
-  // ============================================
   // CLOSE RATE
+  // Placeholder until reporting logic is connected
   // ============================================
 
   const closeRate = 0;
+
+  // ============================================
+  // SUSPENSE KEYS
+  // ============================================
+
+  const revenueSummaryKey = [
+    salesman.id,
+    selectedPreset,
+    startDate,
+    endDate,
+  ].join("-");
+
+  const revenueTableKey = [
+    salesman.id,
+    startDate,
+    endDate,
+    query.page || "1",
+    query.pageSize || "10",
+  ].join("-");
+
+  const followUpsKey = salesman.id;
+
+  // ============================================
+  // ESTIMATES
+  // Temporarily empty until estimate assignment
+  // and database schema are implemented.
+  // Keep the table connected for future use.
+  // ============================================
+
+  const estimates = [];
 
   // ============================================
   // RENDER
@@ -314,6 +257,8 @@ export default async function SalesmanDetailsPage({ params, searchParams }) {
 
   return (
     <div className="space-y-4 sm:space-y-5">
+      {/* BREADCRUMBS */}
+
       <Breadcrumbs
         items={[
           {
@@ -328,6 +273,8 @@ export default async function SalesmanDetailsPage({ params, searchParams }) {
         currentPage={salesman.name}
       />
 
+      {/* DATE FILTER */}
+
       <RevenueDateFilter
         value={{
           startDate,
@@ -336,6 +283,8 @@ export default async function SalesmanDetailsPage({ params, searchParams }) {
         preset={selectedPreset}
         basePath={`/admin/salesmen/${salesman.id}`}
       />
+
+      {/* SALESMAN HEADER */}
 
       <section className="border-b border-[#d9d9d9] pb-5">
         <div className="flex items-start justify-between gap-4 px-1">
@@ -357,71 +306,65 @@ export default async function SalesmanDetailsPage({ params, searchParams }) {
         </div>
       </section>
 
-      {/* Sales Revenue */}
+      {/* SALES REVENUE */}
 
       <section className="space-y-4">
         <h2 className="px-1 text-sm font-bold uppercase text-black sm:text-base">
           Sales Revenue
         </h2>
 
-        <RevenueSummary
-          revenue={totalRevenue}
-          goal={selectedPeriodGoal}
-          goalLabel={goalConfiguration.label}
-          commissionRate={commissionRate}
-        />
+        {/* REVENUE SUMMARY */}
 
-        {/* Revenue Details */}
+        <Suspense
+          key={revenueSummaryKey}
+          fallback={<SummarySkeleton variant="revenue" />}
+        >
+          <SalesmanRevenueSummarySection
+            dateRange={dateRange}
+            salesmanId={salesman.id}
+          />
+        </Suspense>
 
-        <section className="space-y-3">
-          <div className="flex items-center justify-between gap-3">
-            <h3 className="text-sm font-bold uppercase text-[#555]">
-              Revenue Details
-            </h3>
+        {/* REVENUE DETAILS */}
 
-            <span className="shrink-0 text-xs text-[#777]">
-              {revenueData.length} {revenueData.length === 1 ? "Sale" : "Sales"}
-            </span>
-          </div>
-
-          <RevenueTable sales={revenueData} />
-        </section>
+        <Suspense key={revenueTableKey} fallback={<RevenueTableFallback />}>
+          <SalesmanRevenueTableSection
+            dateRange={dateRange}
+            searchParams={query}
+            salesmanId={salesman.id}
+          />
+        </Suspense>
       </section>
 
-      <div className="flex items-center gap-0 pt-2">
-        <div className="h-[4px] w-8 rounded-full bg-black" />
-        <div className="h-[3px] flex-1 rounded-full bg-[#eeeeee]" />
-      </div>
+      <SectionDivider />
 
-      {/* Follow-ups */}
+      {/* FOLLOW-UPS */}
 
-      <section className="space-y-3">
-        <h2 className="px-1 text-sm font-bold uppercase text-black sm:text-base">
-          Follow-ups
-        </h2>
+      <Suspense key={followUpsKey} fallback={<FollowUpsFallback />}>
+        <SalesmanFollowUpsSection salesmanId={salesman.id} />
+      </Suspense>
 
-        <FollowUpsTable followUps={followUps} showSalesman={false} />
-      </section>
+      <SectionDivider />
 
-      <div className="flex items-center gap-0 pt-2">
-        <div className="h-[4px] w-8 rounded-full bg-black" />
-        <div className="h-[3px] flex-1 rounded-full bg-[#eeeeee]" />
-      </div>
-
-      {/* Estimates */}
+      {/* ESTIMATES */}
 
       <section className="space-y-3">
         <h2 className="px-1 text-sm font-bold uppercase text-black sm:text-base">
           Estimates
         </h2>
 
-        <EstimatesTable opportunities={opportunityData} />
+        <EstimatesTable
+          estimates={estimates}
+          currentPage={1}
+          pageSize={10}
+          totalItems={0}
+          serverPaginated={false}
+        />
       </section>
 
-      <div className="flex items-center gap-0 pt-2">
-        <div className="h-[4px] w-8 rounded-full bg-black" />
-        <div className="h-[3px] flex-1 rounded-full bg-[#eeeeee]" />
-      </div>
+      <SectionDivider />
+
+      {/* PAGE TAGLINE */}
 
       <PageTagline>Men produce, boys consume.</PageTagline>
     </div>

@@ -27,7 +27,7 @@ export const dynamic = "force-dynamic";
 // ============================================
 
 async function RevenueSummarySection({ dateRange }) {
-  const { totalRevenue, teamGoal, goalConfiguration } =
+  const { totalRevenue, totalCommission, teamGoal, goalConfiguration } =
     await getSalesRevenueSummaryData({
       dateRange,
     });
@@ -37,7 +37,7 @@ async function RevenueSummarySection({ dateRange }) {
       revenue={totalRevenue}
       goal={teamGoal}
       goalLabel={goalConfiguration.label}
-      commissionRate={0}
+      commissionAmount={totalCommission}
     />
   );
 }
@@ -77,17 +77,9 @@ async function RevenueTableSection({ dateRange, searchParams }) {
 // ============================================
 
 export default async function SalesRevenuePage({ searchParams }) {
-  const params = await searchParams;
-
-  // ------------------------------------------
-  // DATE RANGE
-  // ------------------------------------------
+  const params = (await searchParams) || {};
 
   const dateRange = getSalesRevenueDateRange(params);
-
-  // ------------------------------------------
-  // SUSPENSE KEYS
-  // ------------------------------------------
 
   const summaryKey = [
     dateRange.preset,
@@ -102,15 +94,9 @@ export default async function SalesRevenuePage({ searchParams }) {
     params.pageSize || "10",
   ].join("-");
 
-  // ------------------------------------------
-  // RENDER
-  // ------------------------------------------
-
   return (
     <div className="space-y-4 sm:space-y-5">
       <Breadcrumbs currentPage="Sales Revenue" />
-
-      {/* DATE FILTER - STATIC */}
 
       <RevenueDateFilter
         value={{
@@ -120,13 +106,12 @@ export default async function SalesRevenuePage({ searchParams }) {
         preset={dateRange.preset}
       />
 
-      {/* REVENUE SUMMARY */}
-
-      <Suspense key={summaryKey} fallback={<SummarySkeleton variant="revenue" />}>
+      <Suspense
+        key={summaryKey}
+        fallback={<SummarySkeleton variant="revenue" />}
+      >
         <RevenueSummarySection dateRange={dateRange} />
       </Suspense>
-
-      {/* REVENUE TABLE */}
 
       <Suspense
         key={tableKey}
@@ -138,7 +123,7 @@ export default async function SalesRevenuePage({ searchParams }) {
               </h2>
             </div>
 
-            <TableSkeleton rows={10} columns={5} />
+            <TableSkeleton rows={10} columns={6} />
           </section>
         }
       >

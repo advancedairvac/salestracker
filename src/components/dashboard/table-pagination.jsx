@@ -64,7 +64,7 @@ export default function TablePagination({
 
   return (
     <div className="flex flex-col gap-4 border-t border-[#d9d9d9] px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
-      {/* ITEMS PER PAGE */}
+      {/* ITEMS PER PAGE - ALWAYS VISIBLE */}
 
       <div className="flex items-center gap-2 text-sm text-neutral-700">
         <label htmlFor="table-page-size" className="whitespace-nowrap">
@@ -87,95 +87,97 @@ export default function TablePagination({
 
       {/* PAGE INFORMATION AND NAVIGATION */}
 
-      <div className="flex flex-wrap items-center justify-between gap-3 sm:justify-end">
-        {/* ITEM RANGE */}
+      {totalItems > pageSize && (
+        <div className="flex flex-wrap items-center justify-between gap-3 sm:justify-end">
+          {/* ITEM RANGE */}
 
-        <p className="whitespace-nowrap text-xs text-neutral-500 sm:text-sm">
-          {startItem}–{endItem} of {totalItems}
-        </p>
+          <p className="whitespace-nowrap text-xs text-neutral-500 sm:text-sm">
+            {startItem}–{endItem} of {totalItems}
+          </p>
 
-        {/* PAGE NAVIGATION */}
+          {/* PAGE NAVIGATION */}
 
-        <div className="flex items-center gap-1">
-          {/* PREVIOUS */}
+          <div className="flex items-center gap-1">
+            {/* PREVIOUS */}
 
-          <button
-            type="button"
-            aria-label="Previous page"
-            disabled={currentPage <= 1}
-            onClick={() => onPageChange(currentPage - 1)}
-            className="flex size-9 items-center justify-center border border-neutral-300 text-neutral-700 transition-colors hover:bg-neutral-100 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
+            <button
+              type="button"
+              aria-label="Previous page"
+              disabled={currentPage <= 1}
+              onClick={() => onPageChange(currentPage - 1)}
+              className="flex size-9 items-center justify-center border border-neutral-300 text-neutral-700 transition-colors hover:bg-neutral-100 disabled:cursor-not-allowed disabled:opacity-40"
             >
-              <path d="m15 18-6-6 6-6" />
-            </svg>
-          </button>
-
-          {/* PAGE NUMBERS */}
-
-          {pageNumbers.map((page, index) =>
-            page === "..." ? (
-              <span
-                key={`ellipsis-${index}`}
-                className="flex size-9 items-center justify-center text-sm text-neutral-500"
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
               >
-                ...
-              </span>
-            ) : (
-              <button
-                key={page}
-                type="button"
-                aria-label={`Page ${page}`}
-                aria-current={currentPage === page ? "page" : undefined}
-                onClick={() => onPageChange(page)}
-                className={`flex size-9 items-center justify-center border text-sm transition-colors ${
-                  currentPage === page
-                    ? "border-black bg-black font-semibold text-white"
-                    : "border-neutral-300 text-neutral-700 hover:bg-neutral-100"
-                }`}
-              >
-                {page}
-              </button>
-            ),
-          )}
+                <path d="m15 18-6-6 6-6" />
+              </svg>
+            </button>
 
-          {/* NEXT */}
+            {/* PAGE NUMBERS */}
 
-          <button
-            type="button"
-            aria-label="Next page"
-            disabled={currentPage >= totalPages}
-            onClick={() => onPageChange(currentPage + 1)}
-            className="flex size-9 items-center justify-center border border-neutral-300 text-neutral-700 transition-colors hover:bg-neutral-100 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
+            {pageNumbers.map((page, index) =>
+              page === "..." ? (
+                <span
+                  key={`ellipsis-${index}`}
+                  className="flex size-9 items-center justify-center text-sm text-neutral-500"
+                >
+                  ...
+                </span>
+              ) : (
+                <button
+                  key={page}
+                  type="button"
+                  aria-label={`Page ${page}`}
+                  aria-current={currentPage === page ? "page" : undefined}
+                  onClick={() => onPageChange(page)}
+                  className={`flex size-9 items-center justify-center border text-sm transition-colors ${
+                    currentPage === page
+                      ? "border-black bg-black font-semibold text-white"
+                      : "border-neutral-300 text-neutral-700 hover:bg-neutral-100"
+                  }`}
+                >
+                  {page}
+                </button>
+              ),
+            )}
+
+            {/* NEXT */}
+
+            <button
+              type="button"
+              aria-label="Next page"
+              disabled={currentPage >= totalPages}
+              onClick={() => onPageChange(currentPage + 1)}
+              className="flex size-9 items-center justify-center border border-neutral-300 text-neutral-700 transition-colors hover:bg-neutral-100 disabled:cursor-not-allowed disabled:opacity-40"
             >
-              <path d="m9 18 6-6-6-6" />
-            </svg>
-          </button>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="m9 18 6-6-6-6" />
+              </svg>
+            </button>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
