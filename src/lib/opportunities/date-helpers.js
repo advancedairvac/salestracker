@@ -1,6 +1,5 @@
-
 export function parseDate(value) {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
     return null;
   }
 
@@ -30,13 +29,21 @@ export function parseManualFollowUpDate(value) {
 
 export function addHours(date, hours) {
   const result = new Date(date);
-  result.setHours(result.getHours() + hours);
 
-  return result;
+  if (Number.isNaN(result.getTime()) || !Number.isFinite(hours)) {
+    throw new Error("Invalid date or hour value.");
+  }
+
+  return new Date(result.getTime() + hours * 60 * 60 * 1000);
 }
 
 export function addDays(date, days) {
   const result = new Date(date);
+
+  if (Number.isNaN(result.getTime()) || !Number.isInteger(days)) {
+    throw new Error("Invalid date or day value.");
+  }
+
   result.setDate(result.getDate() + days);
 
   return result;
@@ -44,6 +51,11 @@ export function addDays(date, days) {
 
 export function addOneMonth(date) {
   const result = new Date(date);
+
+  if (Number.isNaN(result.getTime())) {
+    throw new Error("Invalid date.");
+  }
+
   const originalDay = result.getDate();
 
   result.setDate(1);

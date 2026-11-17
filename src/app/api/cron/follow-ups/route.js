@@ -1,58 +1,34 @@
 
 import { NextResponse } from "next/server";
-
 import { dispatchFollowUpEmails } from "@/lib/notifications/follow-up-email-dispatcher";
-
-// ============================================
-// RUNTIME CONFIGURATION
-// ============================================
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
-
-// ============================================
-// CRON AUTHENTICATION
-// ============================================
 
 function isAuthorizedCronRequest(request) {
   const cronSecret = process.env.CRON_SECRET;
 
   if (!cronSecret) {
     console.error("CRON_SECRET is missing.");
-
     return false;
   }
 
-  const authorization = request.headers.get("authorization");
-
-  return authorization === `Bearer ${cronSecret}`;
+  return (
+    request.headers.get("authorization") === `Bearer ${cronSecret}`
+  );
 }
 
-// ============================================
-// CRON FOLLOW-UP HANDLER
-// ============================================
-
 export async function GET(request) {
-  // ------------------------------------------
-  // AUTHENTICATION
-  // ------------------------------------------
-
   if (!isAuthorizedCronRequest(request)) {
     return NextResponse.json(
       {
         success: false,
         error: "Unauthorized cron request.",
       },
-      {
-        status: 401,
-      },
+      { status: 401 },
     );
   }
-
-  // ------------------------------------------
-  // PROCESS FOLLOW-UPS
-  // ------------------------------------------
 
   try {
     console.log("Cron follow-up execution started.");
@@ -65,14 +41,14 @@ export async function GET(request) {
 
     return NextResponse.json(
       {
-        success: true,
-        message: "Follow-up processing completed.",
+        success: result.success,
+        message: result.success
+          ? "Follow-up processing completed successfully."
+          : "Follow-up processing completed with errors or failed notifications.",
         timestamp: new Date().toISOString(),
         result,
       },
-      {
-        status: 200,
-      },
+      { status: 200 },
     );
   } catch (error) {
     console.error("Cron follow-up execution failed:", error);
@@ -82,9 +58,7 @@ export async function GET(request) {
         success: false,
         error: "Follow-up processing failed.",
       },
-      {
-        status: 500,
-      },
+      { status: 500 },
     );
   }
 }

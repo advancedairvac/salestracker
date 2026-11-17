@@ -7,21 +7,16 @@ import {
   recoverStaleProcessingNotifications,
 } from "@/lib/notifications/notification-logger";
 
-// ============================================
-// FOLLOW-UP EMAIL DISPATCHER
-// ============================================
-
 export async function dispatchFollowUpEmails({
   now = new Date(),
   limit = 50,
 } = {}) {
-  console.log("Starting follow-up email dispatcher...");
-
   const summary = {
     recovery: {
       scanned: 0,
       recovered: 0,
       skipped: 0,
+      errors: [],
     },
     scanned: 0,
     claimed: 0,
@@ -33,45 +28,28 @@ export async function dispatchFollowUpEmails({
     errors: [],
   };
 
-  // ==========================================
-  // STEP 1: RECOVER STALE NOTIFICATIONS
-  // ==========================================
-
   try {
     summary.recovery = await recoverStaleProcessingNotifications({
       now,
       limit,
     });
-
-    console.log("Stale notification recovery completed.", summary.recovery);
   } catch (error) {
-    console.error("Notification recovery failed:", error);
-
     summary.errors.push({
       stage: "RECOVERY",
       reason: error.message,
     });
   }
 
-  // ==========================================
-  // STEP 2: CLAIM DUE FOLLOW-UPS
-  // ==========================================
-
   let processingResult;
 
   try {
-    processingResult = await processDueFollowUps({
-      now,
-      limit,
-    });
+    processingResult = await processDueFollowUps({ now, limit });
 
-    summary.scanned = processingResult.scanned ?? 0;
-    summary.claimed = processingResult.claimed ?? 0;
-    summary.skipped = processingResult.skipped ?? 0;
-    summary.skipReasons = processingResult.skipReasons ?? [];
+    summary.scanned = processingResult.scanned;
+    summary.claimed = processingResult.claimed;
+    summary.skipped = processingResult.skipped;
+    summary.skipReasons = processingResult.skipReasons;
   } catch (error) {
-    console.error("Failed to process due follow-ups:", error);
-
     summary.errors.push({
       stage: "PROCESSING",
       reason: error.message,
@@ -83,16 +61,8 @@ export async function dispatchFollowUpEmails({
     };
   }
 
-  // ==========================================
-  // STEP 3: PROCESS CLAIMED FOLLOW-UPS
-  // ==========================================
-
-  for (const claim of processingResult.claims ?? []) {
+  for (const claim of processingResult.claims) {
     let emailResult;
-
-    // ----------------------------------------
-    // SEND EMAIL
-    // ----------------------------------------
 
     try {
       emailResult = await sendFollowUpEmail({
@@ -101,11 +71,6 @@ export async function dispatchFollowUpEmails({
         body: claim.body,
       });
     } catch (error) {
-      console.error(
-        `Email sending failed for follow-up ${claim.followUpId}:`,
-        error,
-      );
-
       try {
         const failureResult = await markNotificationFailed({
           notificationLogId: claim.notificationLogId,
@@ -123,11 +88,6 @@ export async function dispatchFollowUpEmails({
           nextRetryAt: failureResult.nextRetryAt,
         });
       } catch (loggingError) {
-        console.error(
-          `Failed to record notification failure for ${claim.followUpId}:`,
-          loggingError,
-        );
-
         summary.errors.push({
           followUpId: claim.followUpId,
           reason: error.message,
@@ -138,10 +98,6 @@ export async function dispatchFollowUpEmails({
       continue;
     }
 
-    // ----------------------------------------
-    // EMAIL ACCEPTED BY RESEND
-    // ----------------------------------------
-
     try {
       await markNotificationSent({
         notificationLogId: claim.notificationLogId,
@@ -150,17 +106,8 @@ export async function dispatchFollowUpEmails({
       });
 
       summary.sent++;
-
-      console.log(
-        `Email accepted and logged for follow-up ${claim.followUpId}.`,
-      );
     } catch (error) {
       summary.acceptedButUnlogged++;
-
-      console.error(
-        `Email accepted by Resend, but database logging failed for ${claim.followUpId}:`,
-        error,
-      );
 
       summary.errors.push({
         followUpId: claim.followUpId,
@@ -171,15 +118,16 @@ export async function dispatchFollowUpEmails({
     }
   }
 
-  // ==========================================
-  // STEP 4: FINAL SUMMARY
-  // ==========================================
+  const hasRecoveryErrors = summary.recovery.errors?.length > 0;
 
-  console.log("Follow-up email dispatcher completed.");
-  console.log(summary);
+  const hasSystemErrors = summary.errors.some(
+    (item) =>
+      ["RECOVERY", "PROCESSING"].includes(item.stage) ||
+      item.reason === "EMAIL_ACCEPTED_BUT_DATABASE_UPDATE_FAILED",
+  );
 
   return {
-    success: summary.errors.length === 0,
+    success: !hasRecoveryErrors && !hasSystemErrors && summary.failed === 0,
     ...summary,
   };
 }

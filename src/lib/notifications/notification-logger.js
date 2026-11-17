@@ -1,17 +1,8 @@
-
 import { prisma } from "@/lib/prisma";
-
-// ============================================
-// RETRY & RECOVERY CONFIGURATION
-// ============================================
 
 const BASE_RETRY_DELAY_MINUTES = 5;
 const STALE_PROCESSING_MINUTES = 10;
 const MAX_RECOVERY_BATCH_SIZE = 50;
-
-// ============================================
-// CALCULATE NEXT RETRY TIME
-// ============================================
 
 function getNextRetryAt(attemptNumber, now = new Date()) {
   const delayMinutes =
@@ -20,47 +11,18 @@ function getNextRetryAt(attemptNumber, now = new Date()) {
   return new Date(now.getTime() + delayMinutes * 60 * 1000);
 }
 
-// ============================================
-// MARK NOTIFICATION AS SENT
-// ============================================
-
 export async function markNotificationSent({
   notificationLogId,
   followUpId,
   providerMessageId,
 }) {
   if (!notificationLogId || !followUpId) {
-    throw new Error(
-      "Notification log ID and follow-up ID are required.",
-    );
+    throw new Error("Notification log ID and follow-up ID are required.");
   }
 
   const now = new Date();
 
   return prisma.$transaction(async (tx) => {
-    const log = await tx.notificationLog.findUnique({
-      where: {
-        id: notificationLogId,
-      },
-      select: {
-        id: true,
-        followUpId: true,
-        status: true,
-      },
-    });
-
-    if (!log || log.followUpId !== followUpId) {
-      throw new Error("Notification log not found.");
-    }
-
-    if (log.status !== "PROCESSING") {
-      throw new Error("Notification log is not processing.");
-    }
-
-    // ----------------------------------------
-    // UPDATE NOTIFICATION LOG
-    // ----------------------------------------
-
     const logUpdate = await tx.notificationLog.updateMany({
       where: {
         id: notificationLogId,
@@ -77,19 +39,14 @@ export async function markNotificationSent({
     });
 
     if (logUpdate.count !== 1) {
-      throw new Error(
-        "Notification log was already processed.",
-      );
+      throw new Error("Notification log was already processed or not found.");
     }
 
-    // ----------------------------------------
-    // COMPLETE FOLLOW-UP
-    // ----------------------------------------
-
-    await tx.followUp.updateMany({
+    const followUpUpdate = await tx.followUp.updateMany({
       where: {
         id: followUpId,
         status: "PENDING",
+        isActive: true,
       },
       data: {
         status: "COMPLETED",
@@ -101,6 +58,10 @@ export async function markNotificationSent({
       },
     });
 
+    if (followUpUpdate.count !== 1) {
+      throw new Error("Follow-up could not be marked as completed.");
+    }
+
     return {
       success: true,
       status: "SENT",
@@ -109,10 +70,6 @@ export async function markNotificationSent({
   });
 }
 
-// ============================================
-// MARK NOTIFICATION AS FAILED
-// ============================================
-
 export async function markNotificationFailed({
   notificationLogId,
   followUpId,
@@ -120,12 +77,10 @@ export async function markNotificationFailed({
   error,
 }) {
   if (!notificationLogId || !followUpId) {
-    throw new Error(
-      "Notification log ID and follow-up ID are required.",
-    );
+    throw new Error("Notification log ID and follow-up ID are required.");
   }
 
-  if (!attemptNumber || attemptNumber < 1) {
+  if (!Number.isInteger(attemptNumber) || attemptNumber < 1) {
     throw new Error("Valid attempt number is required.");
   }
 
@@ -137,14 +92,8 @@ export async function markNotificationFailed({
   const now = new Date();
 
   return prisma.$transaction(async (tx) => {
-    // ----------------------------------------
-    // GET FOLLOW-UP
-    // ----------------------------------------
-
     const followUp = await tx.followUp.findUnique({
-      where: {
-        id: followUpId,
-      },
+      where: { id: followUpId },
       select: {
         id: true,
         status: true,
@@ -158,14 +107,8 @@ export async function markNotificationFailed({
       throw new Error("Follow-up not found.");
     }
 
-    // ----------------------------------------
-    // GET NOTIFICATION LOG
-    // ----------------------------------------
-
     const log = await tx.notificationLog.findUnique({
-      where: {
-        id: notificationLogId,
-      },
+      where: { id: notificationLogId },
       select: {
         id: true,
         followUpId: true,
@@ -179,36 +122,21 @@ export async function markNotificationFailed({
       log.followUpId !== followUpId ||
       log.attemptNumber !== attemptNumber
     ) {
-      throw new Error(
-        "Notification log does not match the follow-up attempt.",
-      );
+      throw new Error("Notification log does not match the follow-up attempt.");
     }
 
     if (log.status !== "PROCESSING") {
       throw new Error("Notification log is not processing.");
     }
 
-    // ----------------------------------------
-    // CALCULATE RETRY
-    // ----------------------------------------
-
-    const attempts = Math.max(
-      attemptNumber,
-      followUp.notificationAttempts,
-    );
+    const attempts = Math.max(attemptNumber, followUp.notificationAttempts);
 
     const canRetry =
       followUp.status === "PENDING" &&
       followUp.isActive &&
       attempts < followUp.maxAttempts;
 
-    const nextRetryAt = canRetry
-      ? getNextRetryAt(attempts, now)
-      : null;
-
-    // ----------------------------------------
-    // MARK LOG AS FAILED
-    // ----------------------------------------
+    const nextRetryAt = canRetry ? getNextRetryAt(attempts, now) : null;
 
     const logUpdate = await tx.notificationLog.updateMany({
       where: {
@@ -224,14 +152,8 @@ export async function markNotificationFailed({
     });
 
     if (logUpdate.count !== 1) {
-      throw new Error(
-        "Notification log was already processed.",
-      );
+      throw new Error("Notification log was already processed.");
     }
-
-    // ----------------------------------------
-    // UPDATE FOLLOW-UP RETRY STATE
-    // ----------------------------------------
 
     await tx.followUp.updateMany({
       where: {
@@ -241,11 +163,7 @@ export async function markNotificationFailed({
       data: {
         nextRetryAt,
         lastNotificationError: errorMessage,
-        ...(canRetry
-          ? {}
-          : {
-              isActive: false,
-            }),
+        ...(!canRetry ? { isActive: false } : {}),
       },
     });
 
@@ -260,26 +178,16 @@ export async function markNotificationFailed({
   });
 }
 
-// ============================================
-// RECOVER STALE PROCESSING NOTIFICATIONS
-// ============================================
-
 export async function recoverStaleProcessingNotifications({
   now = new Date(),
   limit = MAX_RECOVERY_BATCH_SIZE,
 } = {}) {
-  const cutoff = new Date(
-    now.getTime() - STALE_PROCESSING_MINUTES * 60 * 1000,
-  );
-
   const safeLimit = Math.min(
-    Math.max(Number(limit) || MAX_RECOVERY_BATCH_SIZE, 1),
+    Math.max(Math.floor(Number(limit) || MAX_RECOVERY_BATCH_SIZE), 1),
     MAX_RECOVERY_BATCH_SIZE,
   );
 
-  // ------------------------------------------
-  // FIND STALE PROCESSING LOGS
-  // ------------------------------------------
+  const cutoff = new Date(now.getTime() - STALE_PROCESSING_MINUTES * 60 * 1000);
 
   const staleLogs = await prisma.notificationLog.findMany({
     where: {
@@ -306,59 +214,45 @@ export async function recoverStaleProcessingNotifications({
     errors: [],
   };
 
-  // ------------------------------------------
-  // RECOVER EACH STALE LOG
-  // ------------------------------------------
-
   for (const log of staleLogs) {
     try {
-      const recovered = await prisma.$transaction(
-        async (tx) => {
-          // Atomically move PROCESSING to FAILED.
-          // Do not automatically resend an email whose
-          // delivery outcome is unknown.
-
-          const updateResult =
-            await tx.notificationLog.updateMany({
-              where: {
-                id: log.id,
-                status: "PROCESSING",
-                processingAt: {
-                  not: null,
-                  lte: cutoff,
-                },
-              },
-              data: {
-                status: "FAILED",
-                processingAt: null,
-                errorMessage:
-                  "Stale PROCESSING notification. Email delivery outcome is unknown. Manual review is required.",
-              },
-            });
-
-          if (updateResult.count !== 1) {
-            return false;
-          }
-
-          // Deactivate the pending follow-up to prevent
-          // an automatic duplicate email.
-
-          await tx.followUp.updateMany({
-            where: {
-              id: log.followUpId,
-              status: "PENDING",
+      const recovered = await prisma.$transaction(async (tx) => {
+        const updateResult = await tx.notificationLog.updateMany({
+          where: {
+            id: log.id,
+            status: "PROCESSING",
+            processingAt: {
+              not: null,
+              lte: cutoff,
             },
-            data: {
-              isActive: false,
-              nextRetryAt: null,
-              lastNotificationError:
-                "Email delivery outcome is unknown. Manual review is required before retrying.",
-            },
-          });
+          },
+          data: {
+            status: "FAILED",
+            processingAt: null,
+            errorMessage:
+              "Stale PROCESSING notification. Email delivery outcome is unknown. Manual review is required.",
+          },
+        });
 
-          return true;
-        },
-      );
+        if (updateResult.count !== 1) {
+          return false;
+        }
+
+        await tx.followUp.updateMany({
+          where: {
+            id: log.followUpId,
+            status: "PENDING",
+          },
+          data: {
+            isActive: false,
+            nextRetryAt: null,
+            lastNotificationError:
+              "Email delivery outcome is unknown. Manual review is required before retrying.",
+          },
+        });
+
+        return true;
+      });
 
       if (recovered) {
         results.recovered++;
@@ -367,16 +261,12 @@ export async function recoverStaleProcessingNotifications({
       }
     } catch (error) {
       results.skipped++;
-
       results.errors.push({
         notificationLogId: log.id,
         reason: error.message,
       });
 
-      console.error(
-        `Failed to recover notification ${log.id}:`,
-        error,
-      );
+      console.error(`Failed to recover notification ${log.id}:`, error);
     }
   }
 

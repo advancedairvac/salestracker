@@ -1,24 +1,30 @@
 
 import { resend } from "@/lib/email/resend";
 
-// ============================================
-// SEND FOLLOW-UP EMAIL
-// ============================================
-
 export async function sendFollowUpEmail({
   recipientEmail,
   subject,
   body,
 }) {
-  if (!recipientEmail) {
-    throw new Error("Recipient email is required.");
+  const recipient = recipientEmail?.trim();
+
+  if (
+    !recipient ||
+    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipient)
+  ) {
+    throw new Error("A valid recipient email is required.");
   }
 
-  if (!subject || !body) {
+  if (
+    typeof subject !== "string" ||
+    !subject.trim() ||
+    typeof body !== "string" ||
+    !body.trim()
+  ) {
     throw new Error("Email subject and body are required.");
   }
 
-  const from = process.env.RESEND_FROM_EMAIL;
+  const from = process.env.RESEND_FROM_EMAIL?.trim();
 
   if (!from) {
     throw new Error("RESEND_FROM_EMAIL is missing.");
@@ -26,8 +32,8 @@ export async function sendFollowUpEmail({
 
   const { data, error } = await resend.emails.send({
     from,
-    to: [recipientEmail],
-    subject,
+    to: [recipient],
+    subject: subject.trim(),
     text: body,
   });
 

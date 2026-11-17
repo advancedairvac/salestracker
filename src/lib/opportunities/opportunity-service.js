@@ -46,6 +46,7 @@ export async function searchOpportunityCustomers(query) {
         },
       ],
     },
+
     select: {
       id: true,
       stCustomerId: true,
@@ -55,15 +56,17 @@ export async function searchOpportunityCustomers(query) {
       phone: true,
       location: true,
     },
+
     orderBy: {
       businessName: "asc",
     },
+
     take: 10,
   });
 }
 
 // ============================================
-// ASSIGNMENT VALIDATION - CREATE
+// SHARED ASSIGNMENT VALIDATION
 // ============================================
 
 async function getAssignedToId(user, requestedAssignedToId) {
@@ -71,7 +74,7 @@ async function getAssignedToId(user, requestedAssignedToId) {
     return null;
   }
 
-  // Salesperson can only assign opportunities to themselves.
+  // Salespersons can only assign opportunities to themselves.
   if (user.role === "SALESPERSON") {
     return user.id;
   }
@@ -84,7 +87,7 @@ async function getAssignedToId(user, requestedAssignedToId) {
     return user.id;
   }
 
-  // Admin can assign to an active Admin or Salesperson.
+  // Admin can assign to any active Admin or Salesperson.
   const assignedUser = await prisma.user.findFirst({
     where: {
       id: assignedToId,
@@ -93,6 +96,7 @@ async function getAssignedToId(user, requestedAssignedToId) {
         in: ["ADMIN", "SALESPERSON"],
       },
     },
+
     select: {
       id: true,
     },
@@ -102,40 +106,11 @@ async function getAssignedToId(user, requestedAssignedToId) {
 }
 
 // ============================================
-// ASSIGNMENT VALIDATION - UPDATE
+// SHARED ROLE VALIDATION
 // ============================================
 
-async function getUpdatedAssignedToId(user, requestedAssignedToId) {
-  if (!user || !["ADMIN", "SALESPERSON"].includes(user.role)) {
-    return null;
-  }
-
-  // Salesperson must remain assigned to themselves.
-  if (user.role === "SALESPERSON") {
-    return user.id;
-  }
-
-  // Admin defaults to self.
-  const assignedToId = requestedAssignedToId || user.id;
-
-  // Admin assigning to themselves.
-  if (assignedToId === user.id) {
-    return user.id;
-  }
-
-  // Admin can assign to an active Salesperson.
-  const assignedUser = await prisma.user.findFirst({
-    where: {
-      id: assignedToId,
-      isActive: true,
-      role: "SALESPERSON",
-    },
-    select: {
-      id: true,
-    },
-  });
-
-  return assignedUser?.id || null;
+function isAuthorizedUser(user) {
+  return Boolean(user && ["ADMIN", "SALESPERSON"].includes(user.role));
 }
 
 // ============================================
@@ -145,10 +120,17 @@ async function getUpdatedAssignedToId(user, requestedAssignedToId) {
 export async function createOpportunityService({ user, formData }) {
   const values = getFormValues(formData);
 
-  // Role validation.
-  if (!user || !["ADMIN", "SALESPERSON"].includes(user.role)) {
+  // ============================================
+  // ROLE VALIDATION
+  // ============================================
+
+  if (!isAuthorizedUser(user)) {
     return getErrorState("permission", values);
   }
+
+  // ============================================
+  // EXTRACT FORM VALUES
+  // ============================================
 
   const {
     opportunityDate: opportunityDateInput,
@@ -188,7 +170,7 @@ export async function createOpportunityService({ user, formData }) {
   }
 
   // ============================================
-  // DATE VALIDATION
+  // OPPORTUNITY DATE VALIDATION
   // ============================================
 
   const opportunityDate = parseDate(opportunityDateInput);
@@ -198,7 +180,7 @@ export async function createOpportunityService({ user, formData }) {
   }
 
   // ============================================
-  // MANUAL FOLLOW-UP VALIDATION
+  // MANUAL FOLLOW-UP DATE VALIDATION
   // ============================================
 
   const manualFollowUpDate = followUpDateInput
@@ -217,7 +199,15 @@ export async function createOpportunityService({ user, formData }) {
   // ASSIGNMENT VALIDATION
   // ============================================
 
-  const assignedToId = await getAssignedToId(user, requestedAssignedToId);
+  let assignedToId;
+
+  try {
+    assignedToId = await getAssignedToId(user, requestedAssignedToId);
+  } catch (error) {
+    console.error("Opportunity assignment validation failed:", error);
+
+    return getErrorState("assignment", values);
+  }
 
   if (!assignedToId) {
     return getErrorState("assignment", values);
@@ -239,14 +229,19 @@ export async function createOpportunityService({ user, formData }) {
 
   try {
     await prisma.$transaction(async (tx) => {
-      // Find or create customer.
-      // Create does not perform name-based duplicate matching.
+      // ----------------------------------------
+      // FIND OR CREATE CUSTOMER
+      // ----------------------------------------
+
       const customer = await findOrCreateOpportunityCustomer(tx, values, {
         matchNames: false,
         updateMode: "preserve",
       });
 
-      // Create opportunity.
+      // ----------------------------------------
+      // CREATE OPPORTUNITY
+      // ----------------------------------------
+
       const opportunity = await tx.opportunity.create({
         data: {
           customerId: customer.id,
@@ -261,7 +256,10 @@ export async function createOpportunityService({ user, formData }) {
         },
       });
 
-      // Create follow-up schedule.
+      // ----------------------------------------
+      // CREATE FOLLOW-UP SCHEDULE
+      // ----------------------------------------
+
       const schedule = await tx.followUpSchedule.create({
         data: {
           opportunityId: opportunity.id,
@@ -272,43 +270,58 @@ export async function createOpportunityService({ user, formData }) {
         },
       });
 
-      // Generate standard follow-ups.
+      // ----------------------------------------
+      // GENERATE STANDARD FOLLOW-UPS
+      // ----------------------------------------
+
       const standardFollowUps = getStandardFollowUps(opportunityDate);
 
       const followUpRecords = standardFollowUps.map((item) => ({
         opportunityId: opportunity.id,
         scheduleId: schedule.id,
         assignedToId,
+
         eventType: item.eventType,
         type: item.type,
         sequence: item.sequence,
         dueAt: item.dueAt,
+
         status: "PENDING",
         scheduleType: "STANDARD",
         isActive: !hasManualFollowUp,
+
         notes: "Automatically scheduled standard follow-up.",
       }));
 
-      // Add manual follow-up record.
+      // ----------------------------------------
+      // GENERATE MANUAL FOLLOW-UP
+      // ----------------------------------------
+
       const manualFollowUp = getManualFollowUp(manualFollowUpDate);
 
       followUpRecords.push({
         opportunityId: opportunity.id,
         scheduleId: schedule.id,
         assignedToId,
+
         eventType: manualFollowUp.eventType,
         type: manualFollowUp.type,
         sequence: manualFollowUp.sequence,
         dueAt: manualFollowUp.dueAt,
+
         status: "PENDING",
         scheduleType: "MANUAL",
         isActive: hasManualFollowUp,
+
         notes: hasManualFollowUp
           ? "Manually scheduled CALL follow-up."
           : "Manual follow-up not scheduled.",
       });
 
-      // Save all follow-ups.
+      // ----------------------------------------
+      // SAVE ALL FOLLOW-UPS
+      // ----------------------------------------
+
       await tx.followUp.createMany({
         data: followUpRecords,
       });
@@ -335,9 +348,13 @@ export async function updateOpportunityService({ user, formData }) {
 
   const requestedAssignedToId = values.assignedToId;
 
-  // Preserve submitted values for form errors.
+  // ============================================
+  // PRESERVE FORM VALUES FOR ERRORS
+  // ============================================
+
   const errorValues = {
     ...values,
+
     assignedToId:
       user?.role === "SALESPERSON"
         ? user.id
@@ -348,7 +365,7 @@ export async function updateOpportunityService({ user, formData }) {
   // ROLE VALIDATION
   // ============================================
 
-  if (!user || !["ADMIN", "SALESPERSON"].includes(user.role)) {
+  if (!isAuthorizedUser(user)) {
     return getErrorState("permission", errorValues);
   }
 
@@ -396,7 +413,7 @@ export async function updateOpportunityService({ user, formData }) {
   }
 
   // ============================================
-  // DATE VALIDATION
+  // OPPORTUNITY DATE VALIDATION
   // ============================================
 
   const opportunityDate = parseDate(opportunityDateInput);
@@ -409,10 +426,15 @@ export async function updateOpportunityService({ user, formData }) {
   // ASSIGNMENT VALIDATION
   // ============================================
 
-  const assignedToId = await getUpdatedAssignedToId(
-    user,
-    requestedAssignedToId,
-  );
+  let assignedToId;
+
+  try {
+    assignedToId = await getAssignedToId(user, requestedAssignedToId);
+  } catch (error) {
+    console.error("Opportunity assignment validation failed:", error);
+
+    return getErrorState("assignment", errorValues);
+  }
 
   if (!assignedToId) {
     return getErrorState("assignment", errorValues);
@@ -430,11 +452,15 @@ export async function updateOpportunityService({ user, formData }) {
 
   try {
     await prisma.$transaction(async (tx) => {
-      // Find opportunity.
+      // ----------------------------------------
+      // FIND OPPORTUNITY
+      // ----------------------------------------
+
       const opportunity = await tx.opportunity.findUnique({
         where: {
           id: opportunityId,
         },
+
         select: {
           id: true,
           customerId: true,
@@ -443,24 +469,29 @@ export async function updateOpportunityService({ user, formData }) {
         },
       });
 
-      // Opportunity not found.
       if (!opportunity) {
         throw new Error("OPPORTUNITY_NOT_FOUND");
       }
 
-      // Only OPEN opportunities can be edited.
+      // ----------------------------------------
+      // STATUS VALIDATION
+      // ----------------------------------------
+
       if (opportunity.status !== "OPEN") {
         throw new Error("OPPORTUNITY_NOT_OPEN");
       }
 
-      // Salesperson can only edit their own opportunities.
+      // ----------------------------------------
+      // SALESPERSON PERMISSION VALIDATION
+      // ----------------------------------------
+
       if (user.role === "SALESPERSON" && opportunity.assignedToId !== user.id) {
         throw new Error("OPPORTUNITY_PERMISSION_DENIED");
       }
 
-      // ============================================
+      // ----------------------------------------
       // FIND OR UPDATE CUSTOMER
-      // ============================================
+      // ----------------------------------------
 
       const customer = await findOrCreateOpportunityCustomer(
         tx,
@@ -474,14 +505,17 @@ export async function updateOpportunityService({ user, formData }) {
         },
       );
 
-      // ============================================
+      // ----------------------------------------
       // UPDATE OPPORTUNITY
-      // ============================================
+      // ----------------------------------------
 
-      await tx.opportunity.update({
+      const updateResult = await tx.opportunity.updateMany({
         where: {
           id: opportunityId,
+          status: "OPEN",
+          ...(user.role === "SALESPERSON" ? { assignedToId: user.id } : {}),
         },
+
         data: {
           customerId: customer.id,
           opportunityDate,
@@ -493,9 +527,13 @@ export async function updateOpportunityService({ user, formData }) {
         },
       });
 
-      // ============================================
+      if (updateResult.count !== 1) {
+        throw new Error("OPPORTUNITY_ALREADY_UPDATED");
+      }
+
+      // ----------------------------------------
       // RECALCULATE PENDING STANDARD FOLLOW-UPS
-      // ============================================
+      // ----------------------------------------
 
       const updatedStandardFollowUps = getStandardFollowUps(opportunityDate);
 
@@ -507,6 +545,7 @@ export async function updateOpportunityService({ user, formData }) {
             scheduleType: "STANDARD",
             status: "PENDING",
           },
+
           data: {
             eventType: item.eventType,
             type: item.type,
@@ -516,9 +555,9 @@ export async function updateOpportunityService({ user, formData }) {
         });
       }
 
-      // ============================================
+      // ----------------------------------------
       // UPDATE PENDING MANUAL FOLLOW-UP ASSIGNMENT
-      // ============================================
+      // ----------------------------------------
 
       await tx.followUp.updateMany({
         where: {
@@ -526,19 +565,21 @@ export async function updateOpportunityService({ user, formData }) {
           scheduleType: "MANUAL",
           status: "PENDING",
         },
+
         data: {
           assignedToId,
         },
       });
 
-      // ============================================
+      // ----------------------------------------
       // UPDATE FOLLOW-UP SCHEDULE PRESENTATION DATE
-      // ============================================
+      // ----------------------------------------
 
       await tx.followUpSchedule.updateMany({
         where: {
           opportunityId,
         },
+
         data: {
           presentationAt: opportunityDate,
         },
@@ -561,6 +602,10 @@ export async function updateOpportunityService({ user, formData }) {
 
     if (error.message === "OPPORTUNITY_PERMISSION_DENIED") {
       return getErrorState("permission", errorValues);
+    }
+
+    if (error.message === "OPPORTUNITY_ALREADY_UPDATED") {
+      return getErrorState("update", errorValues);
     }
 
     return getErrorState("update", errorValues);
