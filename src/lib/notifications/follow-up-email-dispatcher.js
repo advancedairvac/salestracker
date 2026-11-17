@@ -1,3 +1,4 @@
+
 import { processDueFollowUps } from "@/lib/notifications/follow-up-processor";
 import { sendFollowUpEmail } from "@/lib/email/send-follow-up-email";
 
@@ -43,7 +44,10 @@ export async function dispatchFollowUpEmails({
   let processingResult;
 
   try {
-    processingResult = await processDueFollowUps({ now, limit });
+    processingResult = await processDueFollowUps({
+      now,
+      limit,
+    });
 
     summary.scanned = processingResult.scanned;
     summary.claimed = processingResult.claimed;
@@ -69,6 +73,7 @@ export async function dispatchFollowUpEmails({
         recipientEmail: claim.recipientEmail,
         subject: claim.subject,
         body: claim.body,
+        text: claim.text,
       });
     } catch (error) {
       try {
@@ -118,16 +123,21 @@ export async function dispatchFollowUpEmails({
     }
   }
 
-  const hasRecoveryErrors = summary.recovery.errors?.length > 0;
+  const hasRecoveryErrors =
+    summary.recovery.errors?.length > 0;
 
   const hasSystemErrors = summary.errors.some(
     (item) =>
       ["RECOVERY", "PROCESSING"].includes(item.stage) ||
-      item.reason === "EMAIL_ACCEPTED_BUT_DATABASE_UPDATE_FAILED",
+      item.reason ===
+        "EMAIL_ACCEPTED_BUT_DATABASE_UPDATE_FAILED",
   );
 
   return {
-    success: !hasRecoveryErrors && !hasSystemErrors && summary.failed === 0,
+    success:
+      !hasRecoveryErrors &&
+      !hasSystemErrors &&
+      summary.failed === 0,
     ...summary,
   };
 }

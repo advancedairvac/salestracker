@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { renderFollowUpEmail } from "@/lib/email/follow-up-email-template";
 
 const MAX_BATCH_SIZE = 50;
 const ACTIVE_SCHEDULE_MODES = ["STANDARD", "MANUAL"];
@@ -65,6 +66,7 @@ export async function getDueFollowUps({
               isActive: true,
             },
           },
+          customer: true,
         },
       },
       schedule: true,
@@ -105,6 +107,7 @@ export async function claimEmailFollowUp(followUpId, now = new Date()) {
                 isActive: true,
               },
             },
+            customer: true,
           },
         },
         schedule: true,
@@ -112,38 +115,62 @@ export async function claimEmailFollowUp(followUpId, now = new Date()) {
     });
 
     if (!followUp) {
-      return { claimed: false, reason: "FOLLOW_UP_NOT_FOUND" };
+      return {
+        claimed: false,
+        reason: "FOLLOW_UP_NOT_FOUND",
+      };
     }
 
     if (followUp.status !== "PENDING" || !followUp.isActive) {
-      return { claimed: false, reason: "FOLLOW_UP_NOT_ELIGIBLE" };
+      return {
+        claimed: false,
+        reason: "FOLLOW_UP_NOT_ELIGIBLE",
+      };
     }
 
     if (!followUp.dueAt || followUp.dueAt > now) {
-      return { claimed: false, reason: "FOLLOW_UP_NOT_DUE" };
+      return {
+        claimed: false,
+        reason: "FOLLOW_UP_NOT_DUE",
+      };
     }
 
     if (followUp.notificationAttempts >= followUp.maxAttempts) {
-      return { claimed: false, reason: "MAX_ATTEMPTS_REACHED" };
+      return {
+        claimed: false,
+        reason: "MAX_ATTEMPTS_REACHED",
+      };
     }
 
     if (followUp.nextRetryAt && followUp.nextRetryAt > now) {
-      return { claimed: false, reason: "RETRY_NOT_DUE" };
+      return {
+        claimed: false,
+        reason: "RETRY_NOT_DUE",
+      };
     }
 
     if (!followUp.schedule?.isActive) {
-      return { claimed: false, reason: "SCHEDULE_INACTIVE" };
+      return {
+        claimed: false,
+        reason: "SCHEDULE_INACTIVE",
+      };
     }
 
     if (
       !ACTIVE_SCHEDULE_MODES.includes(followUp.schedule.mode) ||
       followUp.schedule.mode !== followUp.scheduleType
     ) {
-      return { claimed: false, reason: "SCHEDULE_MODE_MISMATCH" };
+      return {
+        claimed: false,
+        reason: "SCHEDULE_MODE_MISMATCH",
+      };
     }
 
     if (followUp.opportunity?.status !== "OPEN") {
-      return { claimed: false, reason: "OPPORTUNITY_NOT_OPEN" };
+      return {
+        claimed: false,
+        reason: "OPPORTUNITY_NOT_OPEN",
+      };
     }
 
     const assignedUser = followUp.opportunity.assignedTo;
@@ -156,18 +183,32 @@ export async function claimEmailFollowUp(followUpId, now = new Date()) {
       };
     }
 
+    if (!followUp.opportunity.customer) {
+      return {
+        claimed: false,
+        reason: "CUSTOMER_NOT_FOUND",
+      };
+    }
+
     const existingProcessingLog = await tx.notificationLog.findFirst({
       where: {
         followUpId: followUp.id,
         status: "PROCESSING",
       },
-      select: { id: true },
+      select: {
+        id: true,
+      },
     });
 
     if (existingProcessingLog) {
-      return { claimed: false, reason: "NOTIFICATION_ALREADY_PROCESSING" };
+      return {
+        claimed: false,
+        reason: "NOTIFICATION_ALREADY_PROCESSING",
+      };
     }
 
+    // Use the database template if available.
+    // Otherwise use the default message from the template helper.
     const template = await tx.emailTemplate.findFirst({
       where: {
         userId: null,
@@ -176,11 +217,14 @@ export async function claimEmailFollowUp(followUpId, now = new Date()) {
       },
     });
 
-    if (!template) {
-      return { claimed: false, reason: "EMAIL_TEMPLATE_NOT_FOUND" };
-    }
+    const email = renderFollowUpEmail({
+      opportunity: followUp.opportunity,
+      followUp,
+      customMessage: template?.body,
+    });
 
     const attemptNumber = followUp.notificationAttempts + 1;
+
     const eventKey = `followup:${followUp.id}:attempt:${attemptNumber}`;
 
     const claimResult = await tx.followUp.updateMany({
@@ -214,7 +258,9 @@ export async function claimEmailFollowUp(followUpId, now = new Date()) {
       },
 
       data: {
-        notificationAttempts: { increment: 1 },
+        notificationAttempts: {
+          increment: 1,
+        },
         nextRetryAt: null,
       },
     });
@@ -230,7 +276,7 @@ export async function claimEmailFollowUp(followUpId, now = new Date()) {
       data: {
         followUpId: followUp.id,
         scheduleId: followUp.scheduleId,
-        templateId: template.id,
+        templateId: template?.id || null,
         eventKey,
         eventType: followUp.eventType,
         attemptNumber,
@@ -238,8 +284,8 @@ export async function claimEmailFollowUp(followUpId, now = new Date()) {
         status: "PROCESSING",
         processingAt: now,
         scheduledAt: followUp.dueAt,
-        subjectSnapshot: template.subject,
-        bodySnapshot: template.body,
+        subjectSnapshot: email.subject,
+        bodySnapshot: email.html,
       },
     });
 
@@ -251,8 +297,9 @@ export async function claimEmailFollowUp(followUpId, now = new Date()) {
       recipientEmail,
       eventType: followUp.eventType,
       followUpType: followUp.type,
-      subject: template.subject,
-      body: template.body,
+      subject: email.subject,
+      body: email.html,
+      text: email.text,
     };
   });
 }
@@ -261,7 +308,10 @@ export async function processDueFollowUps({
   now = new Date(),
   limit = MAX_BATCH_SIZE,
 } = {}) {
-  const candidates = await getDueFollowUps({ now, limit });
+  const candidates = await getDueFollowUps({
+    now,
+    limit,
+  });
 
   const results = {
     scanned: candidates.length,
@@ -280,6 +330,7 @@ export async function processDueFollowUps({
         results.claims.push(claim);
       } else {
         results.skipped++;
+
         results.skipReasons.push({
           followUpId: followUp.id,
           eventType: followUp.eventType,

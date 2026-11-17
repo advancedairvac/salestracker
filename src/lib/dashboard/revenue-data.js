@@ -9,7 +9,7 @@ import {
 
 import { resolveSelectedDateRange } from "@/lib/dashboard/date-range-helpers";
 
-import { getRevenueDateRanges, isWithinRange } from "@/lib/date/date-utils";
+import { isWithinRange } from "@/lib/date/date-utils";
 
 import { getGoalConfiguration, calculateTeamGoal } from "@/lib/date/goal-utils";
 
@@ -18,8 +18,6 @@ import {
   getCompletedJobs,
   calculateJobRevenue,
 } from "@/lib/dashboard/servicetitan-helpers";
-
-import { getCachedYtdRevenueJobs } from "@/lib/dashboard/servicetitan-jobs";
 
 import { getDashboardTeamMembers } from "@/lib/dashboard/dashboard-data";
 
@@ -31,16 +29,7 @@ const ALLOWED_PAGE_SIZES = [10, 20, 50, 100];
 
 const SERVICE_TITAN_PAGE_SIZE = 500;
 const MAX_SERVICE_TITAN_PAGES = 1000;
-
-const REVENUE_RANGE_CACHE_TTL = 5 * 60 * 1000;
 const REVENUE_PAGE_CONCURRENCY = 4;
-
-// ============================================
-// DATE RANGE CACHE
-// ============================================
-
-const revenueRangeCache = new Map();
-const revenueRangeFetchPromises = new Map();
 
 // ============================================
 // QUERY HELPERS
@@ -87,16 +76,6 @@ export function getSalesRevenueDateRange(searchParams = {}) {
 }
 
 // ============================================
-// CHECK WHETHER RANGE IS WITHIN CURRENT YEAR
-// ============================================
-
-function isRangeWithinCurrentYear({ start, endExclusive }) {
-  const { yearStart, nextYearStart } = getRevenueDateRanges();
-
-  return start >= yearStart && endExclusive <= nextYearStart;
-}
-
-// ============================================
 // REVENUE PAGINATION PARAMETERS
 // ============================================
 
@@ -109,18 +88,24 @@ function getRevenuePagination(searchParams = {}) {
 
 // ============================================
 // FETCH ALL MATCHING SERVICE TITAN JOBS
-// CONTROLLED PARALLEL PAGINATION
+// NO CACHE - ALWAYS FETCH LIVE DATA
 // ============================================
 
 async function fetchAllRevenueJobs({ start, endExclusive } = {}) {
-  const completedOnOrAfter = start.toISOString();
-  const completedBefore = endExclusive.toISOString();
+  if (
+    !(start instanceof Date) ||
+    !(endExclusive instanceof Date) ||
+    Number.isNaN(start.getTime()) ||
+    Number.isNaN(endExclusive.getTime())
+  ) {
+    throw new Error("Invalid revenue date range.");
+  }
 
   const filters = {
     pageSize: SERVICE_TITAN_PAGE_SIZE,
     jobStatus: "Completed",
-    completedOnOrAfter,
-    completedBefore,
+    completedOnOrAfter: start.toISOString(),
+    completedBefore: endExclusive.toISOString(),
   };
 
   const firstPage = await getRevenueJobs({
@@ -149,6 +134,7 @@ async function fetchAllRevenueJobs({ start, endExclusive } = {}) {
 
   const allJobs = [...firstPage.data];
 
+  // Fetch remaining pages in controlled parallel batches.
   for (
     let startPage = 2;
     startPage <= totalPages;
@@ -186,6 +172,7 @@ async function fetchAllRevenueJobs({ start, endExclusive } = {}) {
     );
   }
 
+  // Remove duplicate jobs and validate the final result.
   const uniqueJobs = [];
   const seenJobIds = new Set();
 
@@ -210,64 +197,12 @@ async function fetchAllRevenueJobs({ start, endExclusive } = {}) {
 }
 
 // ============================================
-// GET CACHED REVENUE JOBS FOR DATE RANGE
-// ============================================
-
-async function getCachedRevenueJobsForRange({ start, endExclusive }) {
-  const cacheKey = [start.toISOString(), endExclusive.toISOString()].join("_");
-
-  const now = Date.now();
-  const cached = revenueRangeCache.get(cacheKey);
-
-  if (cached && now < cached.expiresAt) {
-    return cached.jobs;
-  }
-
-  if (cached) {
-    revenueRangeCache.delete(cacheKey);
-  }
-
-  const existingPromise = revenueRangeFetchPromises.get(cacheKey);
-
-  if (existingPromise) {
-    return existingPromise;
-  }
-
-  const fetchPromise = fetchAllRevenueJobs({
-    start,
-    endExclusive,
-  });
-
-  revenueRangeFetchPromises.set(cacheKey, fetchPromise);
-
-  try {
-    const jobs = await fetchPromise;
-
-    revenueRangeCache.set(cacheKey, {
-      jobs,
-      expiresAt: Date.now() + REVENUE_RANGE_CACHE_TTL,
-    });
-
-    return jobs;
-  } finally {
-    revenueRangeFetchPromises.delete(cacheKey);
-  }
-}
-
-// ============================================
 // GET REVENUE JOBS FOR SELECTED DATE RANGE
+// NO CACHE
 // ============================================
 
 async function getRevenueJobsForRange({ start, endExclusive }) {
-  if (isRangeWithinCurrentYear({ start, endExclusive })) {
-    const cachedJobs = await getCachedYtdRevenueJobs();
-
-    return cachedJobs.filter((job) =>
-      isWithinRange(job.completedOn, start, endExclusive),
-    );
-  }
-
-  return getCachedRevenueJobsForRange({
+  return fetchAllRevenueJobs({
     start,
     endExclusive,
   });
@@ -308,6 +243,7 @@ function getSourceLabel(source) {
 
 // ============================================
 // FETCH CRM SALE ASSIGNMENTS
+// DIRECT DATABASE QUERY - NO CACHE
 // ============================================
 
 async function getRevenueSaleAssignments(
@@ -362,6 +298,7 @@ function buildRevenueTableData({
 
   return jobs.map((job) => {
     const savedSale = salesByJobId.get(String(job.id));
+
     const customer = customerLookup[String(job.customerId)];
 
     return {
@@ -417,11 +354,8 @@ async function getMatchingCompletedRevenueJobs({ start, endExclusive }) {
 
 // ============================================
 // REVENUE SUMMARY DATA
-// Supports optional salesperson filtering
-// ============================================
-
-// ============================================
-// REVENUE SUMMARY DATA
+// SUPPORTS SALESPERSON FILTERING
+// NO CACHE
 // ============================================
 
 export async function getSalesRevenueSummaryData({
@@ -434,6 +368,7 @@ export async function getSalesRevenueSummaryData({
 
   const { preset, startDate, endDate, start, endExclusive } = dateRange;
 
+  // Fetch ServiceTitan jobs and team members directly.
   const [revenueJobs, teamMembers] = await Promise.all([
     getRevenueJobsForRange({
       start,
@@ -452,17 +387,23 @@ export async function getSalesRevenueSummaryData({
   const sortedJobs = sortRevenueJobs(matchingJobs);
 
   // ------------------------------------------
-  // SALESPERSON ASSIGNMENT FILTER
+  // FETCH ASSIGNMENTS ONLY ONCE
+  // ------------------------------------------
+
+  const allMatchingJobIds = sortedJobs.map((job) => String(job.id));
+
+  const assignments = await getRevenueSaleAssignments(
+    allMatchingJobIds,
+    salesmanId,
+  );
+
+  // ------------------------------------------
+  // FILTER SALESPERSON JOBS
   // ------------------------------------------
 
   let filteredJobs = sortedJobs;
 
   if (salesmanId) {
-    const assignments = await getRevenueSaleAssignments(
-      sortedJobs.map((job) => String(job.id)),
-      salesmanId,
-    );
-
     const assignedJobIds = new Set(
       assignments.map((sale) => String(sale.serviceTitanJobId)),
     );
@@ -473,7 +414,7 @@ export async function getSalesRevenueSummaryData({
   }
 
   // ------------------------------------------
-  // REVENUE
+  // TOTAL REVENUE
   // ------------------------------------------
 
   const summaryJobs = getCompletedJobs(filteredJobs);
@@ -481,13 +422,9 @@ export async function getSalesRevenueSummaryData({
   const totalRevenue = calculateJobRevenue(summaryJobs);
 
   // ------------------------------------------
-  // COMMISSION
+  // TOTAL COMMISSION
+  // REUSE THE SAME ASSIGNMENT RESULT
   // ------------------------------------------
-
-  const assignments = await getRevenueSaleAssignments(
-    filteredJobs.map((job) => String(job.id)),
-    salesmanId,
-  );
 
   const totalCommission = assignments.reduce(
     (total, sale) => total + Number(sale.commissionEstimate || 0),
@@ -495,7 +432,7 @@ export async function getSalesRevenueSummaryData({
   );
 
   // ------------------------------------------
-  // GOAL
+  // TEAM GOAL
   // ------------------------------------------
 
   const goalConfiguration = getGoalConfiguration(preset, startDate, endDate);
@@ -520,7 +457,8 @@ export async function getSalesRevenueSummaryData({
 
 // ============================================
 // REVENUE TABLE DATA
-// Supports optional salesperson filtering
+// SUPPORTS SALESPERSON FILTERING
+// NO CACHE
 // ============================================
 
 export async function getSalesRevenueTableData({
@@ -536,6 +474,7 @@ export async function getSalesRevenueTableData({
 
   const { requestedPage, pageSize } = getRevenuePagination(searchParams);
 
+  // Always fetch live ServiceTitan data.
   const sortedJobs = await getMatchingCompletedRevenueJobs({
     start,
     endExclusive,
@@ -586,9 +525,13 @@ export async function getSalesRevenueTableData({
   // CURRENT PAGE CUSTOMER IDS
   // ------------------------------------------
 
-  const customerIds = paginatedJobs
-    .map((job) => job.customerId)
-    .filter((id) => id !== undefined && id !== null && id !== "");
+  const customerIds = [
+    ...new Set(
+      paginatedJobs
+        .map((job) => job.customerId)
+        .filter((id) => id !== undefined && id !== null && id !== ""),
+    ),
+  ];
 
   // ------------------------------------------
   // CURRENT PAGE SERVICE TITAN JOB IDS
@@ -600,15 +543,12 @@ export async function getSalesRevenueTableData({
   // FETCH ASSIGNMENTS AND CUSTOMERS
   // ------------------------------------------
 
-  const [pageSaleAssignments, customerLookup] = await Promise.all([
-    salesmanId
-      ? Promise.resolve(
-          saleAssignments.filter((sale) =>
-            serviceTitanJobIds.includes(String(sale.serviceTitanJobId)),
-          ),
-        )
-      : getRevenueSaleAssignments(serviceTitanJobIds),
+  const pageSaleAssignmentsPromise = salesmanId
+    ? Promise.resolve(saleAssignments)
+    : getRevenueSaleAssignments(serviceTitanJobIds);
 
+  const [pageSaleAssignments, customerLookup] = await Promise.all([
+    pageSaleAssignmentsPromise,
     getServiceTitanCustomersByIds(customerIds),
   ]);
 
