@@ -1,3 +1,4 @@
+
 import AdminSettingsCta from "@/components/settings/admin-settings-cta";
 import SettingsContent from "@/components/settings/settings-content";
 
@@ -7,10 +8,6 @@ import PageTagline from "@/components/ui/page-tagline";
 export const metadata = {
   title: "Settings | Sales Tracker",
 };
-
-// ============================================
-// ADMIN SETTINGS CTA DATA
-// ============================================
 
 const adminSettings = [
   {
@@ -34,17 +31,23 @@ const adminSettings = [
     description: "Manage sales team settings and salesperson preferences.",
     href: "/admin/salesmen",
   },
+  {
+    title: "Estimate Configuration",
+    description:
+      "Manage estimate settings and configuration preferences.",
+    href: "/admin/settings/estimate-configuration",
+  },
+  {
+    title: "Email Template",
+    description:
+      "Manage and preview default follow-up email templates.",
+    href: "/admin/settings/email-templates",
+  },
 ];
-
-// ============================================
-// ADMIN SETTINGS PAGE
-// ============================================
 
 export default function AdminSettingsPage() {
   return (
     <div className="flex min-h-full w-full flex-col">
-      {/* BREADCRUMB */}
-
       <Breadcrumbs
         items={[
           {
@@ -55,11 +58,7 @@ export default function AdminSettingsPage() {
         currentPage="Settings"
       />
 
-      {/* PAGE CONTENT */}
-
       <section className="mt-5 w-full sm:mt-6">
-        {/* PAGE HEADING */}
-
         <div className="space-y-1">
           <h1 className="text-base font-bold uppercase tracking-wide text-neutral-950 sm:text-lg">
             Settings
@@ -69,8 +68,6 @@ export default function AdminSettingsPage() {
             Manage your application preferences and configurations.
           </p>
         </div>
-
-        {/* ADMIN SETTINGS CTA */}
 
         <div className="mt-8 grid w-full grid-cols-1 gap-3 sm:grid-cols-2">
           {adminSettings.map((item) => (
@@ -83,14 +80,10 @@ export default function AdminSettingsPage() {
           ))}
         </div>
 
-        {/* GENERAL SETTINGS */}
-
         <div className="mt-10 w-full">
           <SettingsContent />
         </div>
       </section>
-
-      {/* PAGE TAGLINE */}
 
       <div className="mt-auto pt-24">
         <PageTagline>

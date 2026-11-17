@@ -12,13 +12,12 @@ export async function sendFollowUpEmail({
     throw new Error("A valid recipient email is required.");
   }
 
-  if (
-    typeof subject !== "string" ||
-    !subject.trim() ||
-    typeof body !== "string" ||
-    !body.trim()
-  ) {
-    throw new Error("Email subject and HTML body are required.");
+  if (typeof subject !== "string" || !subject.trim()) {
+    throw new Error("Email subject is required.");
+  }
+
+  if (typeof body !== "string" || !body.trim()) {
+    throw new Error("Email HTML content is required.");
   }
 
   const from = process.env.RESEND_FROM_EMAIL?.trim();
@@ -27,28 +26,12 @@ export async function sendFollowUpEmail({
     throw new Error("RESEND_FROM_EMAIL is missing.");
   }
 
-  const plainText =
-    typeof text === "string" && text.trim()
-      ? text
-      : body
-          .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "")
-          .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
-          .replace(/<br\s*\/?>/gi, "\n")
-          .replace(/<\/(div|p|tr|td)>/gi, "\n")
-          .replace(/<[^>]+>/g, "")
-          .replace(/&nbsp;/g, " ")
-          .replace(/&amp;/g, "&")
-          .replace(/&lt;/g, "<")
-          .replace(/&gt;/g, ">")
-          .replace(/&quot;/g, '"')
-          .trim();
-
   const { data, error } = await resend.emails.send({
     from,
     to: [recipient],
     subject: subject.trim(),
     html: body,
-    text: plainText,
+    text: typeof text === "string" && text.trim() ? text : undefined,
   });
 
   if (error) {

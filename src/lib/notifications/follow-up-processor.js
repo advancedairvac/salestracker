@@ -12,6 +12,10 @@ function getSafeLimit(limit) {
   return Math.min(Math.max(Math.floor(parsed), 1), MAX_BATCH_SIZE);
 }
 
+// ============================================
+// GET DUE FOLLOW-UPS
+// ============================================
+
 export async function getDueFollowUps({
   now = new Date(),
   limit = MAX_BATCH_SIZE,
@@ -22,18 +26,19 @@ export async function getDueFollowUps({
     where: {
       isActive: true,
       status: "PENDING",
-      dueAt: { lte: now },
+
+      dueAt: {
+        lte: now,
+      },
 
       OR: [{ nextRetryAt: null }, { nextRetryAt: { lte: now } }],
-
-      notificationAttempts: {
-        lt: 3,
-      },
 
       schedule: {
         is: {
           isActive: true,
-          mode: { in: ACTIVE_SCHEDULE_MODES },
+          mode: {
+            in: ACTIVE_SCHEDULE_MODES,
+          },
         },
       },
 
@@ -66,9 +71,11 @@ export async function getDueFollowUps({
               isActive: true,
             },
           },
+
           customer: true,
         },
       },
+
       schedule: true,
     },
 
@@ -87,14 +94,24 @@ export async function getDueFollowUps({
   });
 }
 
+// ============================================
+// CLAIM EMAIL FOLLOW-UP
+// ============================================
+
 export async function claimEmailFollowUp(followUpId, now = new Date()) {
   if (!followUpId) {
     throw new Error("Follow-up ID is required.");
   }
 
   return prisma.$transaction(async (tx) => {
+    // ----------------------------------------
+    // GET FOLLOW-UP
+    // ----------------------------------------
+
     const followUp = await tx.followUp.findUnique({
-      where: { id: followUpId },
+      where: {
+        id: followUpId,
+      },
 
       include: {
         opportunity: {
@@ -107,9 +124,11 @@ export async function claimEmailFollowUp(followUpId, now = new Date()) {
                 isActive: true,
               },
             },
+
             customer: true,
           },
         },
+
         schedule: true,
       },
     });
@@ -120,6 +139,10 @@ export async function claimEmailFollowUp(followUpId, now = new Date()) {
         reason: "FOLLOW_UP_NOT_FOUND",
       };
     }
+
+    // ----------------------------------------
+    // VALIDATE FOLLOW-UP STATUS
+    // ----------------------------------------
 
     if (followUp.status !== "PENDING" || !followUp.isActive) {
       return {
@@ -149,6 +172,10 @@ export async function claimEmailFollowUp(followUpId, now = new Date()) {
       };
     }
 
+    // ----------------------------------------
+    // VALIDATE SCHEDULE
+    // ----------------------------------------
+
     if (!followUp.schedule?.isActive) {
       return {
         claimed: false,
@@ -166,12 +193,20 @@ export async function claimEmailFollowUp(followUpId, now = new Date()) {
       };
     }
 
+    // ----------------------------------------
+    // VALIDATE OPPORTUNITY
+    // ----------------------------------------
+
     if (followUp.opportunity?.status !== "OPEN") {
       return {
         claimed: false,
         reason: "OPPORTUNITY_NOT_OPEN",
       };
     }
+
+    // ----------------------------------------
+    // VALIDATE ASSIGNED SALESPERSON
+    // ----------------------------------------
 
     const assignedUser = followUp.opportunity.assignedTo;
     const recipientEmail = assignedUser?.email?.trim();
@@ -183,6 +218,10 @@ export async function claimEmailFollowUp(followUpId, now = new Date()) {
       };
     }
 
+    // ----------------------------------------
+    // VALIDATE CUSTOMER
+    // ----------------------------------------
+
     if (!followUp.opportunity.customer) {
       return {
         claimed: false,
@@ -190,11 +229,16 @@ export async function claimEmailFollowUp(followUpId, now = new Date()) {
       };
     }
 
+    // ----------------------------------------
+    // CHECK EXISTING PROCESSING NOTIFICATION
+    // ----------------------------------------
+
     const existingProcessingLog = await tx.notificationLog.findFirst({
       where: {
         followUpId: followUp.id,
         status: "PROCESSING",
       },
+
       select: {
         id: true,
       },
@@ -207,33 +251,60 @@ export async function claimEmailFollowUp(followUpId, now = new Date()) {
       };
     }
 
-    // Use the database template if available.
-    // Otherwise use the default message from the template helper.
+    // ----------------------------------------
+    // GET ADMIN EMAIL TEMPLATE
+    // ----------------------------------------
+
     const template = await tx.emailTemplate.findFirst({
       where: {
         userId: null,
         eventType: followUp.eventType,
         isActive: true,
       },
+
+      orderBy: {
+        createdAt: "asc",
+      },
     });
+
+    // ----------------------------------------
+    // RENDER EMAIL
+    // ----------------------------------------
 
     const email = renderFollowUpEmail({
       opportunity: followUp.opportunity,
       followUp,
+
+      // Admin-edited email message
       customMessage: template?.body,
+
+      // Admin-edited email subject
+      subject: template?.subject,
     });
+
+    // ----------------------------------------
+    // PREPARE ATTEMPT
+    // ----------------------------------------
 
     const attemptNumber = followUp.notificationAttempts + 1;
 
     const eventKey = `followup:${followUp.id}:attempt:${attemptNumber}`;
+
+    // ----------------------------------------
+    // ATOMICALLY CLAIM FOLLOW-UP
+    // ----------------------------------------
 
     const claimResult = await tx.followUp.updateMany({
       where: {
         id: followUp.id,
         status: "PENDING",
         isActive: true,
+
         notificationAttempts: followUp.notificationAttempts,
-        dueAt: { lte: now },
+
+        dueAt: {
+          lte: now,
+        },
 
         OR: [{ nextRetryAt: null }, { nextRetryAt: { lte: now } }],
 
@@ -261,6 +332,7 @@ export async function claimEmailFollowUp(followUpId, now = new Date()) {
         notificationAttempts: {
           increment: 1,
         },
+
         nextRetryAt: null,
       },
     });
@@ -272,37 +344,58 @@ export async function claimEmailFollowUp(followUpId, now = new Date()) {
       };
     }
 
+    // ----------------------------------------
+    // CREATE NOTIFICATION LOG
+    // ----------------------------------------
+
     const notificationLog = await tx.notificationLog.create({
       data: {
         followUpId: followUp.id,
         scheduleId: followUp.scheduleId,
         templateId: template?.id || null,
+
         eventKey,
         eventType: followUp.eventType,
         attemptNumber,
+
         recipientEmail,
+
         status: "PROCESSING",
         processingAt: now,
         scheduledAt: followUp.dueAt,
+
         subjectSnapshot: email.subject,
         bodySnapshot: email.html,
       },
     });
 
+    // ----------------------------------------
+    // RETURN CLAIMED EMAIL
+    // ----------------------------------------
+
     return {
       claimed: true,
+
       followUpId: followUp.id,
       notificationLogId: notificationLog.id,
+
       attemptNumber,
+
       recipientEmail,
+
       eventType: followUp.eventType,
       followUpType: followUp.type,
+
       subject: email.subject,
       body: email.html,
       text: email.text,
     };
   });
 }
+
+// ============================================
+// PROCESS DUE FOLLOW-UPS
+// ============================================
 
 export async function processDueFollowUps({
   now = new Date(),
@@ -327,6 +420,7 @@ export async function processDueFollowUps({
 
       if (claim.claimed) {
         results.claimed++;
+
         results.claims.push(claim);
       } else {
         results.skipped++;

@@ -1,143 +1,54 @@
+import { resend } from "@/lib/email/resend";
 
-import { processDueFollowUps } from "@/lib/notifications/follow-up-processor";
-import { sendFollowUpEmail } from "@/lib/email/send-follow-up-email";
+export async function sendFollowUpEmail({
+  recipientEmail,
+  subject,
+  body,
+  text,
+}) {
+  const recipient = recipientEmail?.trim();
 
-import {
-  markNotificationSent,
-  markNotificationFailed,
-  recoverStaleProcessingNotifications,
-} from "@/lib/notifications/notification-logger";
-
-export async function dispatchFollowUpEmails({
-  now = new Date(),
-  limit = 50,
-} = {}) {
-  const summary = {
-    recovery: {
-      scanned: 0,
-      recovered: 0,
-      skipped: 0,
-      errors: [],
-    },
-    scanned: 0,
-    claimed: 0,
-    sent: 0,
-    failed: 0,
-    skipped: 0,
-    skipReasons: [],
-    acceptedButUnlogged: 0,
-    errors: [],
-  };
-
-  try {
-    summary.recovery = await recoverStaleProcessingNotifications({
-      now,
-      limit,
-    });
-  } catch (error) {
-    summary.errors.push({
-      stage: "RECOVERY",
-      reason: error.message,
-    });
+  if (!recipient || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipient)) {
+    throw new Error("A valid recipient email is required.");
   }
 
-  let processingResult;
-
-  try {
-    processingResult = await processDueFollowUps({
-      now,
-      limit,
-    });
-
-    summary.scanned = processingResult.scanned;
-    summary.claimed = processingResult.claimed;
-    summary.skipped = processingResult.skipped;
-    summary.skipReasons = processingResult.skipReasons;
-  } catch (error) {
-    summary.errors.push({
-      stage: "PROCESSING",
-      reason: error.message,
-    });
-
-    return {
-      success: false,
-      ...summary,
-    };
+  if (typeof subject !== "string" || !subject.trim()) {
+    throw new Error("Email subject is required.");
   }
 
-  for (const claim of processingResult.claims) {
-    let emailResult;
+  const html = body?.trim();
 
-    try {
-      emailResult = await sendFollowUpEmail({
-        recipientEmail: claim.recipientEmail,
-        subject: claim.subject,
-        body: claim.body,
-        text: claim.text,
-      });
-    } catch (error) {
-      try {
-        const failureResult = await markNotificationFailed({
-          notificationLogId: claim.notificationLogId,
-          followUpId: claim.followUpId,
-          attemptNumber: claim.attemptNumber,
-          error,
-        });
+  const plainText = text?.trim();
 
-        summary.failed++;
-
-        summary.errors.push({
-          followUpId: claim.followUpId,
-          reason: error.message,
-          retryScheduled: failureResult.retryScheduled,
-          nextRetryAt: failureResult.nextRetryAt,
-        });
-      } catch (loggingError) {
-        summary.errors.push({
-          followUpId: claim.followUpId,
-          reason: error.message,
-          loggingError: loggingError.message,
-        });
-      }
-
-      continue;
-    }
-
-    try {
-      await markNotificationSent({
-        notificationLogId: claim.notificationLogId,
-        followUpId: claim.followUpId,
-        providerMessageId: emailResult.providerMessageId,
-      });
-
-      summary.sent++;
-    } catch (error) {
-      summary.acceptedButUnlogged++;
-
-      summary.errors.push({
-        followUpId: claim.followUpId,
-        reason: "EMAIL_ACCEPTED_BUT_DATABASE_UPDATE_FAILED",
-        providerMessageId: emailResult.providerMessageId,
-        loggingError: error.message,
-      });
-    }
+  if (!html && !plainText) {
+    throw new Error("Email body is required.");
   }
 
-  const hasRecoveryErrors =
-    summary.recovery.errors?.length > 0;
+  const from = process.env.RESEND_FROM_EMAIL?.trim();
 
-  const hasSystemErrors = summary.errors.some(
-    (item) =>
-      ["RECOVERY", "PROCESSING"].includes(item.stage) ||
-      item.reason ===
-        "EMAIL_ACCEPTED_BUT_DATABASE_UPDATE_FAILED",
-  );
+  if (!from) {
+    throw new Error("RESEND_FROM_EMAIL is missing.");
+  }
+
+  const { data, error } = await resend.emails.send({
+    from,
+    to: [recipient],
+    subject: subject.trim(),
+
+    ...(html ? { html } : {}),
+    ...(plainText ? { text: plainText } : {}),
+  });
+
+  if (error) {
+    throw new Error(error.message || "Resend email delivery failed.");
+  }
+
+  if (!data?.id) {
+    throw new Error("Resend did not return an email ID.");
+  }
 
   return {
-    success:
-      !hasRecoveryErrors &&
-      !hasSystemErrors &&
-      summary.failed === 0,
-    ...summary,
+    success: true,
+    providerMessageId: data.id,
   };
 }

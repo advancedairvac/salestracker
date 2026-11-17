@@ -1,9 +1,9 @@
 const DEFAULT_MESSAGES = {
   H24: "Morning, did you get those couple emails from yesterday?",
-  H36: "Just checking in to see if you had a chance to review the information.",
-  W1: "I wanted to follow up and see if you have any questions.",
-  W2: "I wanted to check in and see how things are progressing.",
-  M1: "Just following up to see if you are ready to move forward.",
+  H36: "I wanted to follow up regarding your estimate. Have you had a chance to review it?",
+  W1: "I wanted to check in and see if you have any questions about the estimate.",
+  W2: "Just following up to see how things are progressing and whether you need any additional information.",
+  M1: "I wanted to check in one more time regarding your estimate. Please let us know if we can help.",
   MANUAL: "I wanted to follow up with you regarding this opportunity.",
 };
 
@@ -28,7 +28,12 @@ function formatDate(date) {
 }
 
 function formatDateTime(date) {
-  if (!date) return "";
+  if (!date) {
+    return {
+      date: "",
+      time: "",
+    };
+  }
 
   const value = new Date(date);
 
@@ -53,11 +58,15 @@ function formatCurrency(value) {
     return "";
   }
 
+  const amount = Number(value);
+
+  if (!Number.isFinite(amount)) return "";
+
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
     maximumFractionDigits: 2,
-  }).format(Number(value));
+  }).format(amount);
 }
 
 function renderOptionalLine(value) {
@@ -66,11 +75,22 @@ function renderOptionalLine(value) {
   return `<div style="margin:0 0 7px;">${escapeHtml(value)}</div>`;
 }
 
+function replaceSubjectVariables(subject, customerName) {
+  return String(subject || "")
+    .replaceAll("{{customerName}}", customerName)
+    .replaceAll("{{businessName}}", customerName);
+}
+
 export function getDefaultFollowUpMessage(eventType) {
   return DEFAULT_MESSAGES[eventType] || DEFAULT_MESSAGES.MANUAL;
 }
 
-export function renderFollowUpEmail({ opportunity, followUp, customMessage }) {
+export function renderFollowUpEmail({
+  opportunity,
+  followUp,
+  customMessage,
+  subject: customSubject,
+}) {
   if (!opportunity || !followUp) {
     throw new Error("Opportunity and follow-up data are required.");
   }
@@ -81,8 +101,10 @@ export function renderFollowUpEmail({ opportunity, followUp, customMessage }) {
     throw new Error("Customer information is missing.");
   }
 
-  const customerName = customer.pocName || customer.businessName || "";
+  const customerName = customer.pocName || customer.businessName || "Customer";
+
   const businessName = customer.businessName || customer.pocName || "";
+
   const jobType = opportunity.jobType || "";
   const address = customer.location || "";
   const phone = customer.phone || "";
@@ -95,9 +117,12 @@ export function renderFollowUpEmail({ opportunity, followUp, customMessage }) {
   const message =
     customMessage?.trim() || getDefaultFollowUpMessage(followUp.eventType);
 
-  const messageHtml = escapeHtml(message).replace(/\n/g, "<br />");
+  const subject = replaceSubjectVariables(
+    customSubject || `Follow up with ${customerName}`,
+    customerName,
+  );
 
-  const subject = `Follow up with ${customerName || businessName || "Customer"}`;
+  const messageHtml = escapeHtml(message).replace(/\n/g, "<br />");
 
   const html = `
 <!DOCTYPE html>
@@ -125,7 +150,7 @@ export function renderFollowUpEmail({ opportunity, followUp, customMessage }) {
     style="background:#ffffff;"
   >
     <tr>
-      <td align="center">
+      <td align="left" style="padding:0;">
 
         <table
           role="presentation"
@@ -133,54 +158,13 @@ export function renderFollowUpEmail({ opportunity, followUp, customMessage }) {
           cellpadding="0"
           cellspacing="0"
           border="0"
-          style="max-width:600px;background:#ffffff;"
+          style="
+            max-width:700px;
+            width:100%;
+            background:#ffffff;
+            margin:0;
+          "
         >
-
-          <!-- HEADER -->
-
-          <tr>
-            <td style="padding:8px 15px 10px;">
-
-              <table
-                role="presentation"
-                width="100%"
-                cellpadding="0"
-                cellspacing="0"
-              >
-                <tr>
-                  <td width="54" valign="middle">
-                    <div style="
-                      width:48px;
-                      height:48px;
-                      border:1px solid #d5d5d5;
-                      border-radius:12px;
-                    "></div>
-                  </td>
-
-                  <td valign="middle">
-                    <div style="
-                      font-size:19px;
-                      font-weight:800;
-                      line-height:23px;
-                    ">SALES TRACKER</div>
-
-                    <div style="
-                      font-size:18px;
-                      line-height:22px;
-                    ">To: ${escapeHtml(opportunity.assignedTo?.name || "Salesman")}</div>
-                  </td>
-
-                  <td align="right" valign="top" style="
-                    font-size:18px;
-                    white-space:nowrap;
-                  ">
-                    ${escapeHtml(formatDate(new Date()).split(",")[0])}
-                  </td>
-                </tr>
-              </table>
-
-            </td>
-          </tr>
 
           <tr>
             <td style="border-top:1px solid #d5d5d5;"></td>
@@ -189,13 +173,13 @@ export function renderFollowUpEmail({ opportunity, followUp, customMessage }) {
           <!-- FOLLOW-UP TITLE -->
 
           <tr>
-            <td align="center" style="
+            <td align="left" style="
               padding:12px 15px 13px;
               font-size:23px;
               line-height:30px;
               font-weight:400;
             ">
-              Follow up with ${escapeHtml(customerName || businessName)}
+              Follow up with ${escapeHtml(customerName)}
             </td>
           </tr>
 
@@ -210,6 +194,7 @@ export function renderFollowUpEmail({ opportunity, followUp, customMessage }) {
               padding:37px 29px 0;
               font-size:16px;
               line-height:21px;
+              text-align:left;
             ">
 
               ${
