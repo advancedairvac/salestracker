@@ -1,4 +1,3 @@
-
 import { prisma } from "@/lib/prisma";
 
 // ============================================
@@ -6,11 +5,12 @@ import { prisma } from "@/lib/prisma";
 // ============================================
 
 const MAX_BATCH_SIZE = 50;
-
 const ACTIVE_SCHEDULE_MODES = ["STANDARD", "MANUAL"];
 
 // ============================================
 // GET DUE FOLLOW-UPS
+// Each follow-up executes independently.
+// No previous follow-up status dependency.
 // ============================================
 
 export async function getDueFollowUps({
@@ -27,22 +27,24 @@ export async function getDueFollowUps({
       isActive: true,
       status: "PENDING",
       type: "EMAIL",
+
       dueAt: {
         lte: now,
       },
+
       notificationAttempts: {
         lt: 3,
       },
+
       OR: [
-        {
-          nextRetryAt: null,
-        },
+        { nextRetryAt: null },
         {
           nextRetryAt: {
             lte: now,
           },
         },
       ],
+
       schedule: {
         is: {
           isActive: true,
@@ -51,6 +53,7 @@ export async function getDueFollowUps({
           },
         },
       },
+
       opportunity: {
         is: {
           status: "OPEN",
@@ -61,7 +64,6 @@ export async function getDueFollowUps({
     include: {
       opportunity: {
         include: {
-          customer: true,
           assignedTo: {
             select: {
               id: true,
@@ -73,38 +75,51 @@ export async function getDueFollowUps({
       },
 
       schedule: true,
+
+      notificationLogs: {
+        where: {
+          status: "PROCESSING",
+        },
+        select: {
+          id: true,
+        },
+      },
     },
 
-    orderBy: [
-      {
-        dueAt: "asc",
-      },
-      {
-        createdAt: "asc",
-      },
-    ],
+    orderBy: [{ dueAt: "asc" }, { createdAt: "asc" }],
 
     take: safeLimit,
   });
 
-  return followUps;
+  return followUps.filter((followUp) => {
+    if (followUp.notificationAttempts >= followUp.maxAttempts) {
+      return false;
+    }
+
+    if (followUp.nextRetryAt && followUp.nextRetryAt > now) {
+      return false;
+    }
+
+    if (followUp.notificationLogs.length > 0) {
+      return false;
+    }
+
+    return true;
+  });
 }
 
 // ============================================
 // CLAIM EMAIL FOLLOW-UP
-// Atomic claim to prevent concurrent processing
+// Atomic claim to prevent duplicate processing.
+// No sequence dependency.
 // ============================================
 
-export async function claimEmailFollowUp(followUpId) {
+export async function claimEmailFollowUp(followUpId, now = new Date()) {
   if (!followUpId) {
     throw new Error("Follow-up ID is required.");
   }
 
   return prisma.$transaction(async (tx) => {
-    // ----------------------------------------
-    // GET CURRENT FOLLOW-UP
-    // ----------------------------------------
-
     const followUp = await tx.followUp.findUnique({
       where: {
         id: followUpId,
@@ -113,7 +128,6 @@ export async function claimEmailFollowUp(followUpId) {
       include: {
         opportunity: {
           include: {
-            customer: true,
             assignedTo: {
               select: {
                 id: true,
@@ -125,6 +139,15 @@ export async function claimEmailFollowUp(followUpId) {
         },
 
         schedule: true,
+
+        notificationLogs: {
+          where: {
+            status: "PROCESSING",
+          },
+          select: {
+            id: true,
+          },
+        },
       },
     });
 
@@ -135,10 +158,8 @@ export async function claimEmailFollowUp(followUpId) {
       };
     }
 
-    const now = new Date();
-
     // ----------------------------------------
-    // VALIDATE FOLLOW-UP
+    // FOLLOW-UP VALIDATION
     // ----------------------------------------
 
     if (
@@ -159,36 +180,46 @@ export async function claimEmailFollowUp(followUpId) {
       };
     }
 
-    if (
-      followUp.notificationAttempts >= followUp.maxAttempts
-    ) {
+    if (followUp.notificationAttempts >= followUp.maxAttempts) {
       return {
         claimed: false,
         reason: "MAX_ATTEMPTS_REACHED",
       };
     }
 
-    if (
-      followUp.nextRetryAt &&
-      followUp.nextRetryAt > now
-    ) {
+    if (followUp.nextRetryAt && followUp.nextRetryAt > now) {
       return {
         claimed: false,
         reason: "RETRY_NOT_DUE",
       };
     }
 
+    // ----------------------------------------
+    // SCHEDULE VALIDATION
+    // ----------------------------------------
+
+    if (!followUp.schedule?.isActive) {
+      return {
+        claimed: false,
+        reason: "SCHEDULE_INACTIVE",
+      };
+    }
+
     if (
-      !followUp.schedule.isActive ||
+      !ACTIVE_SCHEDULE_MODES.includes(followUp.schedule.mode) ||
       followUp.schedule.mode !== followUp.scheduleType
     ) {
       return {
         claimed: false,
-        reason: "SCHEDULE_NOT_ACTIVE",
+        reason: "SCHEDULE_MODE_MISMATCH",
       };
     }
 
-    if (followUp.opportunity.status !== "OPEN") {
+    // ----------------------------------------
+    // OPPORTUNITY VALIDATION
+    // ----------------------------------------
+
+    if (followUp.opportunity?.status !== "OPEN") {
       return {
         claimed: false,
         reason: "OPPORTUNITY_NOT_OPEN",
@@ -196,15 +227,27 @@ export async function claimEmailFollowUp(followUpId) {
     }
 
     // ----------------------------------------
-    // VALIDATE RECIPIENT
+    // PREVENT DUPLICATE PROCESSING
     // ----------------------------------------
 
-    const recipientEmail = followUp.opportunity.customer.email;
+    if (followUp.notificationLogs.length > 0) {
+      return {
+        claimed: false,
+        reason: "NOTIFICATION_ALREADY_PROCESSING",
+      };
+    }
+
+    // ----------------------------------------
+    // VALIDATE ASSIGNED USER EMAIL
+    // ----------------------------------------
+
+    const assignedUser = followUp.opportunity.assignedTo;
+    const recipientEmail = assignedUser?.email?.trim();
 
     if (!recipientEmail) {
       return {
         claimed: false,
-        reason: "CUSTOMER_EMAIL_MISSING",
+        reason: "ASSIGNED_USER_EMAIL_MISSING",
       };
     }
 
@@ -241,26 +284,29 @@ export async function claimEmailFollowUp(followUpId) {
         status: "PENDING",
         isActive: true,
         type: "EMAIL",
+
         notificationAttempts: followUp.notificationAttempts,
+
         dueAt: {
           lte: now,
         },
+
         OR: [
-          {
-            nextRetryAt: null,
-          },
+          { nextRetryAt: null },
           {
             nextRetryAt: {
               lte: now,
             },
           },
         ],
+
         schedule: {
           is: {
             isActive: true,
             mode: followUp.scheduleType,
           },
         },
+
         opportunity: {
           is: {
             status: "OPEN",
@@ -272,15 +318,15 @@ export async function claimEmailFollowUp(followUpId) {
         notificationAttempts: {
           increment: 1,
         },
+
         nextRetryAt: null,
       },
     });
 
-    // Another worker may have claimed this record.
     if (claimResult.count !== 1) {
       return {
         claimed: false,
-        reason: "ALREADY_CLAIMED",
+        reason: "ALREADY_CLAIMED_OR_STATE_CHANGED",
       };
     }
 
@@ -301,6 +347,7 @@ export async function claimEmailFollowUp(followUpId) {
         recipientEmail,
 
         status: "PROCESSING",
+        processingAt: now,
 
         scheduledAt: followUp.dueAt,
 
@@ -308,6 +355,8 @@ export async function claimEmailFollowUp(followUpId) {
         bodySnapshot: template.body,
       },
     });
+
+    console.log(`Follow-up ${followUp.id} claimed for ${recipientEmail}.`);
 
     return {
       claimed: true,
@@ -324,6 +373,7 @@ export async function claimEmailFollowUp(followUpId) {
 
 // ============================================
 // PROCESS DUE EMAIL FOLLOW-UPS
+// Independent execution for every due follow-up.
 // ============================================
 
 export async function processDueFollowUps({
@@ -340,27 +390,54 @@ export async function processDueFollowUps({
     claimed: 0,
     skipped: 0,
     claims: [],
+    skipReasons: [],
   };
+
+  console.log(`Found ${candidates.length} eligible email follow-ups.`);
 
   for (const followUp of candidates) {
     try {
-      const claim = await claimEmailFollowUp(followUp.id);
+      const claim = await claimEmailFollowUp(followUp.id, now);
 
       if (claim.claimed) {
         results.claimed++;
         results.claims.push(claim);
-      } else {
-        results.skipped++;
+        continue;
       }
+
+      results.skipped++;
+
+      results.skipReasons.push({
+        followUpId: followUp.id,
+        eventType: followUp.eventType,
+        reason: claim.reason,
+      });
+
+      console.log(`Follow-up ${followUp.id} skipped: ${claim.reason}`);
     } catch (error) {
       results.skipped++;
 
-      console.error(
-        `Failed to claim follow-up ${followUp.id}:`,
-        error,
-      );
+      results.skipReasons.push({
+        followUpId: followUp.id,
+        eventType: followUp.eventType,
+        reason: "CLAIM_ERROR",
+        error: error.message,
+      });
+
+      console.error(`Failed to claim follow-up ${followUp.id}:`, error);
     }
   }
+
+  // ------------------------------------------
+  // FINAL SUMMARY
+  // ------------------------------------------
+
+  console.log("Follow-up processing summary:", {
+    scanned: results.scanned,
+    claimed: results.claimed,
+    skipped: results.skipped,
+    skipReasons: results.skipReasons,
+  });
 
   return results;
 }

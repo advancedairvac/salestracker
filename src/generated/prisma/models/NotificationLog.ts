@@ -45,6 +45,7 @@ export type NotificationLogMinAggregateOutputType = {
   recipientEmail: string | null
   status: $Enums.NotificationStatus | null
   scheduledAt: Date | null
+  processingAt: Date | null
   sentAt: Date | null
   subjectSnapshot: string | null
   bodySnapshot: string | null
@@ -65,6 +66,7 @@ export type NotificationLogMaxAggregateOutputType = {
   recipientEmail: string | null
   status: $Enums.NotificationStatus | null
   scheduledAt: Date | null
+  processingAt: Date | null
   sentAt: Date | null
   subjectSnapshot: string | null
   bodySnapshot: string | null
@@ -85,6 +87,7 @@ export type NotificationLogCountAggregateOutputType = {
   recipientEmail: number
   status: number
   scheduledAt: number
+  processingAt: number
   sentAt: number
   subjectSnapshot: number
   bodySnapshot: number
@@ -115,6 +118,7 @@ export type NotificationLogMinAggregateInputType = {
   recipientEmail?: true
   status?: true
   scheduledAt?: true
+  processingAt?: true
   sentAt?: true
   subjectSnapshot?: true
   bodySnapshot?: true
@@ -135,6 +139,7 @@ export type NotificationLogMaxAggregateInputType = {
   recipientEmail?: true
   status?: true
   scheduledAt?: true
+  processingAt?: true
   sentAt?: true
   subjectSnapshot?: true
   bodySnapshot?: true
@@ -155,6 +160,7 @@ export type NotificationLogCountAggregateInputType = {
   recipientEmail?: true
   status?: true
   scheduledAt?: true
+  processingAt?: true
   sentAt?: true
   subjectSnapshot?: true
   bodySnapshot?: true
@@ -262,6 +268,7 @@ export type NotificationLogGroupByOutputType = {
   recipientEmail: string | null
   status: $Enums.NotificationStatus
   scheduledAt: Date
+  processingAt: Date | null
   sentAt: Date | null
   subjectSnapshot: string | null
   bodySnapshot: string | null
@@ -305,6 +312,7 @@ export type NotificationLogWhereInput = {
   recipientEmail?: Prisma.StringNullableFilter<"NotificationLog"> | string | null
   status?: Prisma.EnumNotificationStatusFilter<"NotificationLog"> | $Enums.NotificationStatus
   scheduledAt?: Prisma.DateTimeFilter<"NotificationLog"> | Date | string
+  processingAt?: Prisma.DateTimeNullableFilter<"NotificationLog"> | Date | string | null
   sentAt?: Prisma.DateTimeNullableFilter<"NotificationLog"> | Date | string | null
   subjectSnapshot?: Prisma.StringNullableFilter<"NotificationLog"> | string | null
   bodySnapshot?: Prisma.StringNullableFilter<"NotificationLog"> | string | null
@@ -328,6 +336,7 @@ export type NotificationLogOrderByWithRelationInput = {
   recipientEmail?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
   scheduledAt?: Prisma.SortOrder
+  processingAt?: Prisma.SortOrderInput | Prisma.SortOrder
   sentAt?: Prisma.SortOrderInput | Prisma.SortOrder
   subjectSnapshot?: Prisma.SortOrderInput | Prisma.SortOrder
   bodySnapshot?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -355,6 +364,7 @@ export type NotificationLogWhereUniqueInput = Prisma.AtLeast<{
   recipientEmail?: Prisma.StringNullableFilter<"NotificationLog"> | string | null
   status?: Prisma.EnumNotificationStatusFilter<"NotificationLog"> | $Enums.NotificationStatus
   scheduledAt?: Prisma.DateTimeFilter<"NotificationLog"> | Date | string
+  processingAt?: Prisma.DateTimeNullableFilter<"NotificationLog"> | Date | string | null
   sentAt?: Prisma.DateTimeNullableFilter<"NotificationLog"> | Date | string | null
   subjectSnapshot?: Prisma.StringNullableFilter<"NotificationLog"> | string | null
   bodySnapshot?: Prisma.StringNullableFilter<"NotificationLog"> | string | null
@@ -378,6 +388,7 @@ export type NotificationLogOrderByWithAggregationInput = {
   recipientEmail?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
   scheduledAt?: Prisma.SortOrder
+  processingAt?: Prisma.SortOrderInput | Prisma.SortOrder
   sentAt?: Prisma.SortOrderInput | Prisma.SortOrder
   subjectSnapshot?: Prisma.SortOrderInput | Prisma.SortOrder
   bodySnapshot?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -406,6 +417,7 @@ export type NotificationLogScalarWhereWithAggregatesInput = {
   recipientEmail?: Prisma.StringNullableWithAggregatesFilter<"NotificationLog"> | string | null
   status?: Prisma.EnumNotificationStatusWithAggregatesFilter<"NotificationLog"> | $Enums.NotificationStatus
   scheduledAt?: Prisma.DateTimeWithAggregatesFilter<"NotificationLog"> | Date | string
+  processingAt?: Prisma.DateTimeNullableWithAggregatesFilter<"NotificationLog"> | Date | string | null
   sentAt?: Prisma.DateTimeNullableWithAggregatesFilter<"NotificationLog"> | Date | string | null
   subjectSnapshot?: Prisma.StringNullableWithAggregatesFilter<"NotificationLog"> | string | null
   bodySnapshot?: Prisma.StringNullableWithAggregatesFilter<"NotificationLog"> | string | null
@@ -423,6 +435,7 @@ export type NotificationLogCreateInput = {
   recipientEmail?: string | null
   status?: $Enums.NotificationStatus
   scheduledAt: Date | string
+  processingAt?: Date | string | null
   sentAt?: Date | string | null
   subjectSnapshot?: string | null
   bodySnapshot?: string | null
@@ -446,6 +459,7 @@ export type NotificationLogUncheckedCreateInput = {
   recipientEmail?: string | null
   status?: $Enums.NotificationStatus
   scheduledAt: Date | string
+  processingAt?: Date | string | null
   sentAt?: Date | string | null
   subjectSnapshot?: string | null
   bodySnapshot?: string | null
@@ -463,6 +477,7 @@ export type NotificationLogUpdateInput = {
   recipientEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumNotificationStatusFieldUpdateOperationsInput | $Enums.NotificationStatus
   scheduledAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  processingAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   sentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   subjectSnapshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bodySnapshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -486,6 +501,7 @@ export type NotificationLogUncheckedUpdateInput = {
   recipientEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumNotificationStatusFieldUpdateOperationsInput | $Enums.NotificationStatus
   scheduledAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  processingAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   sentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   subjectSnapshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bodySnapshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -506,6 +522,7 @@ export type NotificationLogCreateManyInput = {
   recipientEmail?: string | null
   status?: $Enums.NotificationStatus
   scheduledAt: Date | string
+  processingAt?: Date | string | null
   sentAt?: Date | string | null
   subjectSnapshot?: string | null
   bodySnapshot?: string | null
@@ -523,6 +540,7 @@ export type NotificationLogUpdateManyMutationInput = {
   recipientEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumNotificationStatusFieldUpdateOperationsInput | $Enums.NotificationStatus
   scheduledAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  processingAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   sentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   subjectSnapshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bodySnapshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -543,6 +561,7 @@ export type NotificationLogUncheckedUpdateManyInput = {
   recipientEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumNotificationStatusFieldUpdateOperationsInput | $Enums.NotificationStatus
   scheduledAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  processingAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   sentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   subjectSnapshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bodySnapshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -578,6 +597,7 @@ export type NotificationLogCountOrderByAggregateInput = {
   recipientEmail?: Prisma.SortOrder
   status?: Prisma.SortOrder
   scheduledAt?: Prisma.SortOrder
+  processingAt?: Prisma.SortOrder
   sentAt?: Prisma.SortOrder
   subjectSnapshot?: Prisma.SortOrder
   bodySnapshot?: Prisma.SortOrder
@@ -602,6 +622,7 @@ export type NotificationLogMaxOrderByAggregateInput = {
   recipientEmail?: Prisma.SortOrder
   status?: Prisma.SortOrder
   scheduledAt?: Prisma.SortOrder
+  processingAt?: Prisma.SortOrder
   sentAt?: Prisma.SortOrder
   subjectSnapshot?: Prisma.SortOrder
   bodySnapshot?: Prisma.SortOrder
@@ -622,6 +643,7 @@ export type NotificationLogMinOrderByAggregateInput = {
   recipientEmail?: Prisma.SortOrder
   status?: Prisma.SortOrder
   scheduledAt?: Prisma.SortOrder
+  processingAt?: Prisma.SortOrder
   sentAt?: Prisma.SortOrder
   subjectSnapshot?: Prisma.SortOrder
   bodySnapshot?: Prisma.SortOrder
@@ -773,6 +795,7 @@ export type NotificationLogCreateWithoutScheduleInput = {
   recipientEmail?: string | null
   status?: $Enums.NotificationStatus
   scheduledAt: Date | string
+  processingAt?: Date | string | null
   sentAt?: Date | string | null
   subjectSnapshot?: string | null
   bodySnapshot?: string | null
@@ -794,6 +817,7 @@ export type NotificationLogUncheckedCreateWithoutScheduleInput = {
   recipientEmail?: string | null
   status?: $Enums.NotificationStatus
   scheduledAt: Date | string
+  processingAt?: Date | string | null
   sentAt?: Date | string | null
   subjectSnapshot?: string | null
   bodySnapshot?: string | null
@@ -843,6 +867,7 @@ export type NotificationLogScalarWhereInput = {
   recipientEmail?: Prisma.StringNullableFilter<"NotificationLog"> | string | null
   status?: Prisma.EnumNotificationStatusFilter<"NotificationLog"> | $Enums.NotificationStatus
   scheduledAt?: Prisma.DateTimeFilter<"NotificationLog"> | Date | string
+  processingAt?: Prisma.DateTimeNullableFilter<"NotificationLog"> | Date | string | null
   sentAt?: Prisma.DateTimeNullableFilter<"NotificationLog"> | Date | string | null
   subjectSnapshot?: Prisma.StringNullableFilter<"NotificationLog"> | string | null
   bodySnapshot?: Prisma.StringNullableFilter<"NotificationLog"> | string | null
@@ -860,6 +885,7 @@ export type NotificationLogCreateWithoutFollowUpInput = {
   recipientEmail?: string | null
   status?: $Enums.NotificationStatus
   scheduledAt: Date | string
+  processingAt?: Date | string | null
   sentAt?: Date | string | null
   subjectSnapshot?: string | null
   bodySnapshot?: string | null
@@ -881,6 +907,7 @@ export type NotificationLogUncheckedCreateWithoutFollowUpInput = {
   recipientEmail?: string | null
   status?: $Enums.NotificationStatus
   scheduledAt: Date | string
+  processingAt?: Date | string | null
   sentAt?: Date | string | null
   subjectSnapshot?: string | null
   bodySnapshot?: string | null
@@ -924,6 +951,7 @@ export type NotificationLogCreateWithoutTemplateInput = {
   recipientEmail?: string | null
   status?: $Enums.NotificationStatus
   scheduledAt: Date | string
+  processingAt?: Date | string | null
   sentAt?: Date | string | null
   subjectSnapshot?: string | null
   bodySnapshot?: string | null
@@ -945,6 +973,7 @@ export type NotificationLogUncheckedCreateWithoutTemplateInput = {
   recipientEmail?: string | null
   status?: $Enums.NotificationStatus
   scheduledAt: Date | string
+  processingAt?: Date | string | null
   sentAt?: Date | string | null
   subjectSnapshot?: string | null
   bodySnapshot?: string | null
@@ -990,6 +1019,7 @@ export type NotificationLogCreateManyScheduleInput = {
   recipientEmail?: string | null
   status?: $Enums.NotificationStatus
   scheduledAt: Date | string
+  processingAt?: Date | string | null
   sentAt?: Date | string | null
   subjectSnapshot?: string | null
   bodySnapshot?: string | null
@@ -1007,6 +1037,7 @@ export type NotificationLogUpdateWithoutScheduleInput = {
   recipientEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumNotificationStatusFieldUpdateOperationsInput | $Enums.NotificationStatus
   scheduledAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  processingAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   sentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   subjectSnapshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bodySnapshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1028,6 +1059,7 @@ export type NotificationLogUncheckedUpdateWithoutScheduleInput = {
   recipientEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumNotificationStatusFieldUpdateOperationsInput | $Enums.NotificationStatus
   scheduledAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  processingAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   sentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   subjectSnapshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bodySnapshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1047,6 +1079,7 @@ export type NotificationLogUncheckedUpdateManyWithoutScheduleInput = {
   recipientEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumNotificationStatusFieldUpdateOperationsInput | $Enums.NotificationStatus
   scheduledAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  processingAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   sentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   subjectSnapshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bodySnapshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1066,6 +1099,7 @@ export type NotificationLogCreateManyFollowUpInput = {
   recipientEmail?: string | null
   status?: $Enums.NotificationStatus
   scheduledAt: Date | string
+  processingAt?: Date | string | null
   sentAt?: Date | string | null
   subjectSnapshot?: string | null
   bodySnapshot?: string | null
@@ -1083,6 +1117,7 @@ export type NotificationLogUpdateWithoutFollowUpInput = {
   recipientEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumNotificationStatusFieldUpdateOperationsInput | $Enums.NotificationStatus
   scheduledAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  processingAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   sentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   subjectSnapshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bodySnapshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1104,6 +1139,7 @@ export type NotificationLogUncheckedUpdateWithoutFollowUpInput = {
   recipientEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumNotificationStatusFieldUpdateOperationsInput | $Enums.NotificationStatus
   scheduledAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  processingAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   sentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   subjectSnapshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bodySnapshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1123,6 +1159,7 @@ export type NotificationLogUncheckedUpdateManyWithoutFollowUpInput = {
   recipientEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumNotificationStatusFieldUpdateOperationsInput | $Enums.NotificationStatus
   scheduledAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  processingAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   sentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   subjectSnapshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bodySnapshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1142,6 +1179,7 @@ export type NotificationLogCreateManyTemplateInput = {
   recipientEmail?: string | null
   status?: $Enums.NotificationStatus
   scheduledAt: Date | string
+  processingAt?: Date | string | null
   sentAt?: Date | string | null
   subjectSnapshot?: string | null
   bodySnapshot?: string | null
@@ -1159,6 +1197,7 @@ export type NotificationLogUpdateWithoutTemplateInput = {
   recipientEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumNotificationStatusFieldUpdateOperationsInput | $Enums.NotificationStatus
   scheduledAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  processingAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   sentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   subjectSnapshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bodySnapshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1180,6 +1219,7 @@ export type NotificationLogUncheckedUpdateWithoutTemplateInput = {
   recipientEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumNotificationStatusFieldUpdateOperationsInput | $Enums.NotificationStatus
   scheduledAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  processingAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   sentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   subjectSnapshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bodySnapshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1199,6 +1239,7 @@ export type NotificationLogUncheckedUpdateManyWithoutTemplateInput = {
   recipientEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumNotificationStatusFieldUpdateOperationsInput | $Enums.NotificationStatus
   scheduledAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  processingAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   sentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   subjectSnapshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bodySnapshot?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1221,6 +1262,7 @@ export type NotificationLogSelect<ExtArgs extends runtime.Types.Extensions.Inter
   recipientEmail?: boolean
   status?: boolean
   scheduledAt?: boolean
+  processingAt?: boolean
   sentAt?: boolean
   subjectSnapshot?: boolean
   bodySnapshot?: boolean
@@ -1244,6 +1286,7 @@ export type NotificationLogSelectCreateManyAndReturn<ExtArgs extends runtime.Typ
   recipientEmail?: boolean
   status?: boolean
   scheduledAt?: boolean
+  processingAt?: boolean
   sentAt?: boolean
   subjectSnapshot?: boolean
   bodySnapshot?: boolean
@@ -1267,6 +1310,7 @@ export type NotificationLogSelectUpdateManyAndReturn<ExtArgs extends runtime.Typ
   recipientEmail?: boolean
   status?: boolean
   scheduledAt?: boolean
+  processingAt?: boolean
   sentAt?: boolean
   subjectSnapshot?: boolean
   bodySnapshot?: boolean
@@ -1290,6 +1334,7 @@ export type NotificationLogSelectScalar = {
   recipientEmail?: boolean
   status?: boolean
   scheduledAt?: boolean
+  processingAt?: boolean
   sentAt?: boolean
   subjectSnapshot?: boolean
   bodySnapshot?: boolean
@@ -1299,7 +1344,7 @@ export type NotificationLogSelectScalar = {
   updatedAt?: boolean
 }
 
-export type NotificationLogOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "followUpId" | "scheduleId" | "templateId" | "eventKey" | "eventType" | "attemptNumber" | "recipientEmail" | "status" | "scheduledAt" | "sentAt" | "subjectSnapshot" | "bodySnapshot" | "providerMessageId" | "errorMessage" | "createdAt" | "updatedAt", ExtArgs["result"]["notificationLog"]>
+export type NotificationLogOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "followUpId" | "scheduleId" | "templateId" | "eventKey" | "eventType" | "attemptNumber" | "recipientEmail" | "status" | "scheduledAt" | "processingAt" | "sentAt" | "subjectSnapshot" | "bodySnapshot" | "providerMessageId" | "errorMessage" | "createdAt" | "updatedAt", ExtArgs["result"]["notificationLog"]>
 export type NotificationLogInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   followUp?: boolean | Prisma.FollowUpDefaultArgs<ExtArgs>
   schedule?: boolean | Prisma.FollowUpScheduleDefaultArgs<ExtArgs>
@@ -1334,6 +1379,7 @@ export type $NotificationLogPayload<ExtArgs extends runtime.Types.Extensions.Int
     recipientEmail: string | null
     status: $Enums.NotificationStatus
     scheduledAt: Date
+    processingAt: Date | null
     sentAt: Date | null
     subjectSnapshot: string | null
     bodySnapshot: string | null
@@ -1777,6 +1823,7 @@ export interface NotificationLogFieldRefs {
   readonly recipientEmail: Prisma.FieldRef<"NotificationLog", 'String'>
   readonly status: Prisma.FieldRef<"NotificationLog", 'NotificationStatus'>
   readonly scheduledAt: Prisma.FieldRef<"NotificationLog", 'DateTime'>
+  readonly processingAt: Prisma.FieldRef<"NotificationLog", 'DateTime'>
   readonly sentAt: Prisma.FieldRef<"NotificationLog", 'DateTime'>
   readonly subjectSnapshot: Prisma.FieldRef<"NotificationLog", 'String'>
   readonly bodySnapshot: Prisma.FieldRef<"NotificationLog", 'String'>

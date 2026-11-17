@@ -323,7 +323,9 @@ model NotificationLog {
 
   // Attempt timing
   scheduledAt DateTime
+  processingAt DateTime?
   sentAt      DateTime?
+  
 
   // Snapshot of sent email
   subjectSnapshot String?

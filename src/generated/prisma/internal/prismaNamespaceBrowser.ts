@@ -188,6 +188,7 @@ export const NotificationLogScalarFieldEnum = {
   recipientEmail: 'recipientEmail',
   status: 'status',
   scheduledAt: 'scheduledAt',
+  processingAt: 'processingAt',
   sentAt: 'sentAt',
   subjectSnapshot: 'subjectSnapshot',
   bodySnapshot: 'bodySnapshot',
