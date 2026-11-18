@@ -18,7 +18,7 @@ export default function Breadcrumbs({
   return (
     <nav
       aria-label="Breadcrumb"
-      className="flex flex-wrap items-center gap-x-2 text-xs sm:text-lg "
+      className="flex flex-wrap items-center gap-x-2 text-xs sm:text-sm mb-8"
     >
       {items.map((item, index) => (
         <span

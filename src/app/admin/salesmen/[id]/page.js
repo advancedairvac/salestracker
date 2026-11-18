@@ -287,7 +287,7 @@ export default async function SalesmanDetailsPage({ params, searchParams }) {
       {/* SALESMAN HEADER */}
 
       <section className="border-b border-[#d9d9d9] pb-5">
-        <div className="flex items-start justify-between gap-4 px-1">
+        <div className="flex items-start justify-between gap-4 px-1 mt-12">
           <div>
             <h1 className="text-base font-bold uppercase text-black sm:text-lg">
               {salesman.name}

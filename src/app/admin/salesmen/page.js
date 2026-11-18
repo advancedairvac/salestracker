@@ -1,10 +1,13 @@
+
 import { redirect } from "next/navigation";
 
-import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth";
 
 import { getInitialRange } from "@/lib/date/date-utils";
-import { getGoalConfiguration, calculateTeamGoal } from "@/lib/date/goal-utils";
+import { getGoalConfiguration } from "@/lib/date/goal-utils";
+
+import { getAdminTeamSectionData } from "@/lib/dashboard/dashboard-data";
+import { getTeamMetrics } from "@/lib/dashboard/dashboard-metrics";
 
 import SalesmanCard from "@/components/dashboard/salesman-card";
 
@@ -16,32 +19,9 @@ export const metadata = {
 };
 
 // ============================================
-// DATE HELPERS
-// ============================================
-
-function getDateRange(startDate, endDate) {
-  const [startYear, startMonth, startDay] = startDate.split("-").map(Number);
-
-  const [endYear, endMonth, endDay] = endDate.split("-").map(Number);
-
-  return {
-    start: new Date(startYear, startMonth - 1, startDay),
-    endExclusive: new Date(endYear, endMonth - 1, endDay + 1),
-  };
-}
-
-// ============================================
-// DATABASE HELPERS
-// ============================================
-
-function getSaleValue(sale) {
-  const value = Number(sale.saleValue || 0);
-
-  return Number.isFinite(value) ? value : 0;
-}
-
-// ============================================
 // SALESMEN PAGE
+// Same data and calculation architecture
+// as Admin Dashboard
 // ============================================
 
 export default async function SalesmenPage() {
@@ -65,9 +45,18 @@ export default async function SalesmenPage() {
 
   const defaultRange = getInitialRange();
 
-  const { start, endExclusive } = getDateRange(
-    defaultRange.startDate,
-    defaultRange.endDate,
+  const [startYear, startMonth, startDay] =
+    defaultRange.startDate.split("-").map(Number);
+
+  const [endYear, endMonth, endDay] =
+    defaultRange.endDate.split("-").map(Number);
+
+  const start = new Date(startYear, startMonth - 1, startDay);
+
+  const endExclusive = new Date(
+    endYear,
+    endMonth - 1,
+    endDay + 1,
   );
 
   // ============================================
@@ -81,115 +70,19 @@ export default async function SalesmenPage() {
   );
 
   // ============================================
-  // FETCH DATA
-  // Same query structure as Admin Dashboard
+  // FETCH TEAM DATA
+  // Reuse Admin Dashboard data architecture
   // ============================================
 
-  const [revenueSales, opportunities, teamMembers] = await Promise.all([
-    // Assigned Sales Revenue
-    prisma.sale.findMany({
-      where: {
-        saleValue: {
-          gt: 0,
-        },
-
-        completedAt: {
-          gte: start,
-          lt: endExclusive,
-        },
-
-        salesmanId: {
-          not: null,
-        },
-      },
-
-      select: {
-        id: true,
-        saleValue: true,
-        completedAt: true,
-        salesmanId: true,
-      },
-    }),
-
-    // CRM Opportunities
-    prisma.opportunity.findMany({
-      where: {
-        opportunityDate: {
-          gte: start,
-          lt: endExclusive,
-        },
-      },
-
-      select: {
-        id: true,
-        assignedToId: true,
-        value: true,
-        status: true,
-      },
-    }),
-
-    // Active Admins and Salespersons
-    prisma.user.findMany({
-      where: {
-        role: {
-          in: ["ADMIN", "SALESPERSON"],
-        },
-
-        isActive: true,
-      },
-
-      select: {
-        id: true,
-        name: true,
-        title: true,
-        role: true,
-        monthlyGoal: true,
-        quarterlyGoal: true,
-        annualGoal: true,
-      },
-
-      orderBy: {
-        name: "asc",
-      },
-    }),
-  ]);
-
-  // ============================================
-  // SALES REVENUE BY TEAM MEMBER
-  // ============================================
-
-  const revenueByMember = new Map();
-
-  for (const sale of revenueSales) {
-    if (!sale.salesmanId) {
-      continue;
-    }
-
-    const currentRevenue = revenueByMember.get(sale.salesmanId) || 0;
-
-    revenueByMember.set(sale.salesmanId, currentRevenue + getSaleValue(sale));
-  }
-
-  // ============================================
-  // OPPORTUNITY COUNT BY TEAM MEMBER
-  // ============================================
-
-  const opportunityCountByMember = new Map();
-
-  for (const opportunity of opportunities) {
-    if (!opportunity.assignedToId) {
-      continue;
-    }
-
-    const memberId = opportunity.assignedToId;
-
-    const currentCount = opportunityCountByMember.get(memberId) || 0;
-
-    opportunityCountByMember.set(memberId, currentCount + 1);
-  }
+  const { teamMembers, revenueSales, opportunities } =
+    await getAdminTeamSectionData({
+      start,
+      endExclusive,
+    });
 
   // ============================================
   // SORT TEAM MEMBERS
+  // Admins first, then alphabetical
   // ============================================
 
   const sortedTeamMembers = [...teamMembers].sort((a, b) => {
@@ -205,31 +98,15 @@ export default async function SalesmenPage() {
   });
 
   // ============================================
-  // TEAM PERFORMANCE DATA
+  // TEAM PERFORMANCE METRICS
   // Same calculation as Admin Dashboard
   // ============================================
 
-  const salesmanPerformance = sortedTeamMembers.map((salesman) => {
-    const memberGoal = calculateTeamGoal(
-      [salesman],
-      goalConfiguration.goalType,
-    );
-
-    return {
-      id: salesman.id,
-      name: salesman.name,
-      title: salesman.title || "",
-
-      monthlyGoal: memberGoal,
-
-      revenue: revenueByMember.get(salesman.id) || 0,
-
-      commission: 0,
-
-      opportunities: opportunityCountByMember.get(salesman.id) || 0,
-
-      closeRate: 0,
-    };
+  const salesmanPerformance = getTeamMetrics({
+    teamMembers: sortedTeamMembers,
+    goalType: goalConfiguration.goalType,
+    revenueSales,
+    opportunities,
   });
 
   // ============================================
@@ -249,7 +126,6 @@ export default async function SalesmenPage() {
         ]}
         currentPage="Salesmen"
       />
-
 
       {/* TEAM SUMMARY */}
 

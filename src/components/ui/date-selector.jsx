@@ -175,7 +175,7 @@ export default function DateSelector({
 
   const triggerClass = compact
     ? "min-h-[44px] gap-3 px-3"
-    : "min-h-[76px] gap-5 px-5 sm:px-6";
+    : "min-h-[72px] gap-5 px-5 sm:px-6";
 
   const calendarClass = compact ? "h-5 w-5" : "h-10 w-10";
 
@@ -208,7 +208,7 @@ export default function DateSelector({
         >
           <SvgIcon
             name="calendar"
-            className={`shrink-0 text-[#565656] ${calendarClass}`}
+            className={`shrink-0 h-[30px] w-[30px] text-[#565656] ${calendarClass}`}
           />
 
           <span

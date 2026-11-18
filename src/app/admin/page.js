@@ -262,17 +262,12 @@ export default async function AdminDashboardPage({ searchParams }) {
 
       {/* REVENUE AND PIPELINE CARDS */}
 
-
-
       <section className="grid grid-cols-1 gap-3 lg:grid-cols-2">
         {/* REVENUE */}
 
-<Suspense fallback={<RevenueCard loading />}>
-  <AdminRevenueSection
-    start={start}
-    endExclusive={endExclusive}
-  />
-</Suspense>
+        <Suspense fallback={<RevenueCard loading />}>
+          <AdminRevenueSection start={start} endExclusive={endExclusive} />
+        </Suspense>
 
         {/* PIPELINE */}
 

@@ -67,7 +67,7 @@ export default function AppSidebar({
   const primaryClasses = (active) =>
     [
       linkBaseClasses,
-      "text-[23px] font-bold uppercase leading-[1.4]",
+      "text-[22px] font-bold uppercase leading-[1.4]",
       active
         ? "text-[#005cb9] after:scale-x-100"
         : "text-black hover:text-[#005cb9]",

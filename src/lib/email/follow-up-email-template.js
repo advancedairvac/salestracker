@@ -137,7 +137,7 @@ export function renderFollowUpEmail({
   margin:0;
   padding:0;
   background:#ffffff;
-  font-family:Arial,Helvetica,sans-serif;
+  font-family:Montserrat,sans-serif;
   color:#111111;
 ">
 
