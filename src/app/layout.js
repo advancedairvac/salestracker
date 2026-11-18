@@ -1,3 +1,4 @@
+
 import PerformanceMonitor from "@/components/dev/performance-monitor";
 import { Montserrat } from "next/font/google";
 import "./globals.css";
@@ -10,10 +11,15 @@ const montserrat = Montserrat({
 
 export const metadata = {
   title: {
-    default: "Advanced Sales Tracker",
-    template: "%s | Advanced Sales Tracker",
+    default: "Sales Tracker | Advanced Air & Vacuum",
+    template: "%s | Sales Tracker | Advanced Air & Vacuum",
   },
-  description: "Advanced Sales Tracker",
+  description: "Sales Tracker | Advanced Air & Vacuum",
+  icons: {
+    icon: "/Favicon.jpg",
+    shortcut: "/Favicon.jpg",
+    apple: "/Favicon.jpg",
+  },
 };
 
 export default function RootLayout({ children }) {

@@ -1,5 +1,6 @@
 import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
+
 import { prisma } from "@/lib/prisma";
 import { createSession } from "@/lib/auth";
 
@@ -30,17 +31,32 @@ export async function POST(request) {
     const user = await prisma.user.findFirst({
       where: {
         OR: [
-          { username: { equals: identifier, mode: "insensitive" } },
-          { email: { equals: identifier, mode: "insensitive" } },
+          {
+            username: {
+              equals: identifier,
+              mode: "insensitive",
+            },
+          },
+          {
+            email: {
+              equals: identifier,
+              mode: "insensitive",
+            },
+          },
         ],
       },
     });
 
-    if (
-      !user ||
-      !user.isActive ||
-      !(await bcrypt.compare(password, user.passwordHash))
-    ) {
+    if (!user || !user.isActive || !user.passwordHash) {
+      return NextResponse.redirect(
+        getRedirectUrl("/login?error=invalid", request),
+        303,
+      );
+    }
+
+    const passwordMatches = await bcrypt.compare(password, user.passwordHash);
+
+    if (!passwordMatches) {
       return NextResponse.redirect(
         getRedirectUrl("/login?error=invalid", request),
         303,

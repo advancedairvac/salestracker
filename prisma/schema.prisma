@@ -93,28 +93,30 @@ model User {
   role     UserRole @default(SALESPERSON)
   isActive Boolean  @default(true)
 
+  // Salesperson invitation
+  invitationTokenHash String?   @unique
+  invitationExpiresAt DateTime?
+  invitedAt           DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Opportunities
+  // Opportunity relations
   assignedOpportunities Opportunity[] @relation("OpportunityAssignedTo")
   createdOpportunities  Opportunity[] @relation("OpportunityCreatedBy")
   closedOpportunities   Opportunity[] @relation("OpportunityClosedBy")
 
-  // Follow-ups
+  // Follow-up relation
   assignedFollowUps FollowUp[] @relation("FollowUpAssignedTo")
 
-  // Email Templates
+  // Other relations
   emailTemplates EmailTemplate[]
-
-  // Activities
-  activities Activity[]
-
-  // Sales Assignments
-  assignedSales Sale[] @relation("SaleAssignedTo")
+  activities     Activity[]
+  assignedSales  Sale[]          @relation("SaleAssignedTo")
 
   @@index([role])
   @@index([isActive])
+  @@index([invitationExpiresAt])
 }
 
 // ============================================
@@ -322,10 +324,9 @@ model NotificationLog {
   status NotificationStatus @default(PENDING)
 
   // Attempt timing
-  scheduledAt DateTime
+  scheduledAt  DateTime
   processingAt DateTime?
-  sentAt      DateTime?
-  
+  sentAt       DateTime?
 
   // Snapshot of sent email
   subjectSnapshot String?

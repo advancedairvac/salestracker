@@ -3,20 +3,24 @@ import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth";
 
-import { updateSalesman } from "../../new/actions";
+import {
+  updateSalesman,
+  resendSalesmanInvitation,
+  terminateSalesman,
+  reactivateSalesman,
+} from "../../new/actions";
 
 import Breadcrumbs from "@/components/ui/breadcrumbs";
 import PageTagline from "@/components/ui/page-tagline";
 import NewEditSalesman from "@/components/dashboard/newEdit-salesman";
 
 export const metadata = {
-  title: "Edit Salesman | Sales Tracker",
+  title: "Edit Profile | Sales Tracker",
 };
 
 export default async function EditSalesmanPage({ params }) {
   const user = await getAuthenticatedUser();
 
-  // Only ADMIN can access this page
   if (!user) {
     redirect("/login");
   }
@@ -31,19 +35,28 @@ export default async function EditSalesmanPage({ params }) {
     notFound();
   }
 
-  // Find the SALESPERSON to edit
+  // Admin can edit their own profile or any salesperson.
+  // Another admin's profile is not editable here.
   const salesman = await prisma.user.findFirst({
     where: {
       id: salesmanId,
-      role: {
-        in: ["ADMIN", "SALESPERSON"],
-      },
+      OR: [
+        { role: "SALESPERSON" },
+        {
+          role: "ADMIN",
+          id: user.id,
+        },
+      ],
     },
     select: {
       id: true,
       name: true,
       title: true,
       email: true,
+      username: true,
+      passwordHash: true,
+      role: true,
+      isActive: true,
       monthlyGoal: true,
       quarterlyGoal: true,
       annualGoal: true,
@@ -54,7 +67,22 @@ export default async function EditSalesmanPage({ params }) {
     notFound();
   }
 
-  // Prepare existing values
+  const isSalesperson = salesman.role === "SALESPERSON";
+
+  const isRegistered = Boolean(salesman.username && salesman.passwordHash);
+
+  const isPendingRegistration =
+    isSalesperson &&
+    !salesman.isActive &&
+    !salesman.username &&
+    !salesman.passwordHash;
+
+  const canResendInvitation = isPendingRegistration;
+
+  const canTerminate = isSalesperson && salesman.isActive && isRegistered;
+
+  const canReactivate = isSalesperson && !salesman.isActive && isRegistered;
+
   const initialValues = {
     name: salesman.name || "",
     title: salesman.title || "",
@@ -66,8 +94,6 @@ export default async function EditSalesmanPage({ params }) {
 
   return (
     <div className="space-y-4 sm:space-y-5">
-      {/* Breadcrumb */}
-
       <Breadcrumbs
         items={[
           {
@@ -79,22 +105,18 @@ export default async function EditSalesmanPage({ params }) {
             href: "/admin/salesmen",
           },
         ]}
-        currentPage="Edit Salesman"
+        currentPage="Edit Profile"
       />
-
-      {/* Page Heading */}
 
       <div>
         <h1 className="text-2xl font-extrabold uppercase tracking-tight text-black">
-          Edit Salesman
+          Edit Profile
         </h1>
 
         <p className="mt-1 text-sm text-[#777777]">
-          Update salesman information and sales goals.
+          Update profile information and sales goals.
         </p>
       </div>
-
-      {/* Edit Salesman Form */}
 
       <section className="mt-5 flex w-full flex-1 flex-col sm:mt-6">
         <NewEditSalesman
@@ -102,10 +124,14 @@ export default async function EditSalesmanPage({ params }) {
           salesmanId={salesman.id}
           initialValues={initialValues}
           onSubmit={updateSalesman}
+          onResendInvitation={resendSalesmanInvitation}
+          canResendInvitation={canResendInvitation}
+          onTerminate={terminateSalesman}
+          onReactivate={reactivateSalesman}
+          canTerminate={canTerminate}
+          canReactivate={canReactivate}
         />
       </section>
-
-      {/* Page Tagline */}
 
       <PageTagline>
         Great teams are built one great person at a time.

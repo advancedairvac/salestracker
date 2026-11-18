@@ -1142,6 +1142,9 @@ export const UserScalarFieldEnum = {
   annualGoal: 'annualGoal',
   role: 'role',
   isActive: 'isActive',
+  invitationTokenHash: 'invitationTokenHash',
+  invitationExpiresAt: 'invitationExpiresAt',
+  invitedAt: 'invitedAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

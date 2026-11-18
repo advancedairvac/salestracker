@@ -855,10 +855,6 @@ export type EnumOpportunityStatusFieldUpdateOperationsInput = {
   set?: $Enums.OpportunityStatus
 }
 
-export type NullableDateTimeFieldUpdateOperationsInput = {
-  set?: Date | string | null
-}
-
 export type OpportunityCreateNestedOneWithoutFollowUpScheduleInput = {
   create?: Prisma.XOR<Prisma.OpportunityCreateWithoutFollowUpScheduleInput, Prisma.OpportunityUncheckedCreateWithoutFollowUpScheduleInput>
   connectOrCreate?: Prisma.OpportunityCreateOrConnectWithoutFollowUpScheduleInput
