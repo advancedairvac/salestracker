@@ -1,8 +1,9 @@
-
 import { notFound, redirect } from "next/navigation";
 
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth";
+
+import { updateSalesman } from "../../new/actions";
 
 import Breadcrumbs from "@/components/ui/breadcrumbs";
 import PageTagline from "@/components/ui/page-tagline";
@@ -12,9 +13,10 @@ export const metadata = {
   title: "Edit Salesman | Sales Tracker",
 };
 
-export default async function EditSalesmanPage({ searchParams }) {
+export default async function EditSalesmanPage({ params }) {
   const user = await getAuthenticatedUser();
 
+  // Only ADMIN can access this page
   if (!user) {
     redirect("/login");
   }
@@ -23,38 +25,49 @@ export default async function EditSalesmanPage({ searchParams }) {
     redirect("/login");
   }
 
-  const params = await searchParams;
-  const salesmanId =
-    typeof params?.id === "string" ? params.id : "";
+  const { id: salesmanId } = await params;
 
   if (!salesmanId) {
     notFound();
   }
 
-  // Find Salesman
-  const salesman = await prisma.user.findUnique({
+  // Find the SALESPERSON to edit
+  const salesman = await prisma.user.findFirst({
     where: {
       id: salesmanId,
+      role: {
+        in: ["ADMIN", "SALESPERSON"],
+      },
+    },
+    select: {
+      id: true,
+      name: true,
+      title: true,
+      email: true,
+      monthlyGoal: true,
+      quarterlyGoal: true,
+      annualGoal: true,
     },
   });
 
-  if (!salesman || salesman.role !== "SALESPERSON") {
+  if (!salesman) {
     notFound();
   }
 
-  // Prepare Existing Values
+  // Prepare existing values
   const initialValues = {
     name: salesman.name || "",
     title: salesman.title || "",
     email: salesman.email || "",
-    monthlyGoal: salesman.monthlyGoal ?? "",
-    quarterlyGoal: salesman.quarterlyGoal ?? "",
-    annualGoal: salesman.annualGoal ?? "",
+    monthlyGoal: salesman.monthlyGoal?.toString() ?? "",
+    quarterlyGoal: salesman.quarterlyGoal?.toString() ?? "",
+    annualGoal: salesman.annualGoal?.toString() ?? "",
   };
 
   return (
     <div className="space-y-4 sm:space-y-5">
       {/* Breadcrumb */}
+
       <Breadcrumbs
         items={[
           {
@@ -70,6 +83,7 @@ export default async function EditSalesmanPage({ searchParams }) {
       />
 
       {/* Page Heading */}
+
       <div>
         <h1 className="text-2xl font-extrabold uppercase tracking-tight text-black">
           Edit Salesman
@@ -81,15 +95,18 @@ export default async function EditSalesmanPage({ searchParams }) {
       </div>
 
       {/* Edit Salesman Form */}
+
       <section className="mt-5 flex w-full flex-1 flex-col sm:mt-6">
         <NewEditSalesman
           mode="edit"
           salesmanId={salesman.id}
           initialValues={initialValues}
+          onSubmit={updateSalesman}
         />
       </section>
 
       {/* Page Tagline */}
+
       <PageTagline>
         Great teams are built one great person at a time.
       </PageTagline>

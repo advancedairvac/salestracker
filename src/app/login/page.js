@@ -1,8 +1,9 @@
+
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import AppShell from "@/components/layout/app-shell";
 import Breadcrumbs from "@/components/ui/breadcrumbs";
+import AppFooter from "@/components/layout/app-footer";
 import { getAuthenticatedUser } from "@/lib/auth";
 
 export const metadata = {
@@ -21,11 +22,14 @@ export default async function LoginPage({ searchParams }) {
   const error = params?.error;
 
   return (
-    <AppShell role="salesperson" isAuthenticated={false}>
-      <main className="flex flex-1 flex-col bg-white text-black">
+    <div className="flex min-h-screen w-full flex-col bg-white text-black">
+      {/* LOGIN CONTENT */}
+
+      <main className="flex flex-1 flex-col px-5 pt-5 lg:px-23 lg:pt-10">
         <div className="flex w-full max-w-2xl flex-1 flex-col">
           {/* Breadcrumb */}
-          <div className="pt-5 sm:pt-6">
+
+          <div>
             <Breadcrumbs
               items={[{ label: "Sales Tracker", href: "/" }]}
               currentPage="Login"
@@ -33,6 +37,7 @@ export default async function LoginPage({ searchParams }) {
           </div>
 
           {/* Login Form */}
+
           <section className="mt-5 flex flex-1 flex-col sm:mt-6">
             <h1 className="max-w-[650px] text-[22px] font-semibold leading-[1.3] sm:text-[26px] lg:text-[28px]">
               Excellence, accountability, organization; Advanced.
@@ -44,6 +49,7 @@ export default async function LoginPage({ searchParams }) {
               className="mt-16 flex w-full flex-col gap-[7px] sm:mt-20 lg:mt-24"
             >
               {/* Login Error */}
+
               {error && (
                 <p role="alert" className="mb-3 text-sm text-red-600">
                   {error === "invalid"
@@ -53,6 +59,7 @@ export default async function LoginPage({ searchParams }) {
               )}
 
               {/* Username */}
+
               <input
                 id="username"
                 name="username"
@@ -71,6 +78,7 @@ export default async function LoginPage({ searchParams }) {
               />
 
               {/* Password */}
+
               <input
                 id="password"
                 name="password"
@@ -89,6 +97,7 @@ export default async function LoginPage({ searchParams }) {
               />
 
               {/* Submit Button */}
+
               <button
                 type="submit"
                 className={[
@@ -106,6 +115,7 @@ export default async function LoginPage({ searchParams }) {
               </button>
 
               {/* Forgot Credentials */}
+
               <p className="mt-5 text-sm text-black">
                 Forgot{" "}
                 <Link
@@ -127,6 +137,10 @@ export default async function LoginPage({ searchParams }) {
           </section>
         </div>
       </main>
-    </AppShell>
+
+      {/* FOOTER */}
+
+      <AppFooter />
+    </div>
   );
 }

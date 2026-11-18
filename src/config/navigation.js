@@ -32,24 +32,9 @@ const primaryNavigation = {
   ],
 };
 
-const publicNavigation = [
-  { label: "DASHBOARD", href: "/salesperson", type: "primary" },
-  {
-    label: "GENERATE REPORT",
-    href: "/salesperson/reports",
-    type: "primary",
-  },
-  {
-    label: "MY PROFILE",
-    href: "/salesperson/profile",
-    type: "primary",
-  },
-  {
-    label: "NEW OPPORTUNITY",
-    href: "/salesperson/opportunities/new",
-    type: "primary",
-  },
-];
+// ============================================
+// EXTERNAL NAVIGATION
+// ============================================
 
 const techTrackerLink = {
   label: "Tech Tracker",
@@ -58,36 +43,33 @@ const techTrackerLink = {
   external: true,
 };
 
-export function getNavigation(role = "salesperson", isAuthenticated = true) {
+// ============================================
+// NAVIGATION CONFIGURATION
+// ============================================
+
+export function getNavigation(role = "salesperson") {
   const normalizedRole =
     String(role).toLowerCase() === "admin" ? "admin" : "salesperson";
-
-  const primaryItems = isAuthenticated
-    ? primaryNavigation[normalizedRole]
-    : publicNavigation;
 
   const secondaryItems = [
     {
       label: "Settings",
-      href: isAuthenticated
-        ? normalizedRole === "admin"
+      href:
+        normalizedRole === "admin"
           ? "/admin/settings"
-          : "/salesperson/settings"
-        : null,
+          : "/salesperson/settings",
       type: "secondary",
     },
+
     techTrackerLink,
-    ...(isAuthenticated
-      ? [
-          {
-            label: "Logout",
-            href: null,
-            action: "logout",
-            type: "secondary",
-          },
-        ]
-      : []),
+
+    {
+      label: "Logout",
+      href: null,
+      action: "logout",
+      type: "secondary",
+    },
   ];
 
-  return [...primaryItems, ...secondaryItems];
+  return [...primaryNavigation[normalizedRole], ...secondaryItems];
 }

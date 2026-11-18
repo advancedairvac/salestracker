@@ -1,4 +1,6 @@
+
 import { redirect } from "next/navigation";
+
 import AppShell from "@/components/layout/app-shell";
 import { getAuthenticatedUser } from "@/lib/auth";
 
@@ -13,9 +15,5 @@ export default async function AdminLayout({ children }) {
     redirect("/salesperson");
   }
 
-  return (
-    <AppShell role="admin" isAuthenticated={true}>
-      {children}
-    </AppShell>
-  );
+  return <AppShell role="admin">{children}</AppShell>;
 }

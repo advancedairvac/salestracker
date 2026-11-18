@@ -7,12 +7,15 @@ import AppHeader from "@/components/layout/app-header";
 import AppSidebar from "@/components/layout/app-sidebar";
 import MobileNavigation from "@/components/layout/mobile-navigation";
 import AppFooter from "@/components/layout/app-footer";
-import Modal from "@/components/ui/modal";
 
 import {
   PageTaglineProvider,
   PageTaglineDisplay,
 } from "@/components/ui/page-tagline";
+
+// ============================================
+// MOBILE EDIT ACTION CONTEXT
+// ============================================
 
 const MobileEditActionContext = createContext({
   setMobileEditHref: () => {},
@@ -22,18 +25,21 @@ export function useMobileEditAction() {
   return useContext(MobileEditActionContext);
 }
 
-export default function AppShell({
-  children,
-  role = "salesperson",
-  isAuthenticated = false,
-}) {
+// ============================================
+// APP SHELL
+// ============================================
+
+export default function AppShell({ children, role = "salesperson" }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
-  const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [tagline, setTagline] = useState(null);
   const [mobileEditHref, setMobileEditHref] = useState(null);
 
   const router = useRouter();
+
+  // ============================================
+  // MOBILE MENU
+  // ============================================
 
   const openMenu = useCallback(() => {
     setMenuOpen(true);
@@ -43,13 +49,9 @@ export default function AppShell({
     setMenuOpen(false);
   }, []);
 
-  const openLoginModal = useCallback(() => {
-    setLoginModalOpen(true);
-  }, []);
-
-  const closeLoginModal = useCallback(() => {
-    setLoginModalOpen(false);
-  }, []);
+  // ============================================
+  // LOGOUT
+  // ============================================
 
   const handleLogout = useCallback(async () => {
     if (loggingOut) return;
@@ -75,19 +77,22 @@ export default function AppShell({
     }
   }, [closeMenu, loggingOut, router]);
 
+  // ============================================
+  // RENDER
+  // ============================================
+
   return (
     <MobileEditActionContext.Provider value={{ setMobileEditHref }}>
       <div className="flex min-h-screen w-full bg-white text-neutral-950">
-        {/* Desktop sidebar */}
-        <AppSidebar
-          role={role}
-          isAuthenticated={isAuthenticated}
-          onLogout={handleLogout}
-          onLoginRequired={openLoginModal}
-        />
+        {/* DESKTOP SIDEBAR */}
 
-        {/* Main content */}
+        <AppSidebar role={role} onLogout={handleLogout} />
+
+        {/* MAIN CONTENT */}
+
         <div className="flex min-h-screen min-w-0 flex-1 flex-col">
+          {/* MOBILE HEADER */}
+
           <AppHeader
             onMenuClick={menuOpen ? closeMenu : openMenu}
             menuOpen={menuOpen}
@@ -99,44 +104,26 @@ export default function AppShell({
               {children}
             </main>
 
-            {/* Shared page tagline position */}
+            {/* SHARED PAGE TAGLINE */}
+
             <div className="px-5 lg:px-23">
               <PageTaglineDisplay />
             </div>
           </PageTaglineProvider>
 
-          {/* Copyright footer */}
+          {/* COPYRIGHT FOOTER */}
+
           <AppFooter />
         </div>
 
-        {/* Mobile navigation drawer */}
+        {/* MOBILE NAVIGATION */}
+
         <MobileNavigation
           open={menuOpen}
           onClose={closeMenu}
           role={role}
-          isAuthenticated={isAuthenticated}
           onLogout={handleLogout}
-          onLoginRequired={openLoginModal}
         />
-
-        {/* Shared login-required modal */}
-        <Modal
-          open={loginModalOpen}
-          onClose={closeLoginModal}
-          title="Login Required"
-          description="Please log in to access this feature."
-          size="sm"
-        >
-          <div className="flex justify-end">
-            <button
-              type="button"
-              onClick={closeLoginModal}
-              className="border border-black bg-black px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-neutral-700"
-            >
-              Close
-            </button>
-          </div>
-        </Modal>
       </div>
     </MobileEditActionContext.Provider>
   );

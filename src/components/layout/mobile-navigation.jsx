@@ -8,9 +8,7 @@ export default function MobileNavigation({
   open,
   onClose,
   role = "salesperson",
-  isAuthenticated = false,
   onLogout,
-  onLoginRequired,
 }) {
   useEffect(() => {
     if (!open) return;
@@ -45,7 +43,8 @@ export default function MobileNavigation({
       ].join(" ")}
       aria-hidden={!open}
     >
-      {/* Overlay */}
+      {/* OVERLAY */}
+
       <button
         type="button"
         tabIndex={open ? 0 : -1}
@@ -57,7 +56,8 @@ export default function MobileNavigation({
         ].join(" ")}
       />
 
-      {/* Drawer */}
+      {/* DRAWER */}
+
       <div
         id="mobile-navigation"
         role="dialog"
@@ -72,10 +72,8 @@ export default function MobileNavigation({
         <AppSidebar
           mobile
           role={role}
-          isAuthenticated={isAuthenticated}
           onNavigate={onClose}
           onLogout={handleLogout}
-          onLoginRequired={onLoginRequired}
         />
       </div>
     </div>

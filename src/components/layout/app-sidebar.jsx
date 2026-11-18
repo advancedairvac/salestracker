@@ -8,18 +8,16 @@ import { getNavigation } from "@/config/navigation";
 
 export default function AppSidebar({
   role = "salesperson",
-  isAuthenticated = false,
   mobile = false,
   onNavigate,
   onLogout,
-  onLoginRequired,
 }) {
   const pathname = usePathname();
 
   const normalizedRole = String(role).toLowerCase();
   const isAdmin = normalizedRole === "admin";
 
-  const items = getNavigation(role, isAuthenticated);
+  const items = getNavigation(role);
 
   const primaryItems = items.filter((item) => item.type === "primary");
   const secondaryItems = items.filter((item) => item.type === "secondary");
@@ -28,7 +26,7 @@ export default function AppSidebar({
   // ROLE-BASED LOGO DESTINATION
   // ============================================
 
-  const logoHref = !isAuthenticated ? "/" : isAdmin ? "/admin" : "/salesperson";
+  const logoHref = isAdmin ? "/admin" : "/salesperson";
 
   // ============================================
   // ACTIVE NAVIGATION
@@ -37,12 +35,10 @@ export default function AppSidebar({
   const isActive = (href) => {
     if (!href) return false;
 
-    // Dashboard must only be active on its exact route.
     if (href === "/admin" || href === "/salesperson") {
       return pathname === href;
     }
 
-    // Other navigation items support nested routes.
     return pathname === href || pathname.startsWith(`${href}/`);
   };
 
@@ -95,6 +91,7 @@ export default function AppSidebar({
         : secondaryClasses(active);
 
     // LOGOUT
+
     if (item.action === "logout") {
       return (
         <li key={`${item.label}-${index}`}>
@@ -113,6 +110,7 @@ export default function AppSidebar({
     }
 
     // EXTERNAL LINK
+
     if (item.external) {
       return (
         <li key={`${item.label}-${index}`}>
@@ -129,37 +127,8 @@ export default function AppSidebar({
       );
     }
 
-    // UNAUTHENTICATED USER
-    if (!isAuthenticated) {
-      return (
-        <li key={`${item.label}-${index}`}>
-          <button
-            type="button"
-            onClick={() => onLoginRequired?.()}
-            className={`${classes} cursor-pointer`}
-          >
-            {item.label}
-          </button>
-        </li>
-      );
-    }
-
-    // ITEM WITHOUT HREF
-    if (!item.href) {
-      return (
-        <li key={`${item.label}-${index}`}>
-          <button
-            type="button"
-            onClick={() => onLoginRequired?.()}
-            className={`${classes} cursor-pointer`}
-          >
-            {item.label}
-          </button>
-        </li>
-      );
-    }
-
     // INTERNAL LINK
+
     return (
       <li key={`${item.label}-${index}`}>
         <Link
@@ -192,28 +161,16 @@ export default function AppSidebar({
             ].join(" "),
       ].join(" ")}
     >
-      {/* ACCOUNT BADGE / LOGIN LOCK */}
+      {/* ACCOUNT BADGE */}
 
       <div className="absolute right-8 top-8 z-10 flex h-7 w-7 items-center justify-center">
-        {isAuthenticated ? (
-          <span
-            aria-label={isAdmin ? "Admin account" : "Salesperson account"}
-            title={isAdmin ? "Admin" : "Salesperson"}
-            className="flex h-6 w-6 items-center justify-center rounded-full bg-black text-[11px] font-medium text-white"
-          >
-            {isAdmin ? "AD" : "DH"}
-          </span>
-        ) : (
-          <button
-            type="button"
-            onClick={() => onLoginRequired?.()}
-            aria-label="Login required"
-            title="Login"
-            className="flex h-7 w-7 items-center justify-center text-black"
-          >
-            <SvgIcon name="lock" className="h-6 w-6" />
-          </button>
-        )}
+        <span
+          aria-label={isAdmin ? "Admin account" : "Salesperson account"}
+          title={isAdmin ? "Admin" : "Salesperson"}
+          className="flex h-6 w-6 items-center justify-center rounded-full bg-black text-[11px] font-medium text-white"
+        >
+          {isAdmin ? "AD" : "DH"}
+        </span>
       </div>
 
       {/* COMPANY LOGO */}
@@ -221,13 +178,7 @@ export default function AppSidebar({
       <div className="pb-10 pt-16">
         <Link
           href={logoHref}
-          aria-label={
-            isAdmin
-              ? "Admin Dashboard"
-              : isAuthenticated
-                ? "Salesperson Dashboard"
-                : "Home"
-          }
+          aria-label={isAdmin ? "Admin Dashboard" : "Salesperson Dashboard"}
           onClick={onNavigate}
           className="flex w-full items-center justify-center"
         >

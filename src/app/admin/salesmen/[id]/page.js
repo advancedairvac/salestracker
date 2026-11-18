@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Suspense } from "react";
 import { redirect, notFound } from "next/navigation";
 
@@ -20,6 +21,8 @@ import FollowUpsTable from "@/components/dashboard/followUps-table";
 
 import Breadcrumbs from "@/components/ui/breadcrumbs";
 import PageTagline from "@/components/ui/page-tagline";
+
+import MobileEditAction from "@/components/layout/mobile-edit-action";
 
 import SummarySkeleton from "@/components/ui/skeleton/summary-skeleton";
 import TableSkeleton from "@/components/ui/skeleton/table-skeleton";
@@ -91,7 +94,6 @@ async function SalesmanRevenueTableSection({
 
 // ============================================
 // SALESMAN FOLLOW-UPS SECTION
-// Reuses Pipeline follow-up data
 // ============================================
 
 async function SalesmanFollowUpsSection({ salesmanId }) {
@@ -216,7 +218,6 @@ export default async function SalesmanDetailsPage({ params, searchParams }) {
 
   // ============================================
   // CLOSE RATE
-  // Placeholder until reporting logic is connected
   // ============================================
 
   const closeRate = 0;
@@ -244,19 +245,26 @@ export default async function SalesmanDetailsPage({ params, searchParams }) {
 
   // ============================================
   // ESTIMATES
-  // Temporarily empty until estimate assignment
-  // and database schema are implemented.
-  // Keep the table connected for future use.
   // ============================================
 
   const estimates = [];
+
+  // ============================================
+  // EDIT URL
+  // ============================================
+
+  const editHref = `/admin/salesmen/${salesman.id}/edit`;
 
   // ============================================
   // RENDER
   // ============================================
 
   return (
-    <div className="space-y-4 sm:space-y-5">
+    <div className="w-full space-y-4 sm:space-y-5">
+      {/* MOBILE HEADER EDIT ACTION */}
+
+      <MobileEditAction href={editHref} />
+
       {/* BREADCRUMBS */}
 
       <Breadcrumbs
@@ -273,42 +281,61 @@ export default async function SalesmanDetailsPage({ params, searchParams }) {
         currentPage={salesman.name}
       />
 
-      {/* DATE FILTER */}
+      {/* SALESMAN HEADER & EDIT */}
 
-      <RevenueDateFilter
-        value={{
-          startDate,
-          endDate,
-        }}
-        preset={selectedPreset}
-        basePath={`/admin/salesmen/${salesman.id}`}
-      />
+      <div className="flex w-full items-start gap-4">
+        {/* LEFT SIDE */}
 
-      {/* SALESMAN HEADER */}
+        <div className="w-full space-y-4 md:w-3/4">
+          {/* DATE FILTER */}
 
-      <section className="border-b border-[#d9d9d9] pb-5">
-        <div className="flex items-start justify-between gap-4 px-1 mt-12">
-          <div>
-            <h1 className="text-base font-bold uppercase text-black sm:text-lg">
-              {salesman.name}
-            </h1>
+          <RevenueDateFilter
+            value={{
+              startDate,
+              endDate,
+            }}
+            preset={selectedPreset}
+            basePath={`/admin/salesmen/${salesman.id}`}
+          />
 
-            <p className="mt-1 text-xs uppercase text-[#777]">
-              {salesman.title || "Salesperson"}
-            </p>
-          </div>
+          {/* SALESMAN INFORMATION */}
 
-          <div className="shrink-0 text-right">
-            <p className="text-lg font-bold text-black">{closeRate}%</p>
+          <section className="border-b border-[#d9d9d9] pb-5">
+            <div className="mt-12 flex items-start justify-between gap-4 px-1">
+              <div>
+                <h1 className="text-base font-bold uppercase text-black sm:text-lg">
+                  {salesman.name}
+                </h1>
 
-            <p className="text-[10px] uppercase text-[#777]">Close Rate</p>
-          </div>
+                <p className="mt-1 text-xs uppercase text-[#777]">
+                  {salesman.title || "Salesperson"}
+                </p>
+              </div>
+
+              <div className="shrink-0 text-right">
+                <p className="text-lg font-bold text-black">{closeRate}%</p>
+
+                <p className="text-[10px] uppercase text-[#777]">Close Rate</p>
+              </div>
+            </div>
+          </section>
         </div>
-      </section>
+
+        {/* RIGHT SIDE - DESKTOP ONLY */}
+
+        <div className="hidden w-1/4 justify-end pt-1 md:flex">
+          <Link
+            href={editHref}
+            className="text-sm font-medium text-[#555] hover:text-black"
+          >
+            Edit
+          </Link>
+        </div>
+      </div>
 
       {/* SALES REVENUE */}
 
-      <section className="space-y-4">
+      <section className="w-full space-y-4">
         <h2 className="px-1 text-sm font-bold uppercase text-black sm:text-base">
           Sales Revenue
         </h2>
@@ -348,7 +375,7 @@ export default async function SalesmanDetailsPage({ params, searchParams }) {
 
       {/* ESTIMATES */}
 
-      <section className="space-y-3">
+      <section className="w-full space-y-3">
         <h2 className="px-1 text-sm font-bold uppercase text-black sm:text-base">
           Estimates
         </h2>

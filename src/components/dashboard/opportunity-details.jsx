@@ -1,11 +1,10 @@
 
 "use client";
 
-import { useEffect } from "react";
 import Link from "next/link";
 
 import OpportunityActions from "@/components/dashboard/opportunity-actions";
-import { useMobileEditAction } from "@/components/layout/app-shell";
+import MobileEditAction from "@/components/layout/mobile-edit-action";
 
 import {
   updateFollowUpMode as updateAdminFollowUpMode,
@@ -57,7 +56,8 @@ function getNextFollowUp(followUps = []) {
         (item) => item.isActive && item.status === "PENDING" && item.dueAt,
       )
       .sort(
-        (a, b) => new Date(a.dueAt).getTime() - new Date(b.dueAt).getTime(),
+        (a, b) =>
+          new Date(a.dueAt).getTime() - new Date(b.dueAt).getTime(),
       )[0]?.dueAt || null
   );
 }
@@ -71,8 +71,6 @@ export default function OpportunityDetails({
   schedule,
   role = "ADMIN",
 }) {
-  const { setMobileEditHref } = useMobileEditAction();
-
   const isSalesperson = role === "SALESPERSON";
 
   const basePath = isSalesperson
@@ -90,20 +88,16 @@ export default function OpportunityDetails({
     : updateAdminOpportunityStatus;
 
   const canEdit = opportunity.status === "OPEN";
-  const nextFollowUpAt = getNextFollowUp(opportunity.followUps || []);
-
-  useEffect(() => {
-    setMobileEditHref(canEdit ? editHref : null);
-
-    return () => {
-      setMobileEditHref(null);
-    };
-  }, [setMobileEditHref, canEdit, editHref]);
+  const nextFollowUpAt = getNextFollowUp(
+    opportunity.followUps || [],
+  );
 
   return (
     <section className="w-full max-w-3xl text-black">
-      {/* HEADER */}
+      {/* Mobile Header Edit Action */}
+      <MobileEditAction href={canEdit ? editHref : null} />
 
+      {/* HEADER */}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="space-y-1">
           <h1 className="text-lg font-bold uppercase leading-tight tracking-tight sm:text-xl">
@@ -115,6 +109,7 @@ export default function OpportunityDetails({
           </p>
         </div>
 
+        {/* Desktop Edit Button */}
         {canEdit && (
           <Link
             href={editHref}
@@ -126,7 +121,6 @@ export default function OpportunityDetails({
       </div>
 
       {/* OPPORTUNITY VALUE */}
-
       <div className="mt-5">
         <span className="inline-flex items-center bg-black px-2.5 py-1 text-sm font-semibold leading-5 text-white">
           {formatCurrency(opportunity.value)}
@@ -134,7 +128,6 @@ export default function OpportunityDetails({
       </div>
 
       {/* CUSTOMER INFORMATION */}
-
       <div className="mt-6 space-y-1 text-sm leading-5 text-neutral-700">
         {opportunity.customer?.pocName && (
           <p className="font-medium uppercase text-neutral-900">
@@ -142,7 +135,9 @@ export default function OpportunityDetails({
           </p>
         )}
 
-        {opportunity.customer?.phone && <p>{opportunity.customer.phone}</p>}
+        {opportunity.customer?.phone && (
+          <p>{opportunity.customer.phone}</p>
+        )}
 
         {opportunity.customer?.email && (
           <p className="break-all">{opportunity.customer.email}</p>
@@ -154,7 +149,6 @@ export default function OpportunityDetails({
       </div>
 
       {/* NEXT FOLLOW-UP */}
-
       {nextFollowUpAt && (
         <div className="mt-3 space-y-1 text-sm leading-5 text-neutral-900">
           <p>{formatDate(nextFollowUpAt)}</p>
@@ -163,7 +157,6 @@ export default function OpportunityDetails({
       )}
 
       {/* OPPORTUNITY MESSAGE */}
-
       {opportunity.textMessage && (
         <p className="mt-3 max-w-2xl whitespace-pre-wrap text-sm leading-6 text-neutral-700">
           {opportunity.textMessage}
@@ -171,7 +164,6 @@ export default function OpportunityDetails({
       )}
 
       {/* OPPORTUNITY ACTIONS */}
-
       <OpportunityActions
         opportunity={opportunity}
         schedule={schedule}
