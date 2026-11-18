@@ -9,7 +9,7 @@ const ERROR_MESSAGES = {
   required: "Please complete all fields.",
   "username-format":
     "Username must be 3–30 characters and may contain letters, numbers, dots, and underscores.",
-  "password-length": "Password must contain at least 10 characters.",
+  "password-length": "Password must contain at least 4 characters.",
   "password-mismatch": "Your passwords do not match.",
   "username-taken": "This username is already taken. Please choose another.",
   "invalid-token":
@@ -56,8 +56,7 @@ export default function RegisterForm({ token }) {
 
       if (result?.error) {
         setError(
-          ERROR_MESSAGES[result.error] ||
-            "Unable to complete registration.",
+          ERROR_MESSAGES[result.error] || "Unable to complete registration.",
         );
         return;
       }
@@ -87,10 +86,7 @@ export default function RegisterForm({ token }) {
       className="mt-10 flex w-full flex-col gap-3 sm:mt-14"
     >
       {error && (
-        <p
-          role="alert"
-          className="mb-2 text-sm leading-6 text-red-600"
-        >
+        <p role="alert" className="mb-2 text-sm leading-6 text-red-600">
           {error}
         </p>
       )}
@@ -117,7 +113,7 @@ export default function RegisterForm({ token }) {
         placeholder="password"
         aria-label="Password"
         autoComplete="new-password"
-        minLength={10}
+        minLength={4}
         value={values.password}
         onChange={handleChange}
         required
@@ -131,7 +127,7 @@ export default function RegisterForm({ token }) {
         placeholder="confirm password"
         aria-label="Confirm password"
         autoComplete="new-password"
-        minLength={10}
+        minLength={4}
         value={values.confirmPassword}
         onChange={handleChange}
         required
@@ -139,7 +135,7 @@ export default function RegisterForm({ token }) {
       />
 
       <p className="text-xs leading-5 text-neutral-600">
-        Your password must contain at least 10 characters.
+        Your password must contain at least 4 characters.
       </p>
 
       <button

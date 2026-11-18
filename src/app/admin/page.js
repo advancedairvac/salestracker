@@ -1,7 +1,6 @@
 import { Suspense } from "react";
 
 import { getGoalConfiguration } from "@/lib/date/goal-utils";
-
 import { resolveSelectedDateRange } from "@/lib/dashboard/date-range-helpers";
 
 import {
@@ -24,7 +23,7 @@ import RevenueCard from "@/components/dashboard/revenue-card";
 import PipelineCard from "@/components/dashboard/pipeline-card";
 import SalesmanCard from "@/components/dashboard/salesman-card";
 
-import Skeleton from "@/components/ui/skeleton/skeleton";
+import TeamCardSkeleton from "@/components/ui/skeleton/team-card-skeleton";
 
 // ============================================
 // REVENUE SECTION
@@ -144,75 +143,6 @@ async function AdminTeamSection({
 }
 
 // ============================================
-// SALES TEAM SKELETON
-// Preserve Card Structure
-// ============================================
-
-function SalesTeamSkeleton() {
-  return (
-    <section
-      className="mt-12 space-y-3"
-      aria-label="Loading sales team"
-      aria-busy="true"
-      role="status"
-    >
-      <div className="flex items-center justify-between gap-3">
-        <h2 className="text-sm font-bold uppercase tracking-wide text-[#555]">
-          Sales Team Performance
-        </h2>
-
-        <Skeleton width="85px" height="12px" />
-      </div>
-
-      <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 2xl:grid-cols-3">
-        {Array.from({ length: 5 }).map((_, index) => (
-          <div
-            key={index}
-            className="border border-[#d5d5d5] bg-white p-4 sm:p-[18px]"
-          >
-            {/* NAME AND TITLE */}
-
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0 flex-1 space-y-2">
-                <Skeleton width="150px" height="18px" />
-                <Skeleton width="110px" height="12px" />
-              </div>
-
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                className="h-6 w-6 shrink-0 text-[#555]"
-                aria-hidden="true"
-              >
-                <path
-                  d="M9 5L16 12L9 19"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </div>
-
-            {/* PERFORMANCE METRICS */}
-
-            <div className="mt-6 flex items-center justify-between gap-3">
-              <div className="flex flex-wrap items-center gap-3">
-                <Skeleton width="55px" height="15px" />
-                <Skeleton width="45px" height="15px" />
-                <Skeleton width="40px" height="15px" />
-              </div>
-
-              <Skeleton width="36px" height="36px" circle />
-            </div>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-// ============================================
 // ADMIN DASHBOARD
 // ============================================
 
@@ -237,7 +167,7 @@ export default async function AdminDashboardPage({ searchParams }) {
 
   return (
     <div className="space-y-4 sm:space-y-5">
-      {/* STATIC BREADCRUMBS */}
+      {/* BREADCRUMBS */}
 
       <Breadcrumbs
         items={[
@@ -249,7 +179,7 @@ export default async function AdminDashboardPage({ searchParams }) {
         currentPage="Dashboard"
       />
 
-      {/* STATIC DATE FILTER */}
+      {/* DATE FILTER */}
 
       <RevenueDateFilter
         value={{
@@ -283,7 +213,7 @@ export default async function AdminDashboardPage({ searchParams }) {
 
       <Suspense
         key={`team-${selectedStartDate}-${selectedEndDate}`}
-        fallback={<SalesTeamSkeleton />}
+        fallback={<TeamCardSkeleton />}
       >
         <AdminTeamSection
           start={start}
@@ -294,7 +224,7 @@ export default async function AdminDashboardPage({ searchParams }) {
         />
       </Suspense>
 
-      {/* STATIC PAGE TAGLINE */}
+      {/* PAGE TAGLINE */}
 
       <PageTagline>
         Iron sharpens iron, as one man sharpens another.
