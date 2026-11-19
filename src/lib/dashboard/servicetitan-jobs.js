@@ -1,5 +1,3 @@
-import { unstable_cache } from "next/cache";
-
 import { getRevenueJobs } from "@/lib/integrations/servicetitan";
 import { getRevenueDateRanges } from "@/lib/date/date-utils";
 
@@ -10,13 +8,13 @@ import { getRevenueDateRanges } from "@/lib/date/date-utils";
 const PAGE_SIZE = 500;
 const PAGE_CONCURRENCY = 4;
 
-const JOBS_CACHE_DURATION = 300; // 5 minutes
-
 // ============================================
 // FETCH YTD COMPLETED JOBS
 // ============================================
 
 async function fetchYtdCompletedJobs(yearStartISO, nextYearStartISO) {
+  const startedAt = performance.now();
+
   const jobFilters = {
     pageSize: PAGE_SIZE,
     jobStatus: "Completed",
@@ -113,62 +111,25 @@ async function fetchYtdCompletedJobs(yearStartISO, nextYearStartISO) {
     );
   }
 
+  const duration = (performance.now() - startedAt) / 1000;
+
+  console.log(
+    `[ServiceTitan Jobs] Live API data fetched: ${duration.toFixed(2)} sec`,
+  );
+
   return uniqueJobs;
 }
 
 // ============================================
-// PERSISTENT SERVICETITAN JOBS CACHE
-//
-// Cache duration: 5 minutes
-// Cache key includes the year date boundaries.
-// ============================================
-
-const getPersistentYtdJobs = unstable_cache(
-  async (yearStartISO, nextYearStartISO) => {
-    const start = performance.now();
-
-    const jobs = await fetchYtdCompletedJobs(yearStartISO, nextYearStartISO);
-
-    const duration = (performance.now() - start) / 1000;
-
-    console.log(
-      `[ServiceTitan Jobs] Fresh API data fetched: ${duration.toFixed(2)} sec`,
-    );
-
-    return jobs;
-  },
-  ["servicetitan-ytd-completed-jobs-v1"],
-  {
-    revalidate: JOBS_CACHE_DURATION,
-    tags: ["servicetitan-ytd-completed-jobs"],
-  },
-);
-
-// ============================================
 // GET YTD REVENUE JOBS
-// ALWAYS FETCH FRESH DATA
+// Always fetch fresh data from ServiceTitan.
+// No persistent cache.
 // ============================================
 
 export async function getYtdRevenueJobs() {
   const { yearStart, nextYearStart } = getRevenueDateRanges();
 
   return fetchYtdCompletedJobs(
-    yearStart.toISOString(),
-    nextYearStart.toISOString(),
-  );
-}
-
-// ============================================
-// GET CACHED YTD REVENUE JOBS
-//
-// Persistent cache across server requests.
-// Revalidates after 5 minutes.
-// ============================================
-
-export async function getCachedYtdRevenueJobs() {
-  const { yearStart, nextYearStart } = getRevenueDateRanges();
-
-  return getPersistentYtdJobs(
     yearStart.toISOString(),
     nextYearStart.toISOString(),
   );

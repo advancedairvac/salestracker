@@ -1,6 +1,6 @@
 import { cache } from "react";
 import { prisma } from "@/lib/prisma";
-import { getCachedYtdRevenueJobs } from "@/lib/dashboard/servicetitan-jobs";
+import { getYtdRevenueJobs } from "@/lib/dashboard/servicetitan-jobs";
 import { getDashboardEstimateSummary } from "@/lib/dashboard/servicetitan-estimates";
 import { getRevenueDateRanges } from "@/lib/date/date-utils";
 
@@ -67,7 +67,7 @@ function optimizeDashboardJobs(jobs = []) {
 
 async function fetchDashboardJobs() {
   return measureTime("ServiceTitan Jobs Data", async () => {
-    const jobs = await getCachedYtdRevenueJobs();
+    const jobs = await getYtdRevenueJobs();
 
     return optimizeDashboardJobs(jobs);
   });
