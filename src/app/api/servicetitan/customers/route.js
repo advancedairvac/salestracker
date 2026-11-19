@@ -1,25 +1,26 @@
 import { getAuthenticatedUser } from "@/lib/auth";
-import { getServiceTitanCustomers } from "@/lib/integrations/servicetitan";
+import { getAllServiceTitanCustomers } from "@/lib/integrations/servicetitan";
 
 export const runtime = "nodejs";
 
 export async function GET(request) {
-  // 1. Authentication
   const user = await getAuthenticatedUser();
 
   if (!user) {
     return Response.json(
-      {
-        success: false,
-        message: "Unauthorized.",
-      },
+      { success: false, message: "Unauthorized." },
       { status: 401 },
     );
   }
 
-  // 2. Query parameters
-  const searchParams = new URL(request.url).searchParams;
+  if (!["ADMIN", "SALESPERSON"].includes(user.role)) {
+    return Response.json(
+      { success: false, message: "You do not have permission." },
+      { status: 403 },
+    );
+  }
 
+  const searchParams = new URL(request.url).searchParams;
   const search = (searchParams.get("search") || "").trim().toLowerCase();
 
   const requestedPage = Number(searchParams.get("page"));
@@ -31,42 +32,58 @@ export async function GET(request) {
   const pageSize =
     Number.isInteger(requestedPageSize) && requestedPageSize > 0
       ? Math.min(requestedPageSize, 100)
-      : 100;
+      : 50;
 
-  try {
-    // 3. Fetch customers from ServiceTitan
-    const result = await getServiceTitanCustomers({
+  if (search.length < 2) {
+    return Response.json({
+      success: true,
+      message: "Enter at least two characters to search customers.",
       page,
       pageSize,
+      hasMore: false,
+      totalCount: 0,
+      search,
+      customers: [],
+    });
+  }
+
+  try {
+    const customers = await getAllServiceTitanCustomers({
+      pageSize: 100,
+      maxPages: 100,
     });
 
-    const customers = result.customers || [];
+    const filteredCustomers = customers.filter((customer) => {
+      const searchableFields = [
+        customer.pocName,
+        customer.businessName,
+        customer.phone,
+        customer.email,
+        customer.location,
+      ];
 
-    // 4. Search customers by name, phone, or email
-    const filteredCustomers = search
-      ? customers.filter((customer) => {
-          const name = String(customer.pocName || "").toLowerCase();
-          const phone = String(customer.phone || "").toLowerCase();
-          const email = String(customer.email || "").toLowerCase();
+      return searchableFields.some((field) =>
+        String(field || "")
+          .toLowerCase()
+          .includes(search),
+      );
+    });
 
-          return (
-            name.includes(search) ||
-            phone.includes(search) ||
-            email.includes(search)
-          );
-        })
-      : customers;
+    const startIndex = (page - 1) * pageSize;
+    const paginatedCustomers = filteredCustomers.slice(
+      startIndex,
+      startIndex + pageSize,
+    );
 
-    // 5. API response
     return Response.json({
       success: true,
       message: "Customers fetched successfully.",
-      page: result.page ?? page,
-      pageSize: result.pageSize ?? pageSize,
-      hasMore: result.hasMore ?? false,
-      totalCount: result.totalCount ?? customers.length,
+      page,
+      pageSize,
+      hasMore: startIndex + pageSize < filteredCustomers.length,
+      totalCount: filteredCustomers.length,
       search,
-      customers: filteredCustomers,
+      customers: paginatedCustomers,
     });
   } catch (error) {
     console.error("ServiceTitan customer request failed:", error);

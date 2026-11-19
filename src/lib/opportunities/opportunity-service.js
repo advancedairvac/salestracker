@@ -69,7 +69,11 @@ export async function searchOpportunityCustomers(query) {
 // SHARED ASSIGNMENT VALIDATION
 // ============================================
 
-async function getAssignedToId(user, requestedAssignedToId) {
+async function getAssignedToId(
+  user,
+  requestedAssignedToId,
+  currentAssignedToId = null,
+) {
   if (!user || !["ADMIN", "SALESPERSON"].includes(user.role)) {
     return null;
   }
@@ -85,6 +89,11 @@ async function getAssignedToId(user, requestedAssignedToId) {
   // Admin assigning to themselves.
   if (assignedToId === user.id) {
     return user.id;
+  }
+
+  // Keep the existing assignee even if currently inactive.
+  if (assignedToId === currentAssignedToId) {
+    return currentAssignedToId;
   }
 
   // Admin can assign to any active Admin or Salesperson.
@@ -193,6 +202,10 @@ export async function createOpportunityService({ user, formData }) {
 
   if (manualFollowUpDate && manualFollowUpDate <= new Date()) {
     return getErrorState("followUpDatePast", values);
+  }
+
+  if (manualFollowUpDate && manualFollowUpDate < opportunityDate) {
+    return getErrorState("followUpDate", values);
   }
 
   // ============================================
@@ -423,13 +436,55 @@ export async function updateOpportunityService({ user, formData }) {
   }
 
   // ============================================
+  // FETCH CURRENT OPPORTUNITY
+  // ============================================
+
+  let currentOpportunity;
+
+  try {
+    currentOpportunity = await prisma.opportunity.findUnique({
+      where: {
+        id: opportunityId,
+      },
+      select: {
+        id: true,
+        assignedToId: true,
+        status: true,
+      },
+    });
+  } catch (error) {
+    console.error("Opportunity lookup failed:", error);
+
+    return getErrorState("opportunity", errorValues);
+  }
+
+  if (!currentOpportunity) {
+    return getErrorState("opportunity", errorValues);
+  }
+
+  if (currentOpportunity.status !== "OPEN") {
+    return getErrorState("status", errorValues);
+  }
+
+  if (
+    user.role === "SALESPERSON" &&
+    currentOpportunity.assignedToId !== user.id
+  ) {
+    return getErrorState("permission", errorValues);
+  }
+
+  // ============================================
   // ASSIGNMENT VALIDATION
   // ============================================
 
   let assignedToId;
 
   try {
-    assignedToId = await getAssignedToId(user, requestedAssignedToId);
+    assignedToId = await getAssignedToId(
+      user,
+      requestedAssignedToId,
+      currentOpportunity.assignedToId,
+    );
   } catch (error) {
     console.error("Opportunity assignment validation failed:", error);
 
@@ -441,19 +496,13 @@ export async function updateOpportunityService({ user, formData }) {
   }
 
   // ============================================
-  // OPPORTUNITY SETTINGS
-  // ============================================
-
-  const source = assignedToId === user.id ? "SELF_GENERATED" : "COMPANY";
-
-  // ============================================
   // DATABASE TRANSACTION
   // ============================================
 
   try {
     await prisma.$transaction(async (tx) => {
       // ----------------------------------------
-      // FIND OPPORTUNITY
+      // FIND OPPORTUNITY AGAIN
       // ----------------------------------------
 
       const opportunity = await tx.opportunity.findUnique({
@@ -523,7 +572,10 @@ export async function updateOpportunityService({ user, formData }) {
           textMessage: textMessage || null,
           value: opportunityValue,
           assignedToId,
-          source,
+
+          // Preserve the original source.
+          // Editing or reassigning an opportunity must not
+          // change how the opportunity was generated.
         },
       });
 

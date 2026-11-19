@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link";
@@ -56,8 +55,7 @@ function getNextFollowUp(followUps = []) {
         (item) => item.isActive && item.status === "PENDING" && item.dueAt,
       )
       .sort(
-        (a, b) =>
-          new Date(a.dueAt).getTime() - new Date(b.dueAt).getTime(),
+        (a, b) => new Date(a.dueAt).getTime() - new Date(b.dueAt).getTime(),
       )[0]?.dueAt || null
   );
 }
@@ -70,8 +68,14 @@ export default function OpportunityDetails({
   opportunity,
   schedule,
   role = "ADMIN",
+  canManage: canManageProp,
 }) {
   const isSalesperson = role === "SALESPERSON";
+
+  // Admin can manage every opportunity.
+  // Salesperson can manage only their assigned opportunity.
+  const canManage =
+    canManageProp !== undefined ? canManageProp : !isSalesperson;
 
   const basePath = isSalesperson
     ? "/salesperson/opportunities"
@@ -87,10 +91,9 @@ export default function OpportunityDetails({
     ? updateSalespersonOpportunityStatus
     : updateAdminOpportunityStatus;
 
-  const canEdit = opportunity.status === "OPEN";
-  const nextFollowUpAt = getNextFollowUp(
-    opportunity.followUps || [],
-  );
+  const canEdit = opportunity.status === "OPEN" && canManage;
+
+  const nextFollowUpAt = getNextFollowUp(opportunity.followUps || []);
 
   return (
     <section className="w-full max-w-3xl text-black">
@@ -135,9 +138,7 @@ export default function OpportunityDetails({
           </p>
         )}
 
-        {opportunity.customer?.phone && (
-          <p>{opportunity.customer.phone}</p>
-        )}
+        {opportunity.customer?.phone && <p>{opportunity.customer.phone}</p>}
 
         {opportunity.customer?.email && (
           <p className="break-all">{opportunity.customer.email}</p>
@@ -168,6 +169,7 @@ export default function OpportunityDetails({
         opportunity={opportunity}
         schedule={schedule}
         role={role}
+        canManage={canManage}
         updateFollowUpModeAction={updateFollowUpModeAction}
         updateOpportunityStatusAction={updateOpportunityStatusAction}
       />

@@ -39,12 +39,10 @@ let tokenRequestPromise = null;
 async function getAccessToken() {
   const now = Date.now();
 
-  // Reuse cached token if still valid.
   if (cachedAccessToken && now < tokenExpiresAt - 60_000) {
     return cachedAccessToken;
   }
 
-  // Prevent duplicate authentication requests.
   if (tokenRequestPromise) {
     return tokenRequestPromise;
   }
@@ -119,7 +117,6 @@ export async function serviceTitanRequest(path, params = {}) {
 
   const url = new URL(`${SERVICE_TITAN_CONFIG.baseUrl}${resolvedPath}`);
 
-  // Add query parameters.
   Object.entries(params).forEach(([key, value]) => {
     if (value !== undefined && value !== null && value !== "") {
       url.searchParams.set(key, String(value));
@@ -138,12 +135,10 @@ export async function serviceTitanRequest(path, params = {}) {
     });
   }
 
-  // First request.
   let accessToken = await getAccessToken();
 
   let response = await makeRequest(accessToken);
 
-  // Refresh token and retry once after 401.
   if (response.status === 401) {
     invalidateAccessToken(accessToken);
 
@@ -152,7 +147,6 @@ export async function serviceTitanRequest(path, params = {}) {
     response = await makeRequest(accessToken);
   }
 
-  // Response handling.
   const result = await response.json().catch(() => null);
 
   if (!response.ok || !result) {
@@ -385,6 +379,7 @@ function formatCustomer(customer, contacts) {
     stCustomerId: String(customer.id),
 
     pocName: customer.name || "",
+    businessName: customer.businessName || "",
 
     email: email?.value || "",
     phone: phone?.value || "",

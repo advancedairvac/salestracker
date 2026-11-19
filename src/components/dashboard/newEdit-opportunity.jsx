@@ -198,7 +198,6 @@ export default function NewEditOpportunity({
   const isEdit = mode === "edit";
   const isAdmin = user?.role === "ADMIN";
 
-  // Select action based on form mode.
   const action = isEdit ? updateAction : createAction;
 
   const [state, formAction, pending] = useActionState(
@@ -214,14 +213,13 @@ export default function NewEditOpportunity({
      ASSIGNMENT OPTIONS
   ------------------------------------------------------- */
 
-  const activeSalespeople = users.filter(
-    (item) => item.role === "SALESPERSON" && item.isActive !== false,
-  );
-
-  const assignmentUsers = [
-    ...(isAdmin ? [user] : []),
-    ...activeSalespeople.filter((item) => item.id !== user?.id),
-  ];
+  const assignmentUsers = isAdmin
+    ? users.filter(
+        (item) =>
+          item.isActive !== false &&
+          ["ADMIN", "SALESPERSON"].includes(item.role),
+      )
+    : [];
 
   /* -------------------------------------------------------
      RESTORE FORM VALUES AFTER VALIDATION ERRORS
@@ -251,8 +249,6 @@ export default function NewEditOpportunity({
       ...previous,
       [name]: value,
 
-      // Clear previously selected customer data
-      // when POC Name is manually changed.
       ...(name === "pocName"
         ? {
             customerId: "",
@@ -274,7 +270,6 @@ export default function NewEditOpportunity({
     setValues((previous) => ({
       ...previous,
 
-      // Keep ServiceTitan ID separate from local Prisma ID.
       customerId: "",
       stCustomerId: customer.stCustomerId || "",
 
@@ -316,8 +311,6 @@ export default function NewEditOpportunity({
 
   return (
     <section className="w-full max-w-[700px]">
-      {/* VALIDATION ERROR */}
-
       {state.error && (
         <div
           role="alert"
@@ -351,7 +344,7 @@ export default function NewEditOpportunity({
           value={values.stCustomerId || ""}
         />
 
-        {/* OPPORTUNITY DATE - REQUIRED */}
+        {/* OPPORTUNITY DATE */}
 
         <Input
           name="opportunityDate"
@@ -362,16 +355,15 @@ export default function NewEditOpportunity({
           required
         />
 
-        {/* POC NAME - REQUIRED */}
+        {/* POC NAME */}
 
         <CustomerSearch
           value={values.pocName}
           onChange={handleChange}
           onSelect={handleCustomerSelect}
-          required
         />
 
-        {/* BUSINESS NAME - OPTIONAL */}
+        {/* BUSINESS NAME */}
 
         <Input
           name="businessName"
@@ -380,7 +372,7 @@ export default function NewEditOpportunity({
           onChange={handleChange}
         />
 
-        {/* JOB TYPE - OPTIONAL */}
+        {/* JOB TYPE */}
 
         <FloatingSelect
           name="jobType"
@@ -389,23 +381,17 @@ export default function NewEditOpportunity({
           onChange={handleChange}
         >
           <option value="EQUIPMENT ONLY">EQUIPMENT ONLY</option>
-
           <option value="INSTALL">INSTALL</option>
-
           <option value="SERVICE">SERVICE</option>
-
           <option value="PREVENTATIVE MAINTENANCE">
             PREVENTATIVE MAINTENANCE
           </option>
-
           <option value="AUTOMOTIVE">AUTOMOTIVE</option>
-
           <option value="HVACR">HVACR</option>
-
           <option value="OTHER">OTHER</option>
         </FloatingSelect>
 
-        {/* EMAIL - OPTIONAL */}
+        {/* EMAIL */}
 
         <Input
           name="email"
@@ -415,7 +401,7 @@ export default function NewEditOpportunity({
           onChange={handleChange}
         />
 
-        {/* TEXT MESSAGE - OPTIONAL */}
+        {/* TEXT MESSAGE */}
 
         <FloatingTextarea
           name="textMessage"
@@ -424,7 +410,7 @@ export default function NewEditOpportunity({
           onChange={handleChange}
         />
 
-        {/* PHONE NUMBER - OPTIONAL */}
+        {/* PHONE NUMBER */}
 
         <Input
           name="phone"
@@ -434,7 +420,7 @@ export default function NewEditOpportunity({
           onChange={handleChange}
         />
 
-        {/* LOCATION - OPTIONAL */}
+        {/* LOCATION */}
 
         <Input
           name="location"
@@ -443,7 +429,7 @@ export default function NewEditOpportunity({
           onChange={handleChange}
         />
 
-        {/* APPROXIMATE DOLLAR VALUE - REQUIRED */}
+        {/* APPROXIMATE DOLLAR VALUE */}
 
         <Input
           name="value"
@@ -456,7 +442,7 @@ export default function NewEditOpportunity({
           required
         />
 
-        {/* FOLLOW-UP DATE - OPTIONAL, NEW MODE ONLY */}
+        {/* FOLLOW-UP DATE */}
 
         {!isEdit && (
           <Input

@@ -67,11 +67,21 @@ export default async function EditOpportunityPage({ params }) {
     redirect(`/admin/opportunities/${opportunity.id}`);
   }
 
-  // Get active salespeople for assignment dropdown
+  // Get active Admins and Salespersons for assignment.
+  // Keep the current assignee available even if inactive.
   const users = await prisma.user.findMany({
     where: {
-      role: "SALESPERSON",
-      isActive: true,
+      OR: [
+        {
+          role: {
+            in: ["ADMIN", "SALESPERSON"],
+          },
+          isActive: true,
+        },
+        {
+          id: opportunity.assignedToId,
+        },
+      ],
     },
     select: {
       id: true,

@@ -66,17 +66,14 @@ export function getEstimateMetrics({
   start,
   endExclusive,
 } = {}) {
-  // Filter only Open estimates.
   const openEstimates = estimates.filter(
     (estimate) => String(estimate.status?.name || "").toLowerCase() === "open",
   );
 
-  // Apply selected dashboard date range.
   const selectedPeriodEstimates = openEstimates.filter((estimate) =>
     isWithinRange(estimate.createdOn, start, endExclusive),
   );
 
-  // Calculate total value from Open estimate subtotals.
   const estimateValue = selectedPeriodEstimates.reduce((total, estimate) => {
     const subtotal = Number(estimate.subtotal) || 0;
 
@@ -85,20 +82,23 @@ export function getEstimateMetrics({
 
   return {
     totalEstimates: selectedPeriodEstimates.length,
-
     estimateValue: Number(estimateValue.toFixed(2)),
-
     estimates: selectedPeriodEstimates,
   };
 }
 
 // ============================================
 // PIPELINE METRICS
-// Opportunities
+// Only OPEN Opportunities count toward OPPS.
 // ============================================
 
 export function getPipelineMetrics(opportunities = []) {
-  return getPipelineSummary(opportunities);
+  const summary = getPipelineSummary(opportunities);
+
+  return {
+    ...summary,
+    totalOpportunities: summary.openOpportunities,
+  };
 }
 
 // ============================================
@@ -125,6 +125,7 @@ export function getTeamMetrics({
 
 // ============================================
 // SALESPERSON PERFORMANCE METRICS
+// Only own assigned OPEN Opportunities.
 // ============================================
 
 export function getSalespersonMetrics({
@@ -140,7 +141,8 @@ export function getSalespersonMetrics({
   const ownSales = revenueSales.filter((sale) => sale.salesmanId === user.id);
 
   const ownOpportunities = opportunities.filter(
-    (opportunity) => opportunity.assignedToId === user.id,
+    (opportunity) =>
+      opportunity.assignedToId === user.id && opportunity.status === "OPEN",
   );
 
   const monthlyGoal = calculateTeamGoal([user], goalType);

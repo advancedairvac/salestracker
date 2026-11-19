@@ -55,7 +55,9 @@ function parseDateTime(value) {
 }
 
 // ============================================
-// CLOSE OPPORTUNITY SERVICE — ADMIN ONLY
+// CLOSE OPPORTUNITY SERVICE
+// ADMIN: ANY OPPORTUNITY
+// SALESPERSON: OWN ASSIGNED OPPORTUNITIES
 // ============================================
 
 export async function closeOpportunityService({
@@ -65,14 +67,6 @@ export async function closeOpportunityService({
   payload = {},
 }) {
   try {
-    // This closing workflow is Admin-only for now.
-    if (!user || user.role !== "ADMIN") {
-      return {
-        success: false,
-        error: "Only Admin users can close opportunities.",
-      };
-    }
-
     const opportunity = await getAuthorizedOpportunity(user, opportunityId);
 
     if (action !== "CLOSE") {
@@ -176,6 +170,7 @@ export async function closeOpportunityService({
         where: {
           id: opportunity.id,
           status: "OPEN",
+          ...(user.role === "SALESPERSON" ? { assignedToId: user.id } : {}),
         },
         data: {
           status: nextStatus,
@@ -243,7 +238,6 @@ export async function closeOpportunityService({
   } catch (error) {
     console.error("Close opportunity service failed:", error);
 
-    // A Titan Job ID is unique in the Opportunity table.
     if (error.code === "P2002") {
       return {
         success: false,
@@ -333,8 +327,6 @@ export async function updateFollowUpModeService({
       // ======================================
 
       if (mode === "STANDARD") {
-        // Recalculate standard follow-up dates using
-        // the current opportunity presentation date.
         const standardFollowUps = getStandardFollowUps(
           opportunity.opportunityDate,
         );
@@ -388,9 +380,6 @@ export async function updateFollowUpModeService({
       // ======================================
 
       if (mode === "MANUAL") {
-        // Manual follow-up always uses sequence 6.
-        // Find the existing record regardless of status
-        // to prevent duplicate sequence records.
         const existingManual = await tx.followUp.findFirst({
           where: {
             scheduleId: schedule.id,
@@ -412,13 +401,26 @@ export async function updateFollowUpModeService({
             };
           }
 
-          // Do not reactivate completed or cancelled records.
           if (existingManual.status !== "PENDING") {
             throw new Error(
               "The existing manual follow-up is no longer pending. A new manual follow-up cannot be created in this schedule.",
             );
           }
 
+          // Deactivate pending standard follow-ups.
+          await tx.followUp.updateMany({
+            where: {
+              opportunityId: opportunity.id,
+              scheduleId: schedule.id,
+              scheduleType: "STANDARD",
+              status: "PENDING",
+            },
+            data: {
+              isActive: false,
+            },
+          });
+
+          // Activate the existing manual follow-up.
           await tx.followUp.update({
             where: {
               id: existingManual.id,
@@ -452,7 +454,6 @@ export async function updateFollowUpModeService({
           });
 
           if (existingManual) {
-            // Do not overwrite completed or cancelled records.
             if (existingManual.status !== "PENDING") {
               throw new Error(
                 "The existing manual follow-up is no longer pending. A new manual follow-up cannot be created in this schedule.",

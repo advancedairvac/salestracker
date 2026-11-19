@@ -6,9 +6,7 @@ import { redirect } from "next/navigation";
 import { getAuthenticatedUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-import {
-  updateOpportunityService,
-} from "@/lib/opportunities/opportunity-service";
+import { updateOpportunityService } from "@/lib/opportunities/opportunity-service";
 
 import {
   closeOpportunityService,
@@ -52,14 +50,26 @@ async function isOwnOpportunity(userId, opportunityId) {
 }
 
 function revalidateOpportunityPages(opportunityId) {
+  // Salesperson pages
   revalidatePath("/salesperson");
   revalidatePath("/salesperson/opportunities");
   revalidatePath("/salesperson/pipeline");
   revalidatePath("/salesperson/sales-revenue");
 
+  // Admin pages
+  revalidatePath("/admin");
+  revalidatePath("/admin/opportunities");
+  revalidatePath("/admin/pipeline");
+  revalidatePath("/admin/sales-revenue");
+
   if (opportunityId) {
+    // Salesperson detail and edit pages
     revalidatePath(`/salesperson/opportunities/${opportunityId}`);
     revalidatePath(`/salesperson/opportunities/${opportunityId}/edit`);
+
+    // Admin detail and edit pages
+    revalidatePath(`/admin/opportunities/${opportunityId}`);
+    revalidatePath(`/admin/opportunities/${opportunityId}/edit`);
   }
 }
 

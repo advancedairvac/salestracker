@@ -1,4 +1,3 @@
-
 import { calculateTeamGoal } from "@/lib/date/goal-utils";
 
 // ============================================
@@ -21,13 +20,18 @@ export function sortTeamMembers(teamMembers = []) {
 }
 
 // ============================================
-// GET OPPORTUNITY COUNT BY MEMBER
+// GET OPEN OPPORTUNITY COUNT BY MEMBER
 // ============================================
 
 export function getOpportunityCountByMember(opportunities = []) {
   const opportunityCountByMember = new Map();
 
   for (const opportunity of opportunities) {
+    // Count only OPEN Opportunities.
+    if (opportunity.status !== "OPEN") {
+      continue;
+    }
+
     if (!opportunity.assignedToId) {
       continue;
     }

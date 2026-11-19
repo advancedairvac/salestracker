@@ -41,28 +41,34 @@ export default async function NewOpportunityPage() {
   }
 
   // ------------------------------------------
+  // ADMIN PERMISSION
+  // ------------------------------------------
+
+  if (user.role !== "ADMIN") {
+    redirect("/salesperson");
+  }
+
+  // ------------------------------------------
   // LOAD ACTIVE USERS FOR ADMIN ASSIGNMENT
   // ------------------------------------------
 
-  const users =
-    user.role === "ADMIN"
-      ? await prisma.user.findMany({
-          where: {
-            isActive: true,
-            role: {
-              in: ["ADMIN", "SALESPERSON"],
-            },
-          },
-          select: {
-            id: true,
-            name: true,
-            role: true,
-          },
-          orderBy: {
-            name: "asc",
-          },
-        })
-      : [];
+  const users = await prisma.user.findMany({
+    where: {
+      isActive: true,
+      role: {
+        in: ["ADMIN", "SALESPERSON"],
+      },
+    },
+    select: {
+      id: true,
+      name: true,
+      role: true,
+      isActive: true,
+    },
+    orderBy: {
+      name: "asc",
+    },
+  });
 
   // ------------------------------------------
   // DEFAULT DATE
@@ -76,13 +82,11 @@ export default async function NewOpportunityPage() {
 
   return (
     <div className="space-y-4 sm:space-y-5">
-      {/* Breadcrumb */}
       <Breadcrumbs
         items={[{ label: "Sales Tracker", href: "/admin" }]}
         currentPage="New Opportunity"
       />
 
-      {/* New Opportunity Form */}
       <section className="mt-5 flex w-full flex-1 flex-col sm:mt-6">
         <NewEditOpportunity
           user={user}
@@ -92,7 +96,6 @@ export default async function NewOpportunityPage() {
         />
       </section>
 
-      {/* Page Tagline */}
       <PageTagline>Failing to plan, is planning to fail.</PageTagline>
     </div>
   );
