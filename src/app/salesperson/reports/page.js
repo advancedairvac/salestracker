@@ -1,7 +1,6 @@
 
 import { redirect } from "next/navigation";
 
-import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth";
 
 import Breadcrumbs from "@/components/ui/breadcrumbs";
@@ -23,36 +22,20 @@ export default async function ReportsPage() {
     redirect("/login");
   }
 
-  const users = await prisma.user.findMany({
-    where: {
-      role: {
-        in: ["ADMIN", "SALESPERSON"],
-      },
-      isActive: true,
-    },
-    select: {
-      id: true,
-      name: true,
-      role: true,
-    },
-    orderBy: {
-      name: "asc",
-    },
-  });
-
   return (
     <div className="flex min-h-full w-full flex-col">
       {/* Breadcrumb */}
       <Breadcrumbs
-        items={[
-          { label: "Sales Tracker", href: "/salesperson" },
-        ]}
+        items={[{ label: "Sales Tracker", href: "/salesperson" }]}
         currentPage="Generate Report"
       />
 
       {/* Generate Report Form */}
       <section className="mt-5 w-full sm:mt-6">
-        <GenerateReportForm users={users} />
+        <GenerateReportForm
+          isSalesperson={true}
+          currentUserName={user.name}
+        />
       </section>
 
       {/* Page Tagline */}

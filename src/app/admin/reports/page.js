@@ -9,7 +9,7 @@ import PageTagline from "@/components/ui/page-tagline";
 import GenerateReportForm from "@/components/dashboard/generateReport-form";
 
 export const metadata = {
-  title: "Generate Report | Sales Tracker",
+  title: "Report | Sales Tracker",
 };
 
 export default async function ReportsPage() {
@@ -23,17 +23,17 @@ export default async function ReportsPage() {
     redirect("/login");
   }
 
+  // Fetch active salespeople for the report filter
   const users = await prisma.user.findMany({
     where: {
-      role: {
-        in: ["ADMIN", "SALESPERSON"],
-      },
+      role: "SALESPERSON",
       isActive: true,
     },
     select: {
       id: true,
       name: true,
       role: true,
+      isActive: true,
     },
     orderBy: {
       name: "asc",
@@ -44,15 +44,16 @@ export default async function ReportsPage() {
     <div className="flex min-h-full w-full flex-col">
       {/* Breadcrumb */}
       <Breadcrumbs
-        items={[
-          { label: "Sales Tracker", href: "/admin" },
-        ]}
+        items={[{ label: "Sales Tracker", href: "/admin" }]}
         currentPage="Generate Report"
       />
 
       {/* Generate Report Form */}
       <section className="mt-5 w-full sm:mt-6">
-        <GenerateReportForm users={users} />
+        <GenerateReportForm
+          users={users}
+          isSalesperson={false}
+        />
       </section>
 
       {/* Page Tagline */}

@@ -35,17 +35,6 @@ export default async function NewSalesmanPage() {
         currentPage="New Salesman"
       />
 
-      <div>
-        <h1 className="text-2xl font-extrabold uppercase tracking-tight text-black">
-          New Salesman
-        </h1>
-
-        <p className="mt-1 text-sm text-[#777777]">
-          Add a new salesman, set their sales goals, and send an invitation to
-          complete account registration.
-        </p>
-      </div>
-
       <section className="mt-5 flex w-full flex-1 flex-col sm:mt-6">
         <NewEditSalesman
           onSubmit={createSalesman}

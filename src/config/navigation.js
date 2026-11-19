@@ -2,7 +2,7 @@
 const primaryNavigation = {
   admin: [
     { label: "DASHBOARD", href: "/admin", type: "primary" },
-    { label: "GENERATE REPORT", href: "/admin/reports", type: "primary" },
+    { label: "REPORT", href: "/admin/reports", type: "primary" },
     { label: "MY PROFILE", href: "/admin/profile", type: "primary" },
     { label: "NEW SALESMAN", href: "/admin/salesmen/new", type: "primary" },
     {
@@ -15,7 +15,7 @@ const primaryNavigation = {
   salesperson: [
     { label: "DASHBOARD", href: "/salesperson", type: "primary" },
     {
-      label: "GENERATE REPORT",
+      label: "REPORT",
       href: "/salesperson/reports",
       type: "primary",
     },
