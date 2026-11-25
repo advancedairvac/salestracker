@@ -86,13 +86,15 @@ export default async function NewOpportunityPage() {
         currentPage="New Opportunity"
       />
 
-      <section className="mt-5 flex w-full flex-1 flex-col sm:mt-6">
-        <NewEditOpportunity
-          user={user}
-          users={users}
-          today={today}
-          createAction={createOpportunity}
-        />
+      <section className="mt-5 flex w-full flex-1 flex-col items-center sm:mt-6">
+        <div className="w-full max-w-[700px]">
+          <NewEditOpportunity
+            user={user}
+            users={users}
+            today={today}
+            createAction={createOpportunity}
+          />
+        </div>
       </section>
 
       <PageTagline>Failing to plan, is planning to fail.</PageTagline>
