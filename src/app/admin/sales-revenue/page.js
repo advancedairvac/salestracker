@@ -131,7 +131,7 @@ export default async function SalesRevenuePage({ searchParams }) {
       </Suspense>
 
       <PageTagline>
-        Revenue performance based on completed ServiceTitan jobs.
+        There's many witty men whose brains can't fill their bellies. 
       </PageTagline>
     </div>
   );

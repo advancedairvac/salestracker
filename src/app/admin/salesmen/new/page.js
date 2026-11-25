@@ -42,9 +42,7 @@ export default async function NewSalesmanPage() {
         />
       </section>
 
-      <PageTagline>
-        Great teams are built one great person at a time.
-      </PageTagline>
+      <PageTagline>A cord of many strands is not quickly broken.</PageTagline>
     </div>
   );
 }

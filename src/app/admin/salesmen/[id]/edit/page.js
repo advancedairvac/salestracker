@@ -135,7 +135,7 @@ export default async function EditSalesmanPage({ params }) {
       </section>
 
       <PageTagline>
-        Great teams are built one great person at a time.
+        A cord of many strands is not quickly broken.
       </PageTagline>
     </div>
   );

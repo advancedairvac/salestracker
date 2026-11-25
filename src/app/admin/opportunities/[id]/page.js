@@ -78,9 +78,7 @@ export default async function OpportunityDetailsPage({ params }) {
     <div className="space-y-4 sm:space-y-5">
       {/* Breadcrumb */}
       <Breadcrumbs
-        items={[
-          { label: "Sales Tracker", href: "/admin" },
-        ]}
+        items={[{ label: "Sales Tracker", href: "/admin" }]}
         currentPage="Opportunity Details"
       />
 
@@ -92,7 +90,7 @@ export default async function OpportunityDetailsPage({ params }) {
 
       {/* Page Tagline */}
       <PageTagline>
-        Iron sharpens iron, as one man sharpens another.
+        At the working man’s house hunger looks in, but dares not enter.
       </PageTagline>
     </div>
   );

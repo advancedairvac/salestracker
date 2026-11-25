@@ -157,7 +157,7 @@ export default async function EditOpportunityPage({ params }) {
       {/* PAGE TAGLINE */}
 
       <PageTagline>
-        Iron sharpens iron, as one man sharpens another.
+        Failing to plan, is planning to fail.
       </PageTagline>
     </div>
   );

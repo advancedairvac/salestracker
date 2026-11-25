@@ -247,7 +247,7 @@ export default async function SalespersonPipelinePage({
       {/* PAGE TAGLINE */}
 
       <PageTagline>
-        Drive thy business, or it will drive thee.
+        Drive thy business, or it will drive thee. 
       </PageTagline>
     </div>
   );

@@ -204,7 +204,7 @@ export default async function SalesRevenuePage({
       {/* PAGE TAGLINE */}
 
       <PageTagline>
-        Success is the sum of small efforts, repeated day in and day out.
+        There's many witty men whose brains can't fill their bellies. 
       </PageTagline>
     </div>
   );

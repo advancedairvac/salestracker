@@ -125,7 +125,7 @@ export default async function SalespersonOpportunityDetailsPage({ params }) {
       />
 
       <PageTagline>
-        Iron sharpens iron, as one man sharpens another.
+        At the working man’s house hunger looks in, but dares not enter.
       </PageTagline>
     </div>
   );
