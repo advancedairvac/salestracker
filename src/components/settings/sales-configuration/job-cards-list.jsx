@@ -1,9 +1,11 @@
+
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import JobCard from "@/components/settings/sales-configuration/job-card";
 import TablePagination from "@/components/dashboard/table-pagination";
+import Tabs from "@/components/ui/tabs";
 
 export default function JobCardsList({
   jobs = [],
@@ -35,14 +37,45 @@ export default function JobCardsList({
     updatePagination(1, size);
   }
 
+  // Job Cards
+  const jobCards = (
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+      {jobs.map((job) => (
+        <JobCard
+          key={job.serviceTitanJobId}
+          job={job}
+          salesmen={salesmen}
+        />
+      ))}
+    </div>
+  );
+
+  // Configuration Tabs
+  const tabs = [
+    { id: "auto-assigned", label: "Auto Assigned", count: jobs.length },
+    { id: "source-assigned", label: "Source Assigned", count: jobs.length },
+    { id: "salesman-assigned", label: "Salesman Assigned", count: jobs.length },
+    { id: "unassigned", label: "Unassigned", count: jobs.length },
+    { id: "all", label: "All", count: jobs.length },
+  ];
+
+  const panels = {
+    "auto-assigned": jobCards,
+    "source-assigned": jobCards,
+    "salesman-assigned": jobCards,
+    unassigned: jobCards,
+    all: jobCards,
+  };
+
   return (
-    <div className="space-y-4">
-      {/* Job Cards */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {jobs.map((job) => (
-          <JobCard key={job.serviceTitanJobId} job={job} salesmen={salesmen} />
-        ))}
-      </div>
+    <div className="space-y-5">
+      {/* Tabs & Job Cards */}
+      <Tabs
+        tabs={tabs}
+        defaultTab="all"
+        countLabel="Jobs"
+        panels={panels}
+      />
 
       {/* Pagination */}
       <TablePagination

@@ -1,6 +1,8 @@
+
 import { prisma } from "@/lib/prisma";
 
 import { getStandardFollowUps } from "@/lib/opportunities/follow-up-schedule";
+import { autoAssignServiceTitanJob } from "@/lib/automations/titanJobs/auto-assign";
 
 // ============================================
 // SHARED ACCESS VALIDATION
@@ -222,6 +224,35 @@ export async function closeOpportunityService({
       });
     });
 
+    // ======================================
+    // TITAN JOB AUTO ASSIGNMENT
+    // Only runs for WON opportunities with a Titan Job ID.
+    // ======================================
+
+    let autoAssignment = null;
+
+    if (closeType === "WON" && titanJobId) {
+      try {
+        autoAssignment = await autoAssignServiceTitanJob(titanJobId);
+      } catch (autoAssignError) {
+        // Auto Assignment must not prevent Opportunity closing.
+        console.error(
+          "[Titan Job Auto Assignment] Failed:",
+          autoAssignError,
+        );
+
+        autoAssignment = {
+          success: false,
+          status: "FAILED",
+          reason: "AUTO_ASSIGNMENT_ERROR",
+        };
+      }
+    }
+
+    // ======================================
+    // SUCCESS RESPONSE
+    // ======================================
+
     const messages = {
       WON: "Opportunity marked as WON successfully.",
       LOST: "Opportunity marked as LOST successfully.",
@@ -234,6 +265,7 @@ export async function closeOpportunityService({
       action: "CLOSE",
       status: nextStatus,
       message: messages[closeType],
+      ...(autoAssignment ? { autoAssignment } : {}),
     };
   } catch (error) {
     console.error("Close opportunity service failed:", error);
@@ -536,7 +568,9 @@ export async function updateFollowUpModeService({
         needsDate: false,
         nextFollowUpAt: nextFollowUp?.dueAt?.toISOString() || null,
         manualDateTime:
-          mode === "MANUAL" ? nextFollowUp?.dueAt?.toISOString() || null : null,
+          mode === "MANUAL"
+            ? nextFollowUp?.dueAt?.toISOString() || null
+            : null,
       };
     });
 

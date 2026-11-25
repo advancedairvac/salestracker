@@ -620,10 +620,12 @@ export default function OpportunityActions({
         <p>{formatDate(opportunity.opportunityDate)}</p>
       </div>
 
-      {/* OPPORTUNITY STATUS */}
+      {/* OPPORTUNITY STATUS + TITAN JOB ID */}
 
       <section className="border-y border-neutral-200 py-5">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="grid grid-cols-2 items-center gap-6">
+          {/* LEFT: OPPORTUNITY STATUS */}
+
           <div>
             <p className="text-xs font-semibold uppercase tracking-wider text-neutral-500">
               Opportunity Status
@@ -634,17 +636,35 @@ export default function OpportunityActions({
             </p>
           </div>
 
-          {canManage && isOpen && !showCloseForm && (
-            <button
-              type="button"
-              disabled={statusPending}
-              onClick={handleOpenCloseForm}
-              className="flex h-10 items-center justify-center rounded-md bg-black px-5 text-sm font-semibold text-white transition-colors hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              Close Opportunity
-            </button>
-          )}
+          {/* RIGHT: TITAN JOB ID */}
+
+          <div className="flex justify-end">
+            {opportunity.titanJobId && (
+              <div className="w-full">
+                <p className="text-xs font-semibold uppercase tracking-wider text-neutral-500">
+                  Titan Job ID
+                </p>
+
+                <p className="mt-1 text-sm font-semibold text-neutral-900">
+                  {opportunity.titanJobId}
+                </p>
+              </div>
+            )}
+          </div>
         </div>
+
+        {/* CLOSE OPPORTUNITY BUTTON */}
+
+        {canManage && isOpen && !showCloseForm && (
+          <button
+            type="button"
+            disabled={statusPending}
+            onClick={handleOpenCloseForm}
+            className="mt-5 flex h-10 items-center justify-center rounded-md bg-black px-5 text-sm font-semibold text-white transition-colors hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Close Opportunity
+          </button>
+        )}
 
         {/* CLOSE OPPORTUNITY FORM */}
 

@@ -2,8 +2,8 @@
 import { Suspense } from "react";
 
 import { getSalesConfigurationData } from "@/lib/dashboard/sales-configuration-data";
-
 import JobCardsList from "@/components/settings/sales-configuration/job-cards-list";
+import Breadcrumbs from "@/components/ui/breadcrumbs";
 
 export const dynamic = "force-dynamic";
 
@@ -15,41 +15,31 @@ function JobCardSkeleton() {
   return (
     <div className="animate-pulse border border-[#d5d5d5] bg-white p-4 sm:p-[18px]">
       {/* Header */}
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex-1 space-y-3">
-          <div className="h-4 w-3/4 rounded bg-[#e5e5e5]" />
-          <div className="h-3 w-1/2 rounded bg-[#eeeeee]" />
-        </div>
-
-        <div className="size-8 shrink-0 rounded-full bg-[#eeeeee]" />
+      <div className="space-y-3">
+        <div className="h-4 w-3/4 rounded bg-[#e5e5e5]" />
+        <div className="h-3 w-1/2 rounded bg-[#eeeeee]" />
       </div>
 
-      <div className="my-4 border-t border-[#ededed]" />
-
-      {/* Customer and Value */}
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <div className="h-2.5 w-16 rounded bg-[#e5e5e5]" />
-          <div className="h-3.5 w-28 rounded bg-[#eeeeee]" />
-        </div>
-
-        <div className="space-y-2">
-          <div className="h-2.5 w-16 rounded bg-[#e5e5e5]" />
-          <div className="h-3.5 w-24 rounded bg-[#eeeeee]" />
-        </div>
+      {/* Job Value */}
+      <div className="mt-5 space-y-2">
+        <div className="h-2.5 w-28 rounded bg-[#e5e5e5]" />
+        <div className="h-7 w-24 rounded bg-[#eeeeee]" />
       </div>
 
-      {/* Assignment */}
-      <div className="mt-4 grid grid-cols-2 gap-4 border-t border-[#ededed] pt-3">
-        <div className="space-y-2">
-          <div className="h-2.5 w-12 rounded bg-[#e5e5e5]" />
-          <div className="h-3.5 w-24 rounded bg-[#eeeeee]" />
-        </div>
+      {/* Information */}
+      <div className="mt-4 grid grid-cols-2 gap-4 border-t border-[#ededed] pt-4">
+        {Array.from({ length: 4 }).map((_, index) => (
+          <div key={index} className="space-y-2">
+            <div className="h-2.5 w-16 rounded bg-[#e5e5e5]" />
+            <div className="h-3.5 w-24 rounded bg-[#eeeeee]" />
+          </div>
+        ))}
+      </div>
 
-        <div className="space-y-2">
-          <div className="h-2.5 w-16 rounded bg-[#e5e5e5]" />
-          <div className="h-3.5 w-24 rounded bg-[#eeeeee]" />
-        </div>
+      {/* Footer */}
+      <div className="mt-4 flex items-center justify-between border-t border-[#ededed] pt-3">
+        <div className="h-3 w-28 rounded bg-[#e5e5e5]" />
+        <div className="h-4 w-4 rounded bg-[#eeeeee]" />
       </div>
     </div>
   );
@@ -61,14 +51,25 @@ function JobCardSkeleton() {
 
 function JobCardsSkeleton() {
   return (
-    <section>
-      <div className="mb-3">
-        <h2 className="text-base font-semibold text-black">
-          ServiceTitan Jobs
-        </h2>
+    <section className="space-y-5">
+      {/* Tabs Skeleton */}
+      <div className="flex flex-wrap gap-2">
+        {Array.from({ length: 5 }).map((_, index) => (
+          <div
+            key={index}
+            className="h-9 w-28 animate-pulse border border-[#e5e5e5] bg-[#f5f5f5]"
+          />
+        ))}
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {/* Section Header */}
+      <div className="flex items-center justify-between">
+        <div className="h-4 w-28 animate-pulse rounded bg-[#e5e5e5]" />
+        <div className="h-3 w-16 animate-pulse rounded bg-[#eeeeee]" />
+      </div>
+
+      {/* Job Cards */}
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
         {Array.from({ length: 9 }).map((_, index) => (
           <JobCardSkeleton key={index} />
         ))}
@@ -87,17 +88,8 @@ async function SalesConfigurationSection({ searchParams }) {
       await getSalesConfigurationData(searchParams);
 
     return (
-      <section>
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-base font-semibold text-black">
-            ServiceTitan Jobs
-          </h2>
-
-          <span className="text-sm text-[#777]">
-            {pagination.totalItems} Jobs
-          </span>
-        </div>
-
+      <section className="space-y-5">
+        {/* Job Cards */}
         {jobs.length > 0 ? (
           <JobCardsList
             jobs={jobs}
@@ -108,7 +100,7 @@ async function SalesConfigurationSection({ searchParams }) {
           />
         ) : (
           <div className="border border-[#d5d5d5] bg-white px-5 py-12 text-center">
-            <h2 className="text-[15px] font-bold uppercase tracking-wide text-[#171717]">
+            <h2 className="text-[15px] font-bold text-[#171717]">
               No Jobs Found
             </h2>
 
@@ -144,23 +136,14 @@ export default async function SalesConfigurationPage({ searchParams }) {
 
   return (
     <div className="w-full space-y-6">
-      {/* Page Header */}
-      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
-        <div>
-          <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#929292]">
-            Settings
-          </p>
-
-          <h1 className="mt-1 text-[23px] font-extrabold uppercase tracking-wide text-[#171717]">
-            Sales Configuration
-          </h1>
-
-          <p className="mt-1 text-[13px] text-[#737373]">
-            Manage job sources and salesperson assignments.
-          </p>
-        </div>
-      </div>
-
+      {/* Breadcrumbs */}
+      <Breadcrumbs
+        items={[
+          { label: "Sales Tracker", href: "/admin" },
+          { label: "Settings", href: "/admin/settings" },
+        ]}
+        currentPage="Sales Configuration"
+      />
       {/* JOB CARDS */}
       <Suspense
         key={tableKey}

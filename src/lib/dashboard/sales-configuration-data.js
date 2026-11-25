@@ -164,7 +164,9 @@ export async function getSalesConfigurationData(searchParams = {}) {
 
     prisma.user.findMany({
       where: {
-        role: "SALESPERSON",
+        role: {
+          in: ["SALESPERSON", "ADMIN"],
+        },
         status: "ACTIVE",
       },
       select: {
