@@ -24,6 +24,27 @@ function prepareInitialValues(initialValues = {}) {
   };
 }
 
+/* -------------------------------------------------------
+   NUMBER FORMATTING
+------------------------------------------------------- */
+
+function formatNumberWithCommas(value) {
+  if (value === null || value === undefined || value === "") return "";
+
+  const rawValue = String(value).replace(/,/g, "");
+  const [integerPart, decimalPart] = rawValue.split(".");
+
+  const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+
+  return decimalPart !== undefined
+    ? `${formattedInteger}.${decimalPart}`
+    : formattedInteger;
+}
+
+function sanitizeGoalValue(value) {
+  return value.replace(/,/g, "");
+}
+
 const ERROR_MESSAGES = {
   permission: "You do not have permission to perform this action.",
   required: "Please complete all required fields.",
@@ -37,6 +58,10 @@ const ERROR_MESSAGES = {
   "not-found": "The account could not be found.",
   "not-eligible": "This account is not eligible for this action.",
 };
+
+/* -------------------------------------------------------
+   NEW / EDIT SALESMAN
+------------------------------------------------------- */
 
 export default function NewEditSalesman({
   mode = "new",
@@ -63,7 +88,6 @@ export default function NewEditSalesman({
   const [accountActionPending, setAccountActionPending] = useState(false);
 
   const [createdSalesmanId, setCreatedSalesmanId] = useState("");
-
   const [feedback, setFeedback] = useState(null);
 
   const shouldShowResend = isEdit
@@ -71,6 +95,10 @@ export default function NewEditSalesman({
     : Boolean(createdSalesmanId);
 
   const targetSalesmanId = isEdit ? salesmanId : createdSalesmanId;
+
+  /* -------------------------------------------------------
+     HANDLE INPUT
+  ------------------------------------------------------- */
 
   function handleChange(event) {
     const { name, value } = event.target;
@@ -82,6 +110,26 @@ export default function NewEditSalesman({
 
     setFeedback(null);
   }
+
+  function handleGoalChange(name, value) {
+    const sanitizedValue = sanitizeGoalValue(value);
+
+    // Allow digits and only one decimal point
+    if (!/^\d*\.?\d*$/.test(sanitizedValue)) {
+      return;
+    }
+
+    setValues((previous) => ({
+      ...previous,
+      [name]: sanitizedValue,
+    }));
+
+    setFeedback(null);
+  }
+
+  /* -------------------------------------------------------
+     SUBMIT
+  ------------------------------------------------------- */
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -96,6 +144,10 @@ export default function NewEditSalesman({
     try {
       const result = await onSubmit({
         ...values,
+        // Ensure goals are sent without formatting commas
+        monthlyGoal: sanitizeGoalValue(values.monthlyGoal),
+        quarterlyGoal: sanitizeGoalValue(values.quarterlyGoal),
+        annualGoal: sanitizeGoalValue(values.annualGoal),
         salesmanId: isEdit ? salesmanId : undefined,
       });
 
@@ -153,6 +205,10 @@ export default function NewEditSalesman({
     }
   }
 
+  /* -------------------------------------------------------
+     RESEND INVITATION
+  ------------------------------------------------------- */
+
   async function handleResendInvitation() {
     if (
       !targetSalesmanId ||
@@ -204,6 +260,10 @@ export default function NewEditSalesman({
       setResending(false);
     }
   }
+
+  /* -------------------------------------------------------
+     TERMINATE / REACTIVATE
+  ------------------------------------------------------- */
 
   async function handleAccountAction(action, actionType) {
     if (
@@ -262,72 +322,87 @@ export default function NewEditSalesman({
     }
   }
 
+  /* -------------------------------------------------------
+     RENDER
+  ------------------------------------------------------- */
+
   return (
     <section className="w-full max-w-[700px]">
       <form onSubmit={handleSubmit} className="flex w-full flex-col gap-[9px]">
         {isEdit && <input type="hidden" name="salesmanId" value={salesmanId} />}
 
+        {/* NAME */}
+
         <Input
           name="name"
           label="Name"
           type="text"
-          placeholder=" "
           value={values.name}
           onChange={handleChange}
           required
         />
 
+        {/* TITLE */}
+
         <Input
           name="title"
           label="Title"
           type="text"
-          placeholder=" "
           value={values.title}
           onChange={handleChange}
         />
 
+        {/* EMAIL */}
+
         <Input
           name="email"
-          label="Gmail"
+          label="Email"
           type="email"
-          placeholder=" "
           value={values.email}
           onChange={handleChange}
           required
         />
 
+        {/* MONTHLY GOAL */}
+
         <Input
           name="monthlyGoal"
           label="Monthly Goal"
-          type="number"
-          placeholder=" "
-          min="0"
-          step="0.01"
-          value={values.monthlyGoal}
-          onChange={handleChange}
+          type="text"
+          inputMode="decimal"
+          value={formatNumberWithCommas(values.monthlyGoal)}
+          onChange={(event) =>
+            handleGoalChange("monthlyGoal", event.target.value)
+          }
         />
+
+        {/* QUARTERLY GOAL */}
 
         <Input
           name="quarterlyGoal"
           label="Quarterly Goal"
-          type="number"
-          placeholder=" "
-          min="0"
-          step="0.01"
-          value={values.quarterlyGoal}
-          onChange={handleChange}
+          type="text"
+          inputMode="decimal"
+          value={formatNumberWithCommas(values.quarterlyGoal)}
+          onChange={(event) =>
+            handleGoalChange("quarterlyGoal", event.target.value)
+          }
         />
+
+        {/* ANNUAL GOAL */}
 
         <Input
           name="annualGoal"
           label="Annual Goal"
-          type="number"
-          placeholder=" "
-          min="0"
-          step="0.01"
-          value={values.annualGoal}
-          onChange={handleChange}
+          type="text"
+          inputMode="decimal"
+          value={formatNumberWithCommas(values.annualGoal)}
+          onChange={(event) =>
+            handleGoalChange("annualGoal", event.target.value)
+          }
         />
+
+        {/* FEEDBACK */}
 
         {feedback && (
           <p
@@ -341,6 +416,8 @@ export default function NewEditSalesman({
             {feedback.message}
           </p>
         )}
+
+        {/* SUBMIT */}
 
         <button
           type="submit"
@@ -363,6 +440,8 @@ export default function NewEditSalesman({
               : "Save & Invite"}
         </button>
 
+        {/* RESEND INVITATION */}
+
         {shouldShowResend && (
           <button
             type="button"
@@ -380,6 +459,8 @@ export default function NewEditSalesman({
           </button>
         )}
 
+        {/* TERMINATE */}
+
         {canTerminate && (
           <button
             type="button"
@@ -396,6 +477,8 @@ export default function NewEditSalesman({
             {accountActionPending ? "Processing..." : "Terminate Salesperson"}
           </button>
         )}
+
+        {/* REACTIVATE */}
 
         {canReactivate && (
           <button

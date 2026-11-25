@@ -55,6 +55,22 @@ function prepareInitialValues(today, initialValues, user) {
 }
 
 /* -------------------------------------------------------
+   Ui Coma using ","
+------------------------------------------------------- */
+function formatDollarValue(value) {
+  if (value === null || value === undefined || value === "") return "";
+
+  const stringValue = String(value).replace(/,/g, "");
+  const [integerPart, decimalPart] = stringValue.split(".");
+
+  const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+
+  return decimalPart !== undefined
+    ? `${formattedInteger}.${decimalPart}`
+    : formattedInteger;
+}
+
+/* -------------------------------------------------------
    SHARED FORM STYLES
 ------------------------------------------------------- */
 
@@ -260,6 +276,8 @@ export default function NewEditOpportunity({
     setValues((previous) => ({
       ...previous,
       businessName: value,
+      customerId: "",
+      stCustomerId: "",
     }));
   }
 
@@ -270,16 +288,26 @@ export default function NewEditOpportunity({
   function handleCustomerSelect(customer) {
     setValues((previous) => ({
       ...previous,
-
       customerId: "",
       stCustomerId: customer.stCustomerId || "",
-
       businessName: customer.businessName || "",
       pocName: customer.pocName || "",
-
       email: customer.email || "",
       phone: customer.phone || "",
       location: customer.location || "",
+    }));
+  }
+
+  /* -------------------------------------------------------
+     HANDLE PHONE NUMBER - NUMBERS ONLY
+  ------------------------------------------------------- */
+
+  function handlePhoneChange(event) {
+    const numericValue = event.target.value.replace(/\D/g, "");
+
+    setValues((previous) => ({
+      ...previous,
+      phone: numericValue,
     }));
   }
 
@@ -407,14 +435,27 @@ export default function NewEditOpportunity({
           onChange={handleChange}
         />
 
+        {/* PHONE NUMBER - NUMBERS ONLY */}
+
         {/* PHONE NUMBER */}
 
         <Input
           name="phone"
           label="Phone Number (If Different)"
           type="tel"
+          inputMode="tel"
           value={values.phone}
-          onChange={handleChange}
+          onChange={(event) => {
+            const value = event.target.value;
+
+            // Allow only phone-number characters
+            const sanitizedValue = value.replace(/[^0-9+\-() ]/g, "");
+
+            setValues((previous) => ({
+              ...previous,
+              phone: sanitizedValue,
+            }));
+          }}
         />
 
         {/* LOCATION */}
@@ -431,11 +472,20 @@ export default function NewEditOpportunity({
         <Input
           name="value"
           label="Approximate Dollar Value"
-          type="number"
-          min="0"
-          step="0.01"
-          value={values.value}
-          onChange={handleChange}
+          type="text"
+          inputMode="decimal"
+          value={formatDollarValue(values.value)}
+          onChange={(event) => {
+            let rawValue = event.target.value.replace(/,/g, "");
+
+            // Allow numbers and a single decimal point
+            if (!/^\d*\.?\d*$/.test(rawValue)) return;
+
+            setValues((previous) => ({
+              ...previous,
+              value: rawValue,
+            }));
+          }}
           required
         />
 
