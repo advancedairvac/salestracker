@@ -156,7 +156,7 @@ export async function createOpportunityService({ user, formData }) {
   // REQUIRED FIELD VALIDATION
   // ============================================
 
-  if (!opportunityDateInput || !pocName || !valueInput) {
+  if (!opportunityDateInput || !valueInput) {
     return getErrorState("required", values);
   }
 
@@ -403,7 +403,7 @@ export async function updateOpportunityService({ user, formData }) {
   // REQUIRED FIELD VALIDATION
   // ============================================
 
-  if (!opportunityDateInput || !pocName || !valueInput) {
+  if (!opportunityDateInput || !valueInput) {
     return getErrorState("required", errorValues);
   }
 

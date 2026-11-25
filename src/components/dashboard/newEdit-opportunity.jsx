@@ -19,7 +19,6 @@ function formatDateInput(value) {
 
   if (typeof value === "string") {
     const match = value.match(/^(\d{4}-\d{2}-\d{2})/);
-
     if (match) return match[1];
   }
 
@@ -248,17 +247,19 @@ export default function NewEditOpportunity({
     setValues((previous) => ({
       ...previous,
       [name]: value,
+    }));
+  }
 
-      ...(name === "pocName"
-        ? {
-            customerId: "",
-            stCustomerId: "",
-            businessName: "",
-            email: "",
-            phone: "",
-            location: "",
-          }
-        : {}),
+  /* -------------------------------------------------------
+     HANDLE BUSINESS NAME SEARCH INPUT
+  ------------------------------------------------------- */
+
+  function handleBusinessNameChange(event) {
+    const value = event.target.value;
+
+    setValues((previous) => ({
+      ...previous,
+      businessName: value,
     }));
   }
 
@@ -273,8 +274,9 @@ export default function NewEditOpportunity({
       customerId: "",
       stCustomerId: customer.stCustomerId || "",
 
-      pocName: customer.pocName || "",
       businessName: customer.businessName || "",
+      pocName: customer.pocName || "",
+
       email: customer.email || "",
       phone: customer.phone || "",
       location: customer.location || "",
@@ -290,18 +292,13 @@ export default function NewEditOpportunity({
     value: "Please enter a valid dollar value.",
     email: "Please enter a valid email address.",
     date: "Please select a valid opportunity date.",
-
     followUpDate: "Please select a valid follow-up date.",
     followUpDatePast: "Follow-up date must be in the future.",
-
     assignment: "Please select a valid team member.",
-
     create: "Unable to create opportunity. Please try again.",
     update: "Unable to update opportunity. Please try again.",
-
     opportunity: "Opportunity not found.",
     status: "This opportunity can no longer be edited.",
-
     permission: "You do not have permission to perform this action.",
   };
 
@@ -355,20 +352,20 @@ export default function NewEditOpportunity({
           required
         />
 
-        {/* POC NAME */}
+        {/* BUSINESS NAME / CUSTOMER SEARCH */}
 
         <CustomerSearch
-          value={values.pocName}
-          onChange={handleChange}
+          value={values.businessName}
+          onChange={handleBusinessNameChange}
           onSelect={handleCustomerSelect}
         />
 
-        {/* BUSINESS NAME */}
+        {/* POC NAME - OPTIONAL */}
 
         <Input
-          name="businessName"
-          label="Business Name"
-          value={values.businessName}
+          name="pocName"
+          label="POC Name"
+          value={values.pocName}
           onChange={handleChange}
         />
 

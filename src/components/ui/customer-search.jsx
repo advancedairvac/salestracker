@@ -17,7 +17,7 @@ export default function CustomerSearch({ value = "", onChange, onSelect }) {
 
   const searchTerm = value.trim();
 
-  // Search customers from ServiceTitan when the user types.
+  // Search ServiceTitan customers.
   useEffect(() => {
     if (searchTerm.length < 2 || selected) {
       setCustomers([]);
@@ -103,6 +103,7 @@ export default function CustomerSearch({ value = "", onChange, onSelect }) {
     };
   }, []);
 
+  // Handle Business Name input.
   function handleInputChange(event) {
     setSelected(false);
     setPage(1);
@@ -110,13 +111,24 @@ export default function CustomerSearch({ value = "", onChange, onSelect }) {
     onChange(event);
   }
 
+  // Select customer and use customer name as Business Name.
   function handleSelect(customer) {
+    const businessName =
+      customer.businessName || customer.pocName || customer.name || "";
+
     setSelected(true);
     setOpen(false);
     setHasMore(false);
-    onSelect(customer);
+
+    onSelect({
+      ...customer,
+      businessName,
+      // Do not automatically use the customer name as POC.
+      pocName: "",
+    });
   }
 
+  // Load more customers.
   function handleLoadMore() {
     if (!loadingMore && hasMore) {
       setPage((previous) => previous + 1);
@@ -126,12 +138,11 @@ export default function CustomerSearch({ value = "", onChange, onSelect }) {
   return (
     <div ref={wrapperRef} className="relative w-full">
       <Input
-        name="pocName"
-        label="POC Name"
+        name="businessName"
+        label="Business Name"
         value={value}
         onChange={handleInputChange}
         autoComplete="off"
-        required
       />
 
       {open && !selected && searchTerm.length >= 2 && (
@@ -144,36 +155,42 @@ export default function CustomerSearch({ value = "", onChange, onSelect }) {
             <div className="px-3 py-4 text-xs text-red-600">{error}</div>
           ) : customers.length > 0 ? (
             <>
-              {customers.map((customer) => (
-                <button
-                  key={customer.id}
-                  type="button"
-                  onClick={() => handleSelect(customer)}
-                  className="flex w-full flex-col gap-1 border-b border-[#eeeeee] px-3 py-3 text-left transition-colors hover:bg-[#f7f7f7]"
-                >
-                  <span className="text-xs font-semibold text-[#111111]">
-                    {customer.pocName || "Unnamed Customer"}
-                  </span>
+              {customers.map((customer) => {
+                const customerName =
+                  customer.businessName ||
+                  customer.pocName ||
+                  customer.name ||
+                  "Unnamed Customer";
 
-                  {customer.businessName && (
-                    <span className="text-[11px] text-[#444444]">
-                      {customer.businessName}
+                return (
+                  <button
+                    key={customer.id}
+                    type="button"
+                    onClick={() => handleSelect(customer)}
+                    className="flex w-full flex-col gap-1 border-b border-[#eeeeee] px-3 py-3 text-left transition-colors hover:bg-[#f7f7f7]"
+                  >
+                    {/* CUSTOMER / BUSINESS NAME */}
+                    <span className="text-xs font-semibold text-[#111111]">
+                      {customerName}
                     </span>
-                  )}
 
-                  <span className="text-[11px] text-[#666666]">
-                    {customer.phone || "No phone"}
-                    {customer.email ? ` · ${customer.email}` : ""}
-                  </span>
-
-                  {customer.location && (
-                    <span className="text-[11px] text-[#888888]">
-                      {customer.location}
+                    {/* CONTACT DETAILS */}
+                    <span className="text-[11px] text-[#666666]">
+                      {customer.phone || "No phone"}
+                      {customer.email ? ` · ${customer.email}` : ""}
                     </span>
-                  )}
-                </button>
-              ))}
 
+                    {/* LOCATION */}
+                    {customer.location && (
+                      <span className="text-[11px] text-[#888888]">
+                        {customer.location}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+
+              {/* LOAD MORE */}
               {hasMore && (
                 <button
                   type="button"
@@ -187,7 +204,8 @@ export default function CustomerSearch({ value = "", onChange, onSelect }) {
             </>
           ) : (
             <div className="px-3 py-4 text-xs text-[#666666]">
-              No matching customers found. You can enter the details manually.
+              No matching customers found. You can enter the business name
+              manually.
             </div>
           )}
         </div>
