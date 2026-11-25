@@ -17,6 +17,15 @@ export const UserRole = {
 export type UserRole = (typeof UserRole)[keyof typeof UserRole]
 
 
+export const UserStatus = {
+  ACTIVE: 'ACTIVE',
+  INVITED: 'INVITED',
+  TERMINATED: 'TERMINATED'
+} as const
+
+export type UserStatus = (typeof UserStatus)[keyof typeof UserStatus]
+
+
 export const LeadSource = {
   SELF_GENERATED: 'SELF_GENERATED',
   COMPANY: 'COMPANY'

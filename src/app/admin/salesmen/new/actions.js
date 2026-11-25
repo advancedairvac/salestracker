@@ -102,7 +102,8 @@ async function createAndSendInvitation(salesman) {
   const tokenHash = hashInvitationToken(token);
   const expiresAt = getInvitationExpiry();
 
-  // Save the new hash first. This also invalidates any previous token.
+  // Save the new token hash first.
+  // This invalidates any previous invitation token.
   await prisma.user.update({
     where: {
       id: salesman.id,
@@ -111,6 +112,7 @@ async function createAndSendInvitation(salesman) {
       invitationTokenHash: tokenHash,
       invitationExpiresAt: expiresAt,
       invitedAt: new Date(),
+      status: "INVITED",
     },
   });
 
@@ -167,7 +169,7 @@ export async function createSalesman(values) {
         quarterlyGoal,
         annualGoal,
         role: "SALESPERSON",
-        isActive: false,
+        status: "INVITED",
       },
       select: {
         id: true,
@@ -218,23 +220,38 @@ export async function resendSalesmanInvitation(salesmanId) {
   }
 
   try {
+    // Find invited salesperson by ID and status.
+    // Username/password are checked separately because
+    // they may contain null or empty-string values.
     const salesman = await prisma.user.findFirst({
       where: {
         id: salesmanId,
         role: "SALESPERSON",
-        isActive: false,
-        username: null,
-        passwordHash: null,
+        status: "INVITED",
       },
       select: {
         id: true,
         name: true,
         email: true,
+        username: true,
+        passwordHash: true,
       },
     });
 
     if (!salesman) {
       return { error: "not-found" };
+    }
+
+    // Allow resend if either username or password is missing.
+    const usernameMissing =
+      !salesman.username ||
+      salesman.username === "EMPTY_STRING" ||
+      salesman.username.trim() === "";
+
+    const passwordMissing = !salesman.passwordHash;
+
+    if (!usernameMissing && !passwordMissing) {
+      return { error: "not-eligible" };
     }
 
     await createAndSendInvitation(salesman);
@@ -248,7 +265,9 @@ export async function resendSalesmanInvitation(salesmanId) {
   } catch (error) {
     console.error("Resend invitation failed:", error);
 
-    return { error: "invitation-email" };
+    return {
+      error: "invitation-email",
+    };
   }
 }
 
@@ -294,7 +313,7 @@ export async function updateSalesman(values) {
         email: true,
         username: true,
         passwordHash: true,
-        isActive: true,
+        status: true,
         role: true,
       },
     });
@@ -321,9 +340,8 @@ export async function updateSalesman(values) {
 
     const isPendingInvitation =
       existingSalesman.role === "SALESPERSON" &&
-      !existingSalesman.isActive &&
-      !existingSalesman.username &&
-      !existingSalesman.passwordHash;
+      existingSalesman.status === "INVITED" &&
+      (!existingSalesman.username || !existingSalesman.passwordHash);
 
     const emailChanged = existingSalesman.email !== email;
 
@@ -339,8 +357,7 @@ export async function updateSalesman(values) {
         quarterlyGoal,
         annualGoal,
 
-        // A pending invitation must not keep its old token
-        // if the recipient's email address changes.
+        // Invalidate the previous invitation when the email changes.
         ...(isPendingInvitation && emailChanged
           ? {
               invitationTokenHash: null,
@@ -355,7 +372,7 @@ export async function updateSalesman(values) {
       },
     });
 
-    // If the pending user's email changed, issue a fresh invitation.
+    // Send a new invitation when the pending user's email changes.
     if (isPendingInvitation && emailChanged) {
       try {
         await createAndSendInvitation(updatedSalesman);
@@ -406,12 +423,12 @@ export async function terminateSalesman(salesmanId) {
       where: {
         id: salesmanId,
         role: "SALESPERSON",
-        isActive: true,
+        status: "ACTIVE",
         username: { not: null },
         passwordHash: { not: null },
       },
       data: {
-        isActive: false,
+        status: "TERMINATED",
       },
     });
 
@@ -448,12 +465,12 @@ export async function reactivateSalesman(salesmanId) {
       where: {
         id: salesmanId,
         role: "SALESPERSON",
-        isActive: false,
+        status: "TERMINATED",
         username: { not: null },
         passwordHash: { not: null },
       },
       data: {
-        isActive: true,
+        status: "ACTIVE",
       },
     });
 

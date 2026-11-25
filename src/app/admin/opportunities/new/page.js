@@ -54,7 +54,7 @@ export default async function NewOpportunityPage() {
 
   const users = await prisma.user.findMany({
     where: {
-      isActive: true,
+      status: "ACTIVE",
       role: {
         in: ["ADMIN", "SALESPERSON"],
       },
@@ -63,13 +63,12 @@ export default async function NewOpportunityPage() {
       id: true,
       name: true,
       role: true,
-      isActive: true,
+      status: true,
     },
     orderBy: {
       name: "asc",
     },
   });
-
   // ------------------------------------------
   // DEFAULT DATE
   // ------------------------------------------

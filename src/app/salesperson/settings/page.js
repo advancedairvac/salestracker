@@ -29,22 +29,11 @@ export default function SalespersonSettingsPage() {
 
       {/* PAGE CONTENT */}
 
-      <section className="mt-5 w-full sm:mt-6">
-        {/* PAGE HEADING */}
-
-        <div className="space-y-1">
-          <h1 className="text-base font-bold uppercase tracking-wide text-neutral-950 sm:text-lg">
-            Settings
-          </h1>
-
-          <p className="text-sm text-[#777]">
-            Manage your application preferences and configurations.
-          </p>
-        </div>
+      <section className="w-full">
 
         {/* GENERAL SETTINGS */}
 
-        <div className="mt-10 w-full">
+        <div className="w-full">
           <SettingsContent />
         </div>
       </section>

@@ -49,10 +49,11 @@ export type UserMinAggregateOutputType = {
   quarterlyGoal: runtime.Decimal | null
   annualGoal: runtime.Decimal | null
   role: $Enums.UserRole | null
-  isActive: boolean | null
+  status: $Enums.UserStatus | null
   invitationTokenHash: string | null
   invitationExpiresAt: Date | null
   invitedAt: Date | null
+  acceptedAt: Date | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -68,10 +69,11 @@ export type UserMaxAggregateOutputType = {
   quarterlyGoal: runtime.Decimal | null
   annualGoal: runtime.Decimal | null
   role: $Enums.UserRole | null
-  isActive: boolean | null
+  status: $Enums.UserStatus | null
   invitationTokenHash: string | null
   invitationExpiresAt: Date | null
   invitedAt: Date | null
+  acceptedAt: Date | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -87,10 +89,11 @@ export type UserCountAggregateOutputType = {
   quarterlyGoal: number
   annualGoal: number
   role: number
-  isActive: number
+  status: number
   invitationTokenHash: number
   invitationExpiresAt: number
   invitedAt: number
+  acceptedAt: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -120,10 +123,11 @@ export type UserMinAggregateInputType = {
   quarterlyGoal?: true
   annualGoal?: true
   role?: true
-  isActive?: true
+  status?: true
   invitationTokenHash?: true
   invitationExpiresAt?: true
   invitedAt?: true
+  acceptedAt?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -139,10 +143,11 @@ export type UserMaxAggregateInputType = {
   quarterlyGoal?: true
   annualGoal?: true
   role?: true
-  isActive?: true
+  status?: true
   invitationTokenHash?: true
   invitationExpiresAt?: true
   invitedAt?: true
+  acceptedAt?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -158,10 +163,11 @@ export type UserCountAggregateInputType = {
   quarterlyGoal?: true
   annualGoal?: true
   role?: true
-  isActive?: true
+  status?: true
   invitationTokenHash?: true
   invitationExpiresAt?: true
   invitedAt?: true
+  acceptedAt?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -264,10 +270,11 @@ export type UserGroupByOutputType = {
   quarterlyGoal: runtime.Decimal | null
   annualGoal: runtime.Decimal | null
   role: $Enums.UserRole
-  isActive: boolean
+  status: $Enums.UserStatus
   invitationTokenHash: string | null
   invitationExpiresAt: Date | null
   invitedAt: Date | null
+  acceptedAt: Date | null
   createdAt: Date
   updatedAt: Date
   _count: UserCountAggregateOutputType | null
@@ -306,10 +313,11 @@ export type UserWhereInput = {
   quarterlyGoal?: Prisma.DecimalNullableFilter<"User"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   annualGoal?: Prisma.DecimalNullableFilter<"User"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   role?: Prisma.EnumUserRoleFilter<"User"> | $Enums.UserRole
-  isActive?: Prisma.BoolFilter<"User"> | boolean
+  status?: Prisma.EnumUserStatusFilter<"User"> | $Enums.UserStatus
   invitationTokenHash?: Prisma.StringNullableFilter<"User"> | string | null
   invitationExpiresAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   invitedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  acceptedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
   assignedOpportunities?: Prisma.OpportunityListRelationFilter
@@ -332,10 +340,11 @@ export type UserOrderByWithRelationInput = {
   quarterlyGoal?: Prisma.SortOrderInput | Prisma.SortOrder
   annualGoal?: Prisma.SortOrderInput | Prisma.SortOrder
   role?: Prisma.SortOrder
-  isActive?: Prisma.SortOrder
+  status?: Prisma.SortOrder
   invitationTokenHash?: Prisma.SortOrderInput | Prisma.SortOrder
   invitationExpiresAt?: Prisma.SortOrderInput | Prisma.SortOrder
   invitedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  acceptedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   assignedOpportunities?: Prisma.OpportunityOrderByRelationAggregateInput
@@ -362,9 +371,10 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   quarterlyGoal?: Prisma.DecimalNullableFilter<"User"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   annualGoal?: Prisma.DecimalNullableFilter<"User"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   role?: Prisma.EnumUserRoleFilter<"User"> | $Enums.UserRole
-  isActive?: Prisma.BoolFilter<"User"> | boolean
+  status?: Prisma.EnumUserStatusFilter<"User"> | $Enums.UserStatus
   invitationExpiresAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   invitedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  acceptedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
   assignedOpportunities?: Prisma.OpportunityListRelationFilter
@@ -387,10 +397,11 @@ export type UserOrderByWithAggregationInput = {
   quarterlyGoal?: Prisma.SortOrderInput | Prisma.SortOrder
   annualGoal?: Prisma.SortOrderInput | Prisma.SortOrder
   role?: Prisma.SortOrder
-  isActive?: Prisma.SortOrder
+  status?: Prisma.SortOrder
   invitationTokenHash?: Prisma.SortOrderInput | Prisma.SortOrder
   invitationExpiresAt?: Prisma.SortOrderInput | Prisma.SortOrder
   invitedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  acceptedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.UserCountOrderByAggregateInput
@@ -414,10 +425,11 @@ export type UserScalarWhereWithAggregatesInput = {
   quarterlyGoal?: Prisma.DecimalNullableWithAggregatesFilter<"User"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   annualGoal?: Prisma.DecimalNullableWithAggregatesFilter<"User"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   role?: Prisma.EnumUserRoleWithAggregatesFilter<"User"> | $Enums.UserRole
-  isActive?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
+  status?: Prisma.EnumUserStatusWithAggregatesFilter<"User"> | $Enums.UserStatus
   invitationTokenHash?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   invitationExpiresAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
   invitedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
+  acceptedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
 }
@@ -433,10 +445,11 @@ export type UserCreateInput = {
   quarterlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   annualGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   role?: $Enums.UserRole
-  isActive?: boolean
+  status?: $Enums.UserStatus
   invitationTokenHash?: string | null
   invitationExpiresAt?: Date | string | null
   invitedAt?: Date | string | null
+  acceptedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   assignedOpportunities?: Prisma.OpportunityCreateNestedManyWithoutAssignedToInput
@@ -459,10 +472,11 @@ export type UserUncheckedCreateInput = {
   quarterlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   annualGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   role?: $Enums.UserRole
-  isActive?: boolean
+  status?: $Enums.UserStatus
   invitationTokenHash?: string | null
   invitationExpiresAt?: Date | string | null
   invitedAt?: Date | string | null
+  acceptedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   assignedOpportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutAssignedToInput
@@ -485,10 +499,11 @@ export type UserUpdateInput = {
   quarterlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   annualGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
-  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   invitationTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   invitationExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   invitedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   assignedOpportunities?: Prisma.OpportunityUpdateManyWithoutAssignedToNestedInput
@@ -511,10 +526,11 @@ export type UserUncheckedUpdateInput = {
   quarterlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   annualGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
-  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   invitationTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   invitationExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   invitedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   assignedOpportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutAssignedToNestedInput
@@ -537,10 +553,11 @@ export type UserCreateManyInput = {
   quarterlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   annualGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   role?: $Enums.UserRole
-  isActive?: boolean
+  status?: $Enums.UserStatus
   invitationTokenHash?: string | null
   invitationExpiresAt?: Date | string | null
   invitedAt?: Date | string | null
+  acceptedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -556,10 +573,11 @@ export type UserUpdateManyMutationInput = {
   quarterlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   annualGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
-  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   invitationTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   invitationExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   invitedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -575,10 +593,11 @@ export type UserUncheckedUpdateManyInput = {
   quarterlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   annualGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
-  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   invitationTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   invitationExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   invitedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -594,10 +613,11 @@ export type UserCountOrderByAggregateInput = {
   quarterlyGoal?: Prisma.SortOrder
   annualGoal?: Prisma.SortOrder
   role?: Prisma.SortOrder
-  isActive?: Prisma.SortOrder
+  status?: Prisma.SortOrder
   invitationTokenHash?: Prisma.SortOrder
   invitationExpiresAt?: Prisma.SortOrder
   invitedAt?: Prisma.SortOrder
+  acceptedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -619,10 +639,11 @@ export type UserMaxOrderByAggregateInput = {
   quarterlyGoal?: Prisma.SortOrder
   annualGoal?: Prisma.SortOrder
   role?: Prisma.SortOrder
-  isActive?: Prisma.SortOrder
+  status?: Prisma.SortOrder
   invitationTokenHash?: Prisma.SortOrder
   invitationExpiresAt?: Prisma.SortOrder
   invitedAt?: Prisma.SortOrder
+  acceptedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -638,10 +659,11 @@ export type UserMinOrderByAggregateInput = {
   quarterlyGoal?: Prisma.SortOrder
   annualGoal?: Prisma.SortOrder
   role?: Prisma.SortOrder
-  isActive?: Prisma.SortOrder
+  status?: Prisma.SortOrder
   invitationTokenHash?: Prisma.SortOrder
   invitationExpiresAt?: Prisma.SortOrder
   invitedAt?: Prisma.SortOrder
+  acceptedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -682,8 +704,8 @@ export type EnumUserRoleFieldUpdateOperationsInput = {
   set?: $Enums.UserRole
 }
 
-export type BoolFieldUpdateOperationsInput = {
-  set?: boolean
+export type EnumUserStatusFieldUpdateOperationsInput = {
+  set?: $Enums.UserStatus
 }
 
 export type NullableDateTimeFieldUpdateOperationsInput = {
@@ -813,10 +835,11 @@ export type UserCreateWithoutAssignedOpportunitiesInput = {
   quarterlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   annualGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   role?: $Enums.UserRole
-  isActive?: boolean
+  status?: $Enums.UserStatus
   invitationTokenHash?: string | null
   invitationExpiresAt?: Date | string | null
   invitedAt?: Date | string | null
+  acceptedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   createdOpportunities?: Prisma.OpportunityCreateNestedManyWithoutCreatedByInput
@@ -838,10 +861,11 @@ export type UserUncheckedCreateWithoutAssignedOpportunitiesInput = {
   quarterlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   annualGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   role?: $Enums.UserRole
-  isActive?: boolean
+  status?: $Enums.UserStatus
   invitationTokenHash?: string | null
   invitationExpiresAt?: Date | string | null
   invitedAt?: Date | string | null
+  acceptedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   createdOpportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutCreatedByInput
@@ -868,10 +892,11 @@ export type UserCreateWithoutCreatedOpportunitiesInput = {
   quarterlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   annualGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   role?: $Enums.UserRole
-  isActive?: boolean
+  status?: $Enums.UserStatus
   invitationTokenHash?: string | null
   invitationExpiresAt?: Date | string | null
   invitedAt?: Date | string | null
+  acceptedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   assignedOpportunities?: Prisma.OpportunityCreateNestedManyWithoutAssignedToInput
@@ -893,10 +918,11 @@ export type UserUncheckedCreateWithoutCreatedOpportunitiesInput = {
   quarterlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   annualGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   role?: $Enums.UserRole
-  isActive?: boolean
+  status?: $Enums.UserStatus
   invitationTokenHash?: string | null
   invitationExpiresAt?: Date | string | null
   invitedAt?: Date | string | null
+  acceptedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   assignedOpportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutAssignedToInput
@@ -923,10 +949,11 @@ export type UserCreateWithoutClosedOpportunitiesInput = {
   quarterlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   annualGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   role?: $Enums.UserRole
-  isActive?: boolean
+  status?: $Enums.UserStatus
   invitationTokenHash?: string | null
   invitationExpiresAt?: Date | string | null
   invitedAt?: Date | string | null
+  acceptedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   assignedOpportunities?: Prisma.OpportunityCreateNestedManyWithoutAssignedToInput
@@ -948,10 +975,11 @@ export type UserUncheckedCreateWithoutClosedOpportunitiesInput = {
   quarterlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   annualGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   role?: $Enums.UserRole
-  isActive?: boolean
+  status?: $Enums.UserStatus
   invitationTokenHash?: string | null
   invitationExpiresAt?: Date | string | null
   invitedAt?: Date | string | null
+  acceptedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   assignedOpportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutAssignedToInput
@@ -989,10 +1017,11 @@ export type UserUpdateWithoutAssignedOpportunitiesInput = {
   quarterlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   annualGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
-  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   invitationTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   invitationExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   invitedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdOpportunities?: Prisma.OpportunityUpdateManyWithoutCreatedByNestedInput
@@ -1014,10 +1043,11 @@ export type UserUncheckedUpdateWithoutAssignedOpportunitiesInput = {
   quarterlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   annualGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
-  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   invitationTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   invitationExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   invitedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdOpportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutCreatedByNestedInput
@@ -1050,10 +1080,11 @@ export type UserUpdateWithoutCreatedOpportunitiesInput = {
   quarterlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   annualGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
-  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   invitationTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   invitationExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   invitedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   assignedOpportunities?: Prisma.OpportunityUpdateManyWithoutAssignedToNestedInput
@@ -1075,10 +1106,11 @@ export type UserUncheckedUpdateWithoutCreatedOpportunitiesInput = {
   quarterlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   annualGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
-  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   invitationTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   invitationExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   invitedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   assignedOpportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutAssignedToNestedInput
@@ -1111,10 +1143,11 @@ export type UserUpdateWithoutClosedOpportunitiesInput = {
   quarterlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   annualGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
-  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   invitationTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   invitationExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   invitedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   assignedOpportunities?: Prisma.OpportunityUpdateManyWithoutAssignedToNestedInput
@@ -1136,10 +1169,11 @@ export type UserUncheckedUpdateWithoutClosedOpportunitiesInput = {
   quarterlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   annualGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
-  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   invitationTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   invitationExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   invitedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   assignedOpportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutAssignedToNestedInput
@@ -1161,10 +1195,11 @@ export type UserCreateWithoutAssignedFollowUpsInput = {
   quarterlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   annualGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   role?: $Enums.UserRole
-  isActive?: boolean
+  status?: $Enums.UserStatus
   invitationTokenHash?: string | null
   invitationExpiresAt?: Date | string | null
   invitedAt?: Date | string | null
+  acceptedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   assignedOpportunities?: Prisma.OpportunityCreateNestedManyWithoutAssignedToInput
@@ -1186,10 +1221,11 @@ export type UserUncheckedCreateWithoutAssignedFollowUpsInput = {
   quarterlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   annualGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   role?: $Enums.UserRole
-  isActive?: boolean
+  status?: $Enums.UserStatus
   invitationTokenHash?: string | null
   invitationExpiresAt?: Date | string | null
   invitedAt?: Date | string | null
+  acceptedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   assignedOpportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutAssignedToInput
@@ -1227,10 +1263,11 @@ export type UserUpdateWithoutAssignedFollowUpsInput = {
   quarterlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   annualGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
-  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   invitationTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   invitationExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   invitedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   assignedOpportunities?: Prisma.OpportunityUpdateManyWithoutAssignedToNestedInput
@@ -1252,10 +1289,11 @@ export type UserUncheckedUpdateWithoutAssignedFollowUpsInput = {
   quarterlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   annualGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
-  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   invitationTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   invitationExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   invitedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   assignedOpportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutAssignedToNestedInput
@@ -1277,10 +1315,11 @@ export type UserCreateWithoutEmailTemplatesInput = {
   quarterlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   annualGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   role?: $Enums.UserRole
-  isActive?: boolean
+  status?: $Enums.UserStatus
   invitationTokenHash?: string | null
   invitationExpiresAt?: Date | string | null
   invitedAt?: Date | string | null
+  acceptedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   assignedOpportunities?: Prisma.OpportunityCreateNestedManyWithoutAssignedToInput
@@ -1302,10 +1341,11 @@ export type UserUncheckedCreateWithoutEmailTemplatesInput = {
   quarterlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   annualGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   role?: $Enums.UserRole
-  isActive?: boolean
+  status?: $Enums.UserStatus
   invitationTokenHash?: string | null
   invitationExpiresAt?: Date | string | null
   invitedAt?: Date | string | null
+  acceptedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   assignedOpportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutAssignedToInput
@@ -1343,10 +1383,11 @@ export type UserUpdateWithoutEmailTemplatesInput = {
   quarterlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   annualGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
-  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   invitationTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   invitationExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   invitedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   assignedOpportunities?: Prisma.OpportunityUpdateManyWithoutAssignedToNestedInput
@@ -1368,10 +1409,11 @@ export type UserUncheckedUpdateWithoutEmailTemplatesInput = {
   quarterlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   annualGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
-  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   invitationTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   invitationExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   invitedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   assignedOpportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutAssignedToNestedInput
@@ -1393,10 +1435,11 @@ export type UserCreateWithoutActivitiesInput = {
   quarterlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   annualGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   role?: $Enums.UserRole
-  isActive?: boolean
+  status?: $Enums.UserStatus
   invitationTokenHash?: string | null
   invitationExpiresAt?: Date | string | null
   invitedAt?: Date | string | null
+  acceptedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   assignedOpportunities?: Prisma.OpportunityCreateNestedManyWithoutAssignedToInput
@@ -1418,10 +1461,11 @@ export type UserUncheckedCreateWithoutActivitiesInput = {
   quarterlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   annualGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   role?: $Enums.UserRole
-  isActive?: boolean
+  status?: $Enums.UserStatus
   invitationTokenHash?: string | null
   invitationExpiresAt?: Date | string | null
   invitedAt?: Date | string | null
+  acceptedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   assignedOpportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutAssignedToInput
@@ -1459,10 +1503,11 @@ export type UserUpdateWithoutActivitiesInput = {
   quarterlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   annualGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
-  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   invitationTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   invitationExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   invitedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   assignedOpportunities?: Prisma.OpportunityUpdateManyWithoutAssignedToNestedInput
@@ -1484,10 +1529,11 @@ export type UserUncheckedUpdateWithoutActivitiesInput = {
   quarterlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   annualGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
-  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   invitationTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   invitationExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   invitedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   assignedOpportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutAssignedToNestedInput
@@ -1509,10 +1555,11 @@ export type UserCreateWithoutAssignedSalesInput = {
   quarterlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   annualGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   role?: $Enums.UserRole
-  isActive?: boolean
+  status?: $Enums.UserStatus
   invitationTokenHash?: string | null
   invitationExpiresAt?: Date | string | null
   invitedAt?: Date | string | null
+  acceptedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   assignedOpportunities?: Prisma.OpportunityCreateNestedManyWithoutAssignedToInput
@@ -1534,10 +1581,11 @@ export type UserUncheckedCreateWithoutAssignedSalesInput = {
   quarterlyGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   annualGoal?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   role?: $Enums.UserRole
-  isActive?: boolean
+  status?: $Enums.UserStatus
   invitationTokenHash?: string | null
   invitationExpiresAt?: Date | string | null
   invitedAt?: Date | string | null
+  acceptedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   assignedOpportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutAssignedToInput
@@ -1575,10 +1623,11 @@ export type UserUpdateWithoutAssignedSalesInput = {
   quarterlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   annualGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
-  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   invitationTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   invitationExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   invitedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   assignedOpportunities?: Prisma.OpportunityUpdateManyWithoutAssignedToNestedInput
@@ -1600,10 +1649,11 @@ export type UserUncheckedUpdateWithoutAssignedSalesInput = {
   quarterlyGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   annualGoal?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
-  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   invitationTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   invitationExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   invitedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  acceptedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   assignedOpportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutAssignedToNestedInput
@@ -1710,10 +1760,11 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   quarterlyGoal?: boolean
   annualGoal?: boolean
   role?: boolean
-  isActive?: boolean
+  status?: boolean
   invitationTokenHash?: boolean
   invitationExpiresAt?: boolean
   invitedAt?: boolean
+  acceptedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   assignedOpportunities?: boolean | Prisma.User$assignedOpportunitiesArgs<ExtArgs>
@@ -1737,10 +1788,11 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   quarterlyGoal?: boolean
   annualGoal?: boolean
   role?: boolean
-  isActive?: boolean
+  status?: boolean
   invitationTokenHash?: boolean
   invitationExpiresAt?: boolean
   invitedAt?: boolean
+  acceptedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["user"]>
@@ -1756,10 +1808,11 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   quarterlyGoal?: boolean
   annualGoal?: boolean
   role?: boolean
-  isActive?: boolean
+  status?: boolean
   invitationTokenHash?: boolean
   invitationExpiresAt?: boolean
   invitedAt?: boolean
+  acceptedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["user"]>
@@ -1775,15 +1828,16 @@ export type UserSelectScalar = {
   quarterlyGoal?: boolean
   annualGoal?: boolean
   role?: boolean
-  isActive?: boolean
+  status?: boolean
   invitationTokenHash?: boolean
   invitationExpiresAt?: boolean
   invitedAt?: boolean
+  acceptedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "username" | "email" | "passwordHash" | "title" | "monthlyGoal" | "quarterlyGoal" | "annualGoal" | "role" | "isActive" | "invitationTokenHash" | "invitationExpiresAt" | "invitedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "username" | "email" | "passwordHash" | "title" | "monthlyGoal" | "quarterlyGoal" | "annualGoal" | "role" | "status" | "invitationTokenHash" | "invitationExpiresAt" | "invitedAt" | "acceptedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   assignedOpportunities?: boolean | Prisma.User$assignedOpportunitiesArgs<ExtArgs>
   createdOpportunities?: boolean | Prisma.User$createdOpportunitiesArgs<ExtArgs>
@@ -1819,10 +1873,11 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     quarterlyGoal: runtime.Decimal | null
     annualGoal: runtime.Decimal | null
     role: $Enums.UserRole
-    isActive: boolean
+    status: $Enums.UserStatus
     invitationTokenHash: string | null
     invitationExpiresAt: Date | null
     invitedAt: Date | null
+    acceptedAt: Date | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["user"]>
@@ -2265,10 +2320,11 @@ export interface UserFieldRefs {
   readonly quarterlyGoal: Prisma.FieldRef<"User", 'Decimal'>
   readonly annualGoal: Prisma.FieldRef<"User", 'Decimal'>
   readonly role: Prisma.FieldRef<"User", 'UserRole'>
-  readonly isActive: Prisma.FieldRef<"User", 'Boolean'>
+  readonly status: Prisma.FieldRef<"User", 'UserStatus'>
   readonly invitationTokenHash: Prisma.FieldRef<"User", 'String'>
   readonly invitationExpiresAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly invitedAt: Prisma.FieldRef<"User", 'DateTime'>
+  readonly acceptedAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly createdAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"User", 'DateTime'>
 }

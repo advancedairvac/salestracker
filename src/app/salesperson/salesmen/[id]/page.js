@@ -211,7 +211,7 @@ export default async function MySalesOverviewPage({ params, searchParams }) {
     where: {
       id: user.id,
       role: "SALESPERSON",
-      isActive: true,
+      status: "ACTIVE",
     },
     select: {
       id: true,

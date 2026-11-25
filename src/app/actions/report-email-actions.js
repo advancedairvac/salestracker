@@ -1,4 +1,3 @@
-
 "use server";
 
 import { prisma } from "@/lib/prisma";
@@ -116,7 +115,7 @@ export async function sendReportEmailAction({
         where: {
           id: salesmanId,
           role: "SALESPERSON",
-          isActive: true,
+          status: "ACTIVE",
         },
         select: {
           id: true,

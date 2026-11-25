@@ -103,8 +103,9 @@ export async function getDashboardTeamMembers() {
         role: {
           in: ["ADMIN", "SALESPERSON"],
         },
-
-        isActive: true,
+        status: {
+          in: ["ACTIVE", "INVITED"],
+        },
       },
 
       select: {
@@ -124,6 +125,39 @@ export async function getDashboardTeamMembers() {
   );
 }
 
+// ============================================
+// FETCH ALL TEAM MEMBERS FOR SALESMEN PAGE
+//
+// Includes ACTIVE, INVITED, TERMINATED
+// Dashboard query remains unchanged.
+// ============================================
+
+export async function getSalesmenPageTeamMembers() {
+  return measureTime("Prisma Salesmen Page Team Members Query", () =>
+    prisma.user.findMany({
+      where: {
+        role: {
+          in: ["ADMIN", "SALESPERSON"],
+        },
+      },
+
+      select: {
+        id: true,
+        name: true,
+        title: true,
+        role: true,
+        status: true,
+        monthlyGoal: true,
+        quarterlyGoal: true,
+        annualGoal: true,
+      },
+
+      orderBy: {
+        name: "asc",
+      },
+    }),
+  );
+}
 // ============================================
 // FETCH OPPORTUNITIES
 // ============================================

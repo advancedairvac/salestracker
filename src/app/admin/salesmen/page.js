@@ -1,15 +1,23 @@
 
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 
 import { getAuthenticatedUser } from "@/lib/auth";
 
 import { getInitialRange } from "@/lib/date/date-utils";
 import { getGoalConfiguration } from "@/lib/date/goal-utils";
 
-import { getAdminTeamSectionData } from "@/lib/dashboard/dashboard-data";
+import {
+  getSalesmenPageTeamMembers,
+  getDashboardOpportunities,
+  getDashboardRevenueSales,
+} from "@/lib/dashboard/dashboard-data";
+
 import { getTeamMetrics } from "@/lib/dashboard/dashboard-metrics";
 
+import Tabs from "@/components/ui/tabs";
 import SalesmanCard from "@/components/dashboard/salesman-card";
+import TeamCardSkeleton from "@/components/ui/skeleton/team-card-skeleton";
 
 import Breadcrumbs from "@/components/ui/breadcrumbs";
 import PageTagline from "@/components/ui/page-tagline";
@@ -19,9 +27,191 @@ export const metadata = {
 };
 
 // ============================================
+// SALESMEN PERFORMANCE SECTION
+// ============================================
+
+async function SalesmenPerformanceSection({
+  start,
+  endExclusive,
+  goalType,
+}) {
+  // ============================================
+  // FETCH DATA
+  // ============================================
+
+  const [teamMembers, revenueSales, opportunities] =
+    await Promise.all([
+      getSalesmenPageTeamMembers(),
+
+      getDashboardRevenueSales({
+        start,
+        endExclusive,
+      }),
+
+      getDashboardOpportunities({
+        start,
+        endExclusive,
+      }),
+    ]);
+
+  // ============================================
+  // SORT TEAM MEMBERS
+  // Admins first, then alphabetical
+  // ============================================
+
+  const sortedTeamMembers = [...teamMembers].sort((a, b) => {
+    if (a.role === "ADMIN" && b.role !== "ADMIN") {
+      return -1;
+    }
+
+    if (a.role !== "ADMIN" && b.role === "ADMIN") {
+      return 1;
+    }
+
+    return a.name.localeCompare(b.name);
+  });
+
+  // ============================================
+  // TEAM PERFORMANCE METRICS
+  // ============================================
+
+  const performanceData = getTeamMetrics({
+    teamMembers: sortedTeamMembers,
+    goalType,
+    revenueSales,
+    opportunities,
+  });
+
+  // ============================================
+  // PRESERVE STATUS
+  // ============================================
+
+  const statusByMemberId = new Map(
+    sortedTeamMembers.map((member) => [
+      member.id,
+      member.status,
+    ])
+  );
+
+  const salesmanPerformance = performanceData.map(
+    (salesman) => ({
+      ...salesman,
+      status: statusByMemberId.get(salesman.id),
+    })
+  );
+
+  // ============================================
+  // FILTER SALESMEN
+  // ============================================
+
+  const activeSalesmen = salesmanPerformance.filter(
+    (salesman) => salesman.status === "ACTIVE"
+  );
+
+  const invitedSalesmen = salesmanPerformance.filter(
+    (salesman) => salesman.status === "INVITED"
+  );
+
+  const terminatedSalesmen = salesmanPerformance.filter(
+    (salesman) => salesman.status === "TERMINATED"
+  );
+
+  // ============================================
+  // TAB CONFIGURATION
+  // ============================================
+
+  const tabs = [
+    {
+      id: "ACTIVE",
+      label: "Active",
+      count: activeSalesmen.length,
+    },
+    {
+      id: "INVITED",
+      label: "Invited",
+      count: invitedSalesmen.length,
+    },
+    {
+      id: "TERMINATED",
+      label: "Terminated",
+      count: terminatedSalesmen.length,
+    },
+    {
+      id: "ALL",
+      label: "All",
+      count: salesmanPerformance.length,
+    },
+  ];
+
+  // ============================================
+  // SALESMEN CARD RENDERER
+  // ============================================
+
+  const renderSalesmen = (salesmen) => {
+    if (!salesmen.length) {
+      return (
+        <div className="border border-[#d5d5d5] bg-white px-4 py-10 text-center">
+          <p className="text-sm font-medium text-[#555]">
+            No salesmen found.
+          </p>
+
+          <p className="mt-1 text-xs text-[#888]">
+            There are no members in this category yet.
+          </p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 2xl:grid-cols-3">
+        {salesmen.map((salesman) => (
+          <SalesmanCard
+            key={salesman.id}
+            id={salesman.id}
+            name={salesman.name}
+            title={salesman.title}
+            revenue={salesman.revenue}
+            commission={salesman.commission}
+            monthlyGoal={salesman.monthlyGoal}
+            opportunities={salesman.opportunities}
+            closeRate={salesman.closeRate}
+            href={`/admin/salesmen/${salesman.id}`}
+          />
+        ))}
+      </div>
+    );
+  };
+
+  // ============================================
+  // TAB CONTENT
+  // ============================================
+
+  const panels = {
+    ACTIVE: renderSalesmen(activeSalesmen),
+
+    INVITED: renderSalesmen(invitedSalesmen),
+
+    TERMINATED: renderSalesmen(terminatedSalesmen),
+
+    ALL: renderSalesmen(salesmanPerformance),
+  };
+
+  // ============================================
+  // RENDER
+  // ============================================
+
+  return (
+    <Tabs
+      tabs={tabs}
+      defaultTab="ACTIVE"
+      countLabel="Members"
+      panels={panels}
+    />
+  );
+}
+
+// ============================================
 // SALESMEN PAGE
-// Same data and calculation architecture
-// as Admin Dashboard
 // ============================================
 
 export default async function SalesmenPage() {
@@ -51,12 +241,16 @@ export default async function SalesmenPage() {
   const [endYear, endMonth, endDay] =
     defaultRange.endDate.split("-").map(Number);
 
-  const start = new Date(startYear, startMonth - 1, startDay);
+  const start = new Date(
+    startYear,
+    startMonth - 1,
+    startDay
+  );
 
   const endExclusive = new Date(
     endYear,
     endMonth - 1,
-    endDay + 1,
+    endDay + 1
   );
 
   // ============================================
@@ -66,48 +260,8 @@ export default async function SalesmenPage() {
   const goalConfiguration = getGoalConfiguration(
     "MTD",
     defaultRange.startDate,
-    defaultRange.endDate,
+    defaultRange.endDate
   );
-
-  // ============================================
-  // FETCH TEAM DATA
-  // Reuse Admin Dashboard data architecture
-  // ============================================
-
-  const { teamMembers, revenueSales, opportunities } =
-    await getAdminTeamSectionData({
-      start,
-      endExclusive,
-    });
-
-  // ============================================
-  // SORT TEAM MEMBERS
-  // Admins first, then alphabetical
-  // ============================================
-
-  const sortedTeamMembers = [...teamMembers].sort((a, b) => {
-    if (a.role === "ADMIN" && b.role !== "ADMIN") {
-      return -1;
-    }
-
-    if (a.role !== "ADMIN" && b.role === "ADMIN") {
-      return 1;
-    }
-
-    return a.name.localeCompare(b.name);
-  });
-
-  // ============================================
-  // TEAM PERFORMANCE METRICS
-  // Same calculation as Admin Dashboard
-  // ============================================
-
-  const salesmanPerformance = getTeamMetrics({
-    teamMembers: sortedTeamMembers,
-    goalType: goalConfiguration.goalType,
-    revenueSales,
-    opportunities,
-  });
 
   // ============================================
   // RENDER
@@ -127,51 +281,15 @@ export default async function SalesmenPage() {
         currentPage="Salesmen"
       />
 
-      {/* TEAM SUMMARY */}
+      {/* SALESMEN PERFORMANCE */}
 
-      <section className="space-y-3">
-        <div className="flex items-center justify-between gap-3">
-          <h2 className="text-sm font-bold uppercase tracking-wide text-[#555]">
-            Team Members
-          </h2>
-
-          <span className="shrink-0 text-xs text-[#777]">
-            {salesmanPerformance.length}{" "}
-            {salesmanPerformance.length === 1 ? "Member" : "Members"}
-          </span>
-        </div>
-
-        {/* SALESMAN CARDS */}
-
-        {salesmanPerformance.length > 0 ? (
-          <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 2xl:grid-cols-3">
-            {salesmanPerformance.map((salesman) => (
-              <SalesmanCard
-                key={salesman.id}
-                id={salesman.id}
-                name={salesman.name}
-                title={salesman.title}
-                revenue={salesman.revenue}
-                commission={salesman.commission}
-                monthlyGoal={salesman.monthlyGoal}
-                opportunities={salesman.opportunities}
-                closeRate={salesman.closeRate}
-                href={`/admin/salesmen/${salesman.id}`}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="border border-[#d5d5d5] bg-white px-4 py-10 text-center">
-            <p className="text-sm font-medium text-[#555]">
-              No active team members found.
-            </p>
-
-            <p className="mt-1 text-xs text-[#888]">
-              Add a salesperson to see their performance here.
-            </p>
-          </div>
-        )}
-      </section>
+      <Suspense fallback={<TeamCardSkeleton count={3} />}>
+        <SalesmenPerformanceSection
+          start={start}
+          endExclusive={endExclusive}
+          goalType={goalConfiguration.goalType}
+        />
+      </Suspense>
 
       {/* PAGE TAGLINE */}
 

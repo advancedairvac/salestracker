@@ -47,7 +47,7 @@ export async function POST(request) {
       },
     });
 
-    if (!user || !user.isActive || !user.passwordHash) {
+    if (!user || user.status !== "ACTIVE" || !user.passwordHash) {
       return NextResponse.redirect(
         getRedirectUrl("/login?error=invalid", request),
         303,

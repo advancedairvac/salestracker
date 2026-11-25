@@ -58,18 +58,8 @@ export default function AdminSettingsPage() {
         currentPage="Settings"
       />
 
-      <section className="mt-5 w-full sm:mt-6">
-        <div className="space-y-1">
-          <h1 className="text-base font-bold uppercase tracking-wide text-neutral-950 sm:text-lg">
-            Settings
-          </h1>
-
-          <p className="text-sm text-[#777]">
-            Manage your application preferences and configurations.
-          </p>
-        </div>
-
-        <div className="mt-8 grid w-full grid-cols-1 gap-3 sm:grid-cols-2">
+      <section className="w-full">
+        <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2">
           {adminSettings.map((item) => (
             <AdminSettingsCta
               key={item.href}

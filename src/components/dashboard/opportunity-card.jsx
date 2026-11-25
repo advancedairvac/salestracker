@@ -1,3 +1,4 @@
+
 import Link from "next/link";
 
 // ============================================
@@ -27,8 +28,6 @@ function getStatusStyle(status) {
     OPEN: "bg-neutral-100 text-neutral-800",
     WON: "bg-green-100 text-green-700",
     LOST: "bg-red-100 text-red-700",
-    TEMPORARILY_CLOSED: "bg-amber-100 text-amber-700",
-    PERMANENTLY_CLOSED: "bg-neutral-200 text-neutral-700",
     SCHEDULED_TO_REOPEN: "bg-blue-100 text-blue-700",
   };
 
@@ -40,8 +39,6 @@ function getStatusLabel(status) {
     OPEN: "Open",
     WON: "Won",
     LOST: "Lost",
-    TEMPORARILY_CLOSED: "Temporarily Closed",
-    PERMANENTLY_CLOSED: "Permanently Closed",
     SCHEDULED_TO_REOPEN: "Scheduled to Reopen",
   };
 
@@ -51,7 +48,7 @@ function getStatusLabel(status) {
 function getSourceLabel(source) {
   const labels = {
     SELF_GENERATED: "Self Generated",
-    COMPANY_GENERATED: "Company Generated",
+    COMPANY: "Company Generated",
   };
 
   return labels[source] || source || "—";
@@ -61,7 +58,10 @@ function getSourceLabel(source) {
 // OPPORTUNITY CARD
 // ============================================
 
-export default function OpportunityCard({ opportunity, role = "ADMIN" }) {
+export default function OpportunityCard({
+  opportunity,
+  role = "ADMIN",
+}) {
   const customer = opportunity.customer;
   const assignedTo = opportunity.assignedTo;
 
@@ -82,16 +82,10 @@ export default function OpportunityCard({ opportunity, role = "ADMIN" }) {
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h3 className="truncate text-[19px] font-extrabold uppercase leading-tight tracking-[-0.4px] text-black sm:text-xl">
-            {customer?.businessName ||
+            {opportunity.jobType ||
               opportunity.title ||
               "Untitled Opportunity"}
           </h3>
-
-          {opportunity.jobType && (
-            <p className="mt-1 text-xs font-medium uppercase tracking-wide text-[#666] sm:text-[13px]">
-              {opportunity.jobType}
-            </p>
-          )}
         </div>
 
         <span

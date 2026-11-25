@@ -56,7 +56,7 @@ export default async function EditSalesmanPage({ params }) {
       username: true,
       passwordHash: true,
       role: true,
-      isActive: true,
+      status: true,
       monthlyGoal: true,
       quarterlyGoal: true,
       annualGoal: true,
@@ -73,15 +73,16 @@ export default async function EditSalesmanPage({ params }) {
 
   const isPendingRegistration =
     isSalesperson &&
-    !salesman.isActive &&
-    !salesman.username &&
-    !salesman.passwordHash;
+    salesman.status === "INVITED" &&
+    (!salesman.username || !salesman.passwordHash);
 
   const canResendInvitation = isPendingRegistration;
 
-  const canTerminate = isSalesperson && salesman.isActive && isRegistered;
+  const canTerminate =
+    isSalesperson && salesman.status === "ACTIVE" && isRegistered;
 
-  const canReactivate = isSalesperson && !salesman.isActive && isRegistered;
+  const canReactivate =
+    isSalesperson && salesman.status === "TERMINATED" && isRegistered;
 
   const initialValues = {
     name: salesman.name || "",

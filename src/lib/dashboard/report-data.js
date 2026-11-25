@@ -124,7 +124,7 @@ async function validateSalesperson(salesmanId) {
     where: {
       id: salesmanId,
       role: "SALESPERSON",
-      isActive: true,
+      status: "ACTIVE",
     },
     select: {
       id: true,

@@ -76,7 +76,7 @@ export default async function EditOpportunityPage({ params }) {
           role: {
             in: ["ADMIN", "SALESPERSON"],
           },
-          isActive: true,
+          status: "ACTIVE",
         },
         {
           id: opportunity.assignedToId,
@@ -87,7 +87,7 @@ export default async function EditOpportunityPage({ params }) {
       id: true,
       name: true,
       role: true,
-      isActive: true,
+      status: true,
     },
     orderBy: {
       name: "asc",

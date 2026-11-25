@@ -1141,10 +1141,11 @@ export const UserScalarFieldEnum = {
   quarterlyGoal: 'quarterlyGoal',
   annualGoal: 'annualGoal',
   role: 'role',
-  isActive: 'isActive',
+  status: 'status',
   invitationTokenHash: 'invitationTokenHash',
   invitationExpiresAt: 'invitationExpiresAt',
   invitedAt: 'invitedAt',
+  acceptedAt: 'acceptedAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -1370,9 +1371,16 @@ export type ListEnumUserRoleFieldRefInput<$PrismaModel> = FieldRefInputType<$Pri
 
 
 /**
- * Reference to a field of type 'Boolean'
+ * Reference to a field of type 'UserStatus'
  */
-export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
+export type EnumUserStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'UserStatus'>
+    
+
+
+/**
+ * Reference to a field of type 'UserStatus[]'
+ */
+export type ListEnumUserStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'UserStatus[]'>
     
 
 
@@ -1429,6 +1437,13 @@ export type EnumFollowUpScheduleTypeFieldRefInput<$PrismaModel> = FieldRefInputT
  * Reference to a field of type 'FollowUpScheduleType[]'
  */
 export type ListEnumFollowUpScheduleTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'FollowUpScheduleType[]'>
+    
+
+
+/**
+ * Reference to a field of type 'Boolean'
+ */
+export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
     
 
 

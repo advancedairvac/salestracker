@@ -89,10 +89,11 @@ export const UserScalarFieldEnum = {
   quarterlyGoal: 'quarterlyGoal',
   annualGoal: 'annualGoal',
   role: 'role',
-  isActive: 'isActive',
+  status: 'status',
   invitationTokenHash: 'invitationTokenHash',
   invitationExpiresAt: 'invitationExpiresAt',
   invitedAt: 'invitedAt',
+  acceptedAt: 'acceptedAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

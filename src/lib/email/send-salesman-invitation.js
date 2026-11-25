@@ -61,11 +61,6 @@ export async function sendSalesmanInvitation({
             <p style="font-size:13px;line-height:1.7;color:#666;">
               This invitation link expires in 48 hours and can only be used once.
             </p>
-
-            <p style="font-size:13px;line-height:1.7;color:#666;">
-              If you were not expecting this invitation, you can ignore this email.
-            </p>
-
             <hr style="border:none;border-top:1px solid #eee;margin:30px 0;" />
 
             <p style="font-size:12px;color:#888;">

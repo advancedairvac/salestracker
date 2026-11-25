@@ -1,3 +1,4 @@
+
 import { NextResponse } from "next/server";
 import { compare, hash } from "bcryptjs";
 
@@ -120,11 +121,11 @@ export async function PATCH(request) {
       select: {
         id: true,
         passwordHash: true,
-        isActive: true,
+        status: true,
       },
     });
 
-    if (!currentUser || !currentUser.isActive) {
+    if (!currentUser || currentUser.status !== "ACTIVE") {
       return NextResponse.json(
         { error: "Your account is unavailable." },
         { status: 401 },
@@ -207,7 +208,7 @@ export async function PATCH(request) {
         email: true,
         title: true,
         role: true,
-        isActive: true,
+        status: true,
       },
     });
 

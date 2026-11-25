@@ -455,6 +455,10 @@ export type EnumFollowUpScheduleTypeFieldUpdateOperationsInput = {
   set?: $Enums.FollowUpScheduleType
 }
 
+export type BoolFieldUpdateOperationsInput = {
+  set?: boolean
+}
+
 export type FollowUpScheduleCreateNestedOneWithoutFollowUpsInput = {
   create?: Prisma.XOR<Prisma.FollowUpScheduleCreateWithoutFollowUpsInput, Prisma.FollowUpScheduleUncheckedCreateWithoutFollowUpsInput>
   connectOrCreate?: Prisma.FollowUpScheduleCreateOrConnectWithoutFollowUpsInput

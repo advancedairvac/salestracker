@@ -1,4 +1,3 @@
-
 import { redirect } from "next/navigation";
 
 import { prisma } from "@/lib/prisma";
@@ -27,13 +26,13 @@ export default async function ReportsPage() {
   const users = await prisma.user.findMany({
     where: {
       role: "SALESPERSON",
-      isActive: true,
+      status: "ACTIVE",
     },
     select: {
       id: true,
       name: true,
       role: true,
-      isActive: true,
+      status: true,
     },
     orderBy: {
       name: "asc",
@@ -50,17 +49,12 @@ export default async function ReportsPage() {
 
       {/* Generate Report Form */}
       <section className="mt-5 w-full sm:mt-6">
-        <GenerateReportForm
-          users={users}
-          isSalesperson={false}
-        />
+        <GenerateReportForm users={users} isSalesperson={false} />
       </section>
 
       {/* Page Tagline */}
       <div className="mt-auto pt-24">
-        <PageTagline>
-          Boss yourself around, so no one else has to.
-        </PageTagline>
+        <PageTagline>Boss yourself around, so no one else has to.</PageTagline>
       </div>
     </div>
   );

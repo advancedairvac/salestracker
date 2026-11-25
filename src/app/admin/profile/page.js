@@ -34,7 +34,7 @@ export default async function ProfilePage() {
       email: true,
       title: true,
       role: true,
-      isActive: true,
+      status: true,
       monthlyGoal: true,
       quarterlyGoal: true,
       annualGoal: true,
@@ -42,7 +42,7 @@ export default async function ProfilePage() {
     },
   });
 
-  if (!databaseUser || !databaseUser.isActive) {
+  if (!databaseUser || databaseUser.status !== "ACTIVE") {
     redirect("/login");
   }
 
@@ -55,7 +55,7 @@ export default async function ProfilePage() {
     email: databaseUser.email,
     title: databaseUser.title || "",
     role: databaseUser.role,
-    isActive: databaseUser.isActive,
+    status: databaseUser.status,
     monthlyGoal: databaseUser.monthlyGoal?.toString() || "0",
     quarterlyGoal: databaseUser.quarterlyGoal?.toString() || "0",
     annualGoal: databaseUser.annualGoal?.toString() || "0",

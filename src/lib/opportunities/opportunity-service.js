@@ -100,7 +100,7 @@ async function getAssignedToId(
   const assignedUser = await prisma.user.findFirst({
     where: {
       id: assignedToId,
-      isActive: true,
+      status: "ACTIVE",
       role: {
         in: ["ADMIN", "SALESPERSON"],
       },

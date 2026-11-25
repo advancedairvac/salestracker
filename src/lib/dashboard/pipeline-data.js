@@ -22,13 +22,14 @@ const PAGE_SIZES = [10, 20, 50, 100];
 // GET ACTIVE PIPELINE USERS
 // ============================================
 
+
 async function getPipelineUsers() {
   return prisma.user.findMany({
     where: {
       role: {
         in: ["ADMIN", "SALESPERSON"],
       },
-      isActive: true,
+      status: "ACTIVE",
     },
     select: {
       id: true,
@@ -45,6 +46,7 @@ async function getPipelineUsers() {
     ],
   });
 }
+
 
 // ============================================
 // BUILD FOLLOW-UP QUERY

@@ -1,4 +1,3 @@
-
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
@@ -57,11 +56,11 @@ export async function getAuthenticatedUser() {
         username: true,
         email: true,
         role: true,
-        isActive: true,
+        status: true,
       },
     });
 
-    if (!user || !user.isActive) return null;
+    if (!user || user.status !== "ACTIVE") return null;
 
     return user;
   } catch {
