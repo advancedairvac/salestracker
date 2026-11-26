@@ -2,6 +2,7 @@
 "use server";
 
 import bcrypt from "bcryptjs";
+import { redirect } from "next/navigation";
 
 import { prisma } from "@/lib/prisma";
 import { hashInvitationToken } from "@/lib/auth/invitations";
@@ -14,28 +15,47 @@ export async function completeSalesmanRegistration(values) {
     const confirmPassword = String(values?.confirmPassword || "");
     const token = String(values?.token || "").trim();
 
-    if (!name || !username || !password || !confirmPassword) {
-      return { error: "required" };
+    // REQUIRED FIELDS
+
+    if (!name || !username || !password || !confirmPassword || !token) {
+      return {
+        error: "required",
+      };
     }
+
+    // USERNAME VALIDATION
 
     if (!/^[a-zA-Z0-9_]{3,30}$/.test(username)) {
-      return { error: "username" };
+      return {
+        error: "username",
+      };
     }
 
-    // Minimum password length: 4 characters
+    // PASSWORD VALIDATION
+
     if (password.length < 4) {
-      return { error: "password-length" };
+      return {
+        error: "password-length",
+      };
     }
 
     if (password !== confirmPassword) {
-      return { error: "password-match" };
+      return {
+        error: "password-match",
+      };
     }
 
-    if (token.length !== 64 || !/^[a-f0-9]+$/i.test(token)) {
-      return { error: "invalid-token" };
+    // TOKEN VALIDATION
+
+    if (!/^[a-f0-9]{64}$/i.test(token)) {
+      return {
+        error: "token",
+      };
     }
 
     const tokenHash = hashInvitationToken(token);
+
+    // VERIFY INVITATION
 
     const salesman = await prisma.user.findFirst({
       where: {
@@ -46,6 +66,7 @@ export async function completeSalesmanRegistration(values) {
         role: "SALESPERSON",
         status: "INVITED",
         passwordHash: null,
+        username: null,
       },
       select: {
         id: true,
@@ -53,8 +74,12 @@ export async function completeSalesmanRegistration(values) {
     });
 
     if (!salesman) {
-      return { error: "invalid-token" };
+      return {
+        error: "invalid-invitation",
+      };
     }
+
+    // CHECK USERNAME
 
     const existingUsername = await prisma.user.findFirst({
       where: {
@@ -69,12 +94,17 @@ export async function completeSalesmanRegistration(values) {
     });
 
     if (existingUsername) {
-      return { error: "username-taken" };
+      return {
+        error: "username-taken",
+      };
     }
+
+    // HASH PASSWORD
 
     const passwordHash = await bcrypt.hash(password, 12);
 
-    // Atomically consume invitation and activate account.
+    // ATOMIC INVITATION CONSUMPTION
+
     const result = await prisma.user.updateMany({
       where: {
         id: salesman.id,
@@ -85,6 +115,7 @@ export async function completeSalesmanRegistration(values) {
         role: "SALESPERSON",
         status: "INVITED",
         passwordHash: null,
+        username: null,
       },
       data: {
         name,
@@ -98,7 +129,9 @@ export async function completeSalesmanRegistration(values) {
     });
 
     if (result.count !== 1) {
-      return { error: "invalid-token" };
+      return {
+        error: "invalid-invitation",
+      };
     }
 
     return {
@@ -107,10 +140,14 @@ export async function completeSalesmanRegistration(values) {
   } catch (error) {
     console.error("Complete salesman registration failed:", error);
 
-    if (error?.code === "P2002") {
-      return { error: "username-taken" };
+    if (error.code === "P2002") {
+      return {
+        error: "username-taken",
+      };
     }
 
-    return { error: "server" };
+    return {
+      error: "server",
+    };
   }
 }
