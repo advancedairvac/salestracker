@@ -19,7 +19,11 @@ const ERROR_MESSAGES = {
   server: "Unable to complete registration. Please try again.",
 };
 
-export default function RegisterForm({ token, initialName = "", email = "" }) {
+export default function RegisterForm({
+  token,
+  initialName = "",
+  email = "",
+}) {
   const router = useRouter();
 
   const [values, setValues] = useState({
@@ -103,7 +107,10 @@ export default function RegisterForm({ token, initialName = "", email = "" }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex w-full flex-col gap-[7px]">
+    <form
+      onSubmit={handleSubmit}
+      className="flex w-full flex-col gap-[7px]"
+    >
       {/* INVITATION INFORMATION */}
 
       <div className="mb-5 w-full bg-neutral-50 px-3 py-3">
@@ -111,9 +118,13 @@ export default function RegisterForm({ token, initialName = "", email = "" }) {
           Invitation for
         </p>
 
-        <p className="text-sm font-medium text-black">{initialName}</p>
+        <p className="text-sm font-medium text-black">
+          {initialName}
+        </p>
 
-        <p className="text-sm text-neutral-500">{email}</p>
+        <p className="text-sm text-neutral-500">
+          {email}
+        </p>
       </div>
 
       {/* FULL NAME */}
@@ -141,7 +152,6 @@ export default function RegisterForm({ token, initialName = "", email = "" }) {
         maxLength={30}
         floatLabel
         required
-        hint="3–30 characters. Letters, numbers, and underscores only."
       />
 
       {/* PASSWORD */}
@@ -156,7 +166,6 @@ export default function RegisterForm({ token, initialName = "", email = "" }) {
         minLength={4}
         floatLabel
         required
-        hint="Your password must be at least 4 characters long."
       />
 
       {/* CONFIRM PASSWORD */}
@@ -181,7 +190,9 @@ export default function RegisterForm({ token, initialName = "", email = "" }) {
           aria-live="polite"
           className={[
             "mt-3 text-sm leading-6",
-            feedback.type === "success" ? "text-green-700" : "text-red-600",
+            feedback.type === "success"
+              ? "text-green-700"
+              : "text-red-600",
           ].join(" ")}
         >
           {feedback.message}
@@ -210,8 +221,8 @@ export default function RegisterForm({ token, initialName = "", email = "" }) {
       {/* POLICY NOTICE */}
 
       <p className="mt-5 max-w-2xl text-center text-xs leading-5 text-neutral-500">
-        By completing registration, you agree to use the Sales Tracker in
-        accordance with your organization&apos;s policies.
+        By completing registration, you agree to use the Sales Tracker
+        in accordance with your organization&apos;s policies.
       </p>
     </form>
   );

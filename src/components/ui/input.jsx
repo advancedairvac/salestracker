@@ -13,7 +13,6 @@ export default function Input({
   required = false,
   className = "",
   wrapperClassName = "",
-  floatLabel = false,
   onFocus,
   onBlur,
   ...props
@@ -27,8 +26,7 @@ export default function Input({
     value !== undefined &&
     String(value) !== "";
 
-  const floating =
-    floatLabel || focused || hasValue || type === "date";
+  const floating = focused || hasValue || type === "date";
 
   const describedBy = error
     ? `${inputId}-error`
