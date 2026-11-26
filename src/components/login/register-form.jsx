@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -9,7 +8,8 @@ import { completeSalesmanRegistration } from "@/app/register/actions";
 
 const ERROR_MESSAGES = {
   required: "Please complete all required fields.",
-  username: "Username must be 3–30 characters and contain only letters, numbers, or underscores.",
+  username:
+    "Username must be 3–30 characters and contain only letters, numbers, or underscores.",
   "password-length": "Your password must be at least 4 characters long.",
   "password-match": "Passwords do not match.",
   token: "Invalid invitation token.",
@@ -57,7 +57,6 @@ export default function RegisterForm({
         type: "error",
         message: ERROR_MESSAGES["password-length"],
       });
-
       return;
     }
 
@@ -66,7 +65,6 @@ export default function RegisterForm({
         type: "error",
         message: ERROR_MESSAGES["password-match"],
       });
-
       return;
     }
 
@@ -86,7 +84,6 @@ export default function RegisterForm({
             ERROR_MESSAGES[result.error] ||
             "Something went wrong. Please try again.",
         });
-
         return;
       }
 
