@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import SvgIcon from "@/components/icons/svg-icons";
 
+import CustomDateCalendar from "@/components/ui/custom-date-calendar";
+
 import {
   PRESETS,
   formatDate,
@@ -22,10 +24,6 @@ export default function DateSelector({
   disabled = false,
   compact = false,
 }) {
-  // ------------------------------------------
-  // INITIAL STATE
-  // ------------------------------------------
-
   const initialRange = getInitialRange();
 
   const [internalValue, setInternalValue] = useState(
@@ -66,33 +64,29 @@ export default function DateSelector({
   }, [preset]);
 
   // ------------------------------------------
-  // APPLY DATE RANGE
+  // APPLY RANGE
   // ------------------------------------------
 
   function applyRange(range, selectedPresetValue) {
     setInternalValue(range);
     setDraft(range);
-
     setSelectedPreset(selectedPresetValue);
 
     setCustomMode(false);
     setIsOpen(false);
 
-    // Send both date range and selected preset.
     onChange?.(range, selectedPresetValue);
   }
 
   // ------------------------------------------
-  // HANDLE PRESET SELECTION
+  // PRESET CLICK
   // ------------------------------------------
 
   function handlePresetClick(presetValue) {
     if (presetValue === "Custom") {
       setSelectedPreset("Custom");
       setCustomMode(true);
-
       setDraft({ ...selectedRange });
-
       return;
     }
 
@@ -102,15 +96,31 @@ export default function DateSelector({
   }
 
   // ------------------------------------------
-  // HANDLE CUSTOM RANGE
+  // CUSTOM DATE SELECTION
   // ------------------------------------------
 
+  function handleCustomDateSelect(range) {
+    setDraft(range);
+  }
+
   function handleCustomApply() {
-    if (!draft.startDate || !draft.endDate || draft.startDate > draft.endDate) {
+    if (
+      !draft.startDate ||
+      !draft.endDate ||
+      draft.startDate > draft.endDate
+    ) {
       return;
     }
 
     applyRange(draft, "Custom");
+  }
+
+  function handleCustomCancel() {
+    setCustomMode(false);
+    setSelectedPreset(
+      PRESETS.includes(preset) ? preset : "MTD",
+    );
+    setDraft({ ...selectedRange });
   }
 
   // ------------------------------------------
@@ -169,9 +179,9 @@ export default function DateSelector({
     };
   }, []);
 
-  // ============================================
+  // ------------------------------------------
   // STYLES
-  // ============================================
+  // ------------------------------------------
 
   const triggerClass = compact
     ? "min-h-[44px] gap-3 px-3"
@@ -188,7 +198,10 @@ export default function DateSelector({
   // ============================================
 
   return (
-    <div ref={containerRef} className={`relative z-30 w-full ${className}`}>
+    <div
+      ref={containerRef}
+      className={`relative z-30 w-1/2 pr-1.5 ${className}`}
+    >
       {/* DATE SELECTOR TRIGGER */}
 
       <div className="relative border border-[#d5d5d5] bg-white">
@@ -233,8 +246,8 @@ export default function DateSelector({
       {/* DROPDOWN */}
 
       {isOpen && (
-        <div className="absolute left-0 right-0 top-full z-50 border border-t-0 border-[#d5d5d5] bg-white shadow-md">
-          <div className="max-h-[min(65vh,560px)] overflow-y-auto overscroll-contain px-5 pb-4 pt-1 sm:px-6">
+        <div className="absolute left-0 right-0 top-full z-50 border border-t-0 border-[#d5d5d5] bg-white shadow-md mr-[6px]">
+          <div className="max-h-[min(75vh,700px)] overflow-y-auto overscroll-contain px-5 pb-4 pt-1 sm:px-6">
             {!customMode ? (
               <div className="flex flex-col">
                 {PRESETS.map((presetValue) => (
@@ -257,103 +270,13 @@ export default function DateSelector({
                 ))}
               </div>
             ) : (
-              <div className="space-y-4 py-4">
-                <h3 className="text-sm font-bold uppercase tracking-wide text-black">
-                  Custom Date Range
-                </h3>
-
-                {/* Start Date */}
-
-                <div>
-                  <label
-                    htmlFor="date-start"
-                    className="mb-2 block text-xs font-medium text-[#555]"
-                  >
-                    Start Date
-                  </label>
-
-                  <input
-                    id="date-start"
-                    type="date"
-                    value={draft.startDate}
-                    max={draft.endDate || undefined}
-                    onChange={(event) =>
-                      setDraft((previous) => ({
-                        ...previous,
-                        startDate: event.target.value,
-                      }))
-                    }
-                    className={[
-                      "h-11 w-full border border-[#d5d5d5]",
-                      "px-3 text-sm outline-none",
-                      "focus:border-black",
-                    ].join(" ")}
-                  />
-                </div>
-
-                {/* End Date */}
-
-                <div>
-                  <label
-                    htmlFor="date-end"
-                    className="mb-2 block text-xs font-medium text-[#555]"
-                  >
-                    End Date
-                  </label>
-
-                  <input
-                    id="date-end"
-                    type="date"
-                    value={draft.endDate}
-                    min={draft.startDate || undefined}
-                    onChange={(event) =>
-                      setDraft((previous) => ({
-                        ...previous,
-                        endDate: event.target.value,
-                      }))
-                    }
-                    className={[
-                      "h-11 w-full border border-[#d5d5d5]",
-                      "px-3 text-sm outline-none",
-                      "focus:border-black",
-                    ].join(" ")}
-                  />
-                </div>
-
-                {/* Custom Actions */}
-
-                <div className="flex gap-2 border-t border-[#e5e5e5] pt-3">
-                  <button
-                    type="button"
-                    onClick={() => setCustomMode(false)}
-                    className={[
-                      "h-10 flex-1 border border-[#d5d5d5]",
-                      "text-sm font-medium text-[#555]",
-                      "transition-colors hover:bg-[#f5f5f5]",
-                    ].join(" ")}
-                  >
-                    Back
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={handleCustomApply}
-                    disabled={
-                      !draft.startDate ||
-                      !draft.endDate ||
-                      draft.startDate > draft.endDate
-                    }
-                    className={[
-                      "h-10 flex-1 bg-black",
-                      "text-sm font-semibold text-white",
-                      "transition-colors hover:bg-[#333]",
-                      "disabled:cursor-not-allowed disabled:opacity-40",
-                    ].join(" ")}
-                  >
-                    Apply
-                  </button>
-                </div>
-              </div>
+              <CustomDateCalendar
+                startDate={draft.startDate || ""}
+                endDate={draft.endDate || ""}
+                onDateSelect={handleCustomDateSelect}
+                onApply={handleCustomApply}
+                onCancel={handleCustomCancel}
+              />
             )}
           </div>
         </div>

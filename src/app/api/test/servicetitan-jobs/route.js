@@ -14,10 +14,10 @@ const PAGE_SIZE = 500;
 const PAGE_CONCURRENCY = 4;
 
 // ============================================
-// FETCH RAW YTD COMPLETED JOBS
+// FETCH YTD COMPLETED JOBS
 // ============================================
 
-async function fetchYtdRawJobs(yearStartISO, nextYearStartISO) {
+async function fetchYtdJobs(yearStartISO, nextYearStartISO) {
   const filters = {
     pageSize: PAGE_SIZE,
     jobStatus: "Completed",
@@ -25,7 +25,7 @@ async function fetchYtdRawJobs(yearStartISO, nextYearStartISO) {
     completedBefore: nextYearStartISO,
   };
 
-  // Fetch first page.
+  // Fetch first page
   const firstPage = await getJobs({
     ...filters,
     page: 1,
@@ -33,19 +33,23 @@ async function fetchYtdRawJobs(yearStartISO, nextYearStartISO) {
   });
 
   if (!firstPage || !Array.isArray(firstPage.data)) {
-    throw new Error("Unable to fetch ServiceTitan YTD jobs.");
+    throw new Error("Unable to fetch ServiceTitan jobs.");
   }
 
   const totalCount = Number(firstPage.totalCount);
 
   if (!Number.isFinite(totalCount) || totalCount < 0) {
-    throw new Error("Invalid ServiceTitan jobs totalCount.");
+    throw new Error("Invalid ServiceTitan totalCount.");
   }
 
   const totalPages = Math.ceil(totalCount / PAGE_SIZE);
+
   const jobs = [...firstPage.data];
 
-  // Fetch remaining pages with controlled concurrency.
+  // ============================================
+  // FETCH REMAINING PAGES
+  // ============================================
+
   for (
     let startPage = 2;
     startPage <= totalPages;
@@ -80,39 +84,31 @@ async function fetchYtdRawJobs(yearStartISO, nextYearStartISO) {
     }
   }
 
-  // Verify the API returned the expected number of jobs.
-  if (jobs.length !== totalCount) {
-    throw new Error(
-      `Incomplete ServiceTitan jobs data. Expected ${totalCount}, received ${jobs.length}.`,
-    );
-  }
+  // ============================================
+  // REMOVE DUPLICATES
+  // ============================================
 
-  // Remove duplicate jobs.
   const uniqueJobs = [];
   const seenJobIds = new Set();
 
   for (const job of jobs) {
-    if (job?.id === undefined || job?.id === null) {
-      continue;
-    }
+    if (job?.id == null) continue;
 
     const jobId = String(job.id);
 
-    if (seenJobIds.has(jobId)) {
-      continue;
-    }
+    if (seenJobIds.has(jobId)) continue;
 
     seenJobIds.add(jobId);
     uniqueJobs.push(job);
   }
 
-  if (uniqueJobs.length !== totalCount) {
-    throw new Error(
-      `Duplicate or missing ServiceTitan jobs detected. Expected ${totalCount}, received ${uniqueJobs.length}.`,
-    );
-  }
-
-  return uniqueJobs;
+  return {
+    jobs: uniqueJobs,
+    totalCount,
+    totalPages,
+    fetchedCount: jobs.length,
+    uniqueCount: uniqueJobs.length,
+  };
 }
 
 // ============================================
@@ -120,20 +116,18 @@ async function fetchYtdRawJobs(yearStartISO, nextYearStartISO) {
 // ============================================
 
 function analyzeJobFields(jobs) {
-  const allFields = new Set();
+  const fields = new Set();
 
-  jobs.forEach((job) => {
-    Object.keys(job || {}).forEach((key) => {
-      allFields.add(key);
-    });
-  });
+  for (const job of jobs) {
+    Object.keys(job || {}).forEach((key) => fields.add(key));
+  }
 
   const fieldTypes = {};
 
-  for (const field of allFields) {
+  for (const field of fields) {
     const types = new Set();
 
-    jobs.forEach((job) => {
+    for (const job of jobs) {
       const value = job?.[field];
 
       if (value === null) {
@@ -145,52 +139,100 @@ function analyzeJobFields(jobs) {
       } else {
         types.add(typeof value);
       }
-    });
+    }
 
     fieldTypes[field] = [...types];
   }
 
-  const possibleUpdateFields = [...allFields].filter((field) =>
+  const possibleUpdateFields = [...fields].filter((field) =>
     /modified|updated|last.?update|change.?date/i.test(field),
   );
 
   return {
-    uniqueFields: [...allFields],
-    totalUniqueFields: allFields.size,
+    uniqueFields: [...fields],
+    totalUniqueFields: fields.size,
     fieldTypes,
     possibleUpdateFields,
   };
 }
 
 // ============================================
-// GET API RESPONSE
+// ANALYZE TAG DATA
+// ============================================
+
+function analyzeTags(jobs) {
+  const tagIds = new Map();
+
+  for (const job of jobs) {
+    const tags = job?.tagTypeIds;
+
+    if (!Array.isArray(tags)) continue;
+
+    for (const tagId of tags) {
+      const id = String(tagId);
+
+      tagIds.set(id, (tagIds.get(id) || 0) + 1);
+    }
+  }
+
+  return {
+    jobsWithTagTypeIds: jobs.filter(
+      (job) => Array.isArray(job?.tagTypeIds),
+    ).length,
+
+    jobsWithoutTagTypeIds: jobs.filter(
+      (job) => !Array.isArray(job?.tagTypeIds),
+    ).length,
+
+    uniqueTagTypeIds: [...tagIds.entries()].map(([id, count]) => ({
+      tagTypeId: id,
+      jobCount: count,
+    })),
+  };
+}
+
+// ============================================
+// GET API
 // ============================================
 
 export async function GET() {
   try {
-    const { yearStart, nextYearStart } = getRevenueDateRanges();
-
     const startTime = performance.now();
 
-    const jobs = await fetchYtdRawJobs(
+    const { yearStart, nextYearStart } = getRevenueDateRanges();
+
+    const result = await fetchYtdJobs(
       yearStart.toISOString(),
       nextYearStart.toISOString(),
     );
 
-    const duration = (
-      (performance.now() - startTime) /
-      1000
-    ).toFixed(2);
+    const jobs = result.jobs;
 
     const analysis = analyzeJobFields(jobs);
+    const tagAnalysis = analyzeTags(jobs);
+
+    const duration = Number(
+      ((performance.now() - startTime) / 1000).toFixed(2),
+    );
 
     return NextResponse.json({
       success: true,
 
+      environment: process.env.SERVICETITAN_ENV || "integration",
+
+      dateRange: {
+        yearStart: yearStart.toISOString(),
+        nextYearStart: nextYearStart.toISOString(),
+      },
+
       summary: {
-        totalJobsLoaded: jobs.length,
+        totalCountFromApi: result.totalCount,
+        totalPages: result.totalPages,
+        fetchedCount: result.fetchedCount,
+        uniqueJobsCount: result.uniqueCount,
+        fetchDurationSeconds: duration,
         ...analysis,
-        fetchDurationSeconds: Number(duration),
+        ...tagAnalysis,
       },
 
       samples: jobs.slice(0, 5),
@@ -198,18 +240,21 @@ export async function GET() {
       firstJob: jobs[0] || null,
 
       lastJob: jobs[jobs.length - 1] || null,
+
+      // Full raw data for testing
+      jobs,
     });
   } catch (error) {
-    console.error("[ServiceTitan Raw Jobs Test]", error);
+    console.error("[ServiceTitan Test API]", error);
 
     return NextResponse.json(
       {
         success: false,
-        error: error.message || "Unable to fetch ServiceTitan jobs.",
+        error:
+          error.message ||
+          "Unable to fetch ServiceTitan jobs.",
       },
-      {
-        status: 500,
-      },
+      { status: 500 },
     );
   }
 }
