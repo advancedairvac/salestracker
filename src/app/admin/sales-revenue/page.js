@@ -96,7 +96,15 @@ export default async function SalesRevenuePage({ searchParams }) {
 
   return (
     <div className="space-y-4 sm:space-y-5">
-      <Breadcrumbs currentPage="Sales Revenue" />
+      <Breadcrumbs
+        items={[
+          {
+            label: "Sales Tracker",
+            href: "/admin",
+          },
+        ]}
+        currentPage="Sales Revenue"
+      />
 
       <RevenueDateFilter
         value={{
@@ -131,7 +139,7 @@ export default async function SalesRevenuePage({ searchParams }) {
       </Suspense>
 
       <PageTagline>
-        There's many witty men whose brains can't fill their bellies. 
+        There's many witty men whose brains can't fill their bellies.
       </PageTagline>
     </div>
   );
