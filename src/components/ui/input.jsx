@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -14,6 +13,7 @@ export default function Input({
   required = false,
   className = "",
   wrapperClassName = "",
+  floatLabel = false,
   onFocus,
   onBlur,
   ...props
@@ -27,7 +27,8 @@ export default function Input({
     value !== undefined &&
     String(value) !== "";
 
-  const floating = focused || hasValue || type === "date";
+  const floating =
+    floatLabel || focused || hasValue || type === "date";
 
   const describedBy = error
     ? `${inputId}-error`
@@ -74,7 +75,7 @@ export default function Input({
           className={[
             "pointer-events-none absolute left-3 z-[1]",
             "font-medium uppercase tracking-[0.02em]",
-            "transition-all duration-150 ease-in-out",
+            "transition-all duration-150",
             error ? "text-red-600" : "text-[#565656]",
             floating
               ? "top-[6px] text-[10px]"
@@ -104,7 +105,7 @@ export default function Input({
       {!error && hint && (
         <p
           id={`${inputId}-hint`}
-          className="mt-1 text-xs leading-5 text-neutral-500"
+          className="mt-1 text-xs text-neutral-500"
         >
           {hint}
         </p>
