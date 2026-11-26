@@ -200,7 +200,7 @@ export default function DateSelector({
   return (
     <div
       ref={containerRef}
-      className={`relative z-30 w-1/2 pr-1.5 ${className}`}
+      className={`relative z-30 lg:w-1/2 w-full lg:pr-1.5 ${className}`}
     >
       {/* DATE SELECTOR TRIGGER */}
 

@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -161,39 +162,47 @@ export default function AppSidebar({
             ].join(" "),
       ].join(" ")}
     >
-      {/* ACCOUNT BADGE */}
+      {/* ACCOUNT BADGE - DESKTOP ONLY */}
 
-      <div className="absolute right-8 top-8 z-10 flex h-7 w-7 items-center justify-center">
-        <span
-          aria-label={isAdmin ? "Admin account" : "Salesperson account"}
-          title={isAdmin ? "Admin" : "Salesperson"}
-          className="flex h-6 w-6 items-center justify-center rounded-full bg-black text-[11px] font-medium text-white"
-        >
-          {isAdmin ? "AD" : "DH"}
-        </span>
-      </div>
+      {!mobile && (
+        <div className="absolute right-8 top-8 z-10 flex h-7 w-7 items-center justify-center">
+          <span
+            aria-label={isAdmin ? "Admin account" : "Salesperson account"}
+            title={isAdmin ? "Admin" : "Salesperson"}
+            className="flex h-6 w-6 items-center justify-center rounded-full bg-black text-[11px] font-medium text-white"
+          >
+            {isAdmin ? "AD" : "DH"}
+          </span>
+        </div>
+      )}
 
-      {/* COMPANY LOGO */}
+      {/* COMPANY LOGO - DESKTOP ONLY */}
 
-      <div className="pb-10 pt-16">
-        <Link
-          href={logoHref}
-          aria-label={isAdmin ? "Admin Dashboard" : "Salesperson Dashboard"}
-          onClick={onNavigate}
-          className="flex w-full items-center justify-center"
-        >
-          <SvgIcon
-            name="logo"
-            className="h-auto w-[222px] max-w-full text-black"
-          />
-        </Link>
-      </div>
+      {!mobile && (
+        <div className="pb-10 pt-16">
+          <Link
+            href={logoHref}
+            aria-label={isAdmin ? "Admin Dashboard" : "Salesperson Dashboard"}
+            onClick={onNavigate}
+            className="flex w-full items-center justify-center"
+          >
+            <SvgIcon
+              name="logo"
+              className="h-auto w-[222px] max-w-full text-black"
+            />
+          </Link>
+        </div>
+      )}
 
       {/* NAVIGATION */}
 
       <nav
         aria-label="Main navigation"
-        className="flex-1 overflow-y-auto px-5 pb-5 pt-8 sm:px-7"
+        className={[
+          "flex-1 overflow-y-auto px-5 pb-5",
+          mobile ? "pt-12" : "pt-8",
+          "sm:px-7",
+        ].join(" ")}
       >
         <ul className="space-y-3">{primaryItems.map(renderItem)}</ul>
 
@@ -227,7 +236,10 @@ export default function AppSidebar({
             ].join(" ")}
           />
 
-          <SvgIcon name="search" className="size-4 shrink-0 text-neutral-700" />
+          <SvgIcon
+            name="search"
+            className="size-4 shrink-0 text-neutral-700"
+          />
         </div>
       </div>
     </aside>

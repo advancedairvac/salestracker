@@ -51,12 +51,12 @@ export default function MobileNavigation({
         aria-label="Close navigation overlay"
         onClick={onClose}
         className={[
-          "absolute inset-0 bg-black/40 transition-opacity duration-200",
+          "absolute inset-0 bg-black/40 transition-opacity duration-300",
           open ? "opacity-100" : "opacity-0",
         ].join(" ")}
       />
 
-      {/* DRAWER */}
+      {/* RIGHT SIDE DRAWER */}
 
       <div
         id="mobile-navigation"
@@ -65,10 +65,30 @@ export default function MobileNavigation({
         aria-label="Mobile navigation"
         inert={!open}
         className={[
-          "absolute inset-y-0 left-0 transition-transform duration-200 ease-out",
-          open ? "translate-x-0" : "-translate-x-full",
+          "absolute inset-y-0 right-0",
+          "transition-transform duration-300 ease-out",
+          open ? "translate-x-0" : "translate-x-full",
         ].join(" ")}
       >
+        {/* CLOSE BUTTON */}
+
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close navigation"
+          className={[
+            "absolute right-5 top-5 z-50",
+            "flex h-10 w-10 items-center justify-center",
+            "bg-white text-black",
+            "text-3xl font-light leading-none",
+            "transition-colors hover:bg-neutral-100",
+          ].join(" ")}
+        >
+          ×
+        </button>
+
+        {/* SIDEBAR */}
+
         <AppSidebar
           mobile
           role={role}
