@@ -102,6 +102,12 @@ async function AdminTeamSection({
     opportunities,
   });
 
+  const sortedTeamData = [...teamData].sort((a, b) =>
+    (a.name || "").localeCompare(b.name || "", "en", {
+      sensitivity: "base",
+    }),
+  );
+
   return (
     <section className="mt-12 space-y-3">
       <div className="flex items-center justify-between gap-3">
@@ -116,7 +122,7 @@ async function AdminTeamSection({
 
       {teamData.length > 0 ? (
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 2xl:grid-cols-3">
-          {teamData.map((member) => (
+          {sortedTeamData.map((member) => (
             <SalesmanCard
               key={member.id}
               id={member.id}
