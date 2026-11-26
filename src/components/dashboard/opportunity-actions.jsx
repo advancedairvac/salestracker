@@ -1,7 +1,9 @@
+
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import Input from "@/components/ui/input";
 
 // ============================================
 // HELPERS
@@ -79,6 +81,10 @@ function getStatusLabel(status) {
   return labels[status] || status;
 }
 
+// ============================================
+// SPINNER
+// ============================================
+
 function Spinner() {
   return (
     <span
@@ -87,6 +93,10 @@ function Spinner() {
     />
   );
 }
+
+// ============================================
+// TOGGLE
+// ============================================
 
 function Toggle({ checked, onChange, disabled }) {
   return (
@@ -126,9 +136,8 @@ export default function OpportunityActions({
 
   const isAdmin = role === "ADMIN";
 
-  // Admin can manage every opportunity.
-  // Salesperson permission comes from the parent page.
-  const canManage = canManageProp !== undefined ? canManageProp : isAdmin;
+  const canManage =
+    canManageProp !== undefined ? canManageProp : isAdmin;
 
   // ============================================
   // INITIAL FOLLOW-UP DATA
@@ -144,7 +153,8 @@ export default function OpportunityActions({
       )
       .sort(
         (a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+          new Date(b.createdAt).getTime() -
+          new Date(a.createdAt).getTime(),
       )[0];
   }, [opportunity.followUps]);
 
@@ -154,7 +164,9 @@ export default function OpportunityActions({
         (item) => item.isActive && item.status === "PENDING" && item.dueAt,
       )
       .sort(
-        (a, b) => new Date(a.dueAt).getTime() - new Date(b.dueAt).getTime(),
+        (a, b) =>
+          new Date(a.dueAt).getTime() -
+          new Date(b.dueAt).getTime(),
       )[0];
   }, [opportunity.followUps]);
 
@@ -189,7 +201,9 @@ export default function OpportunityActions({
   const [showCloseForm, setShowCloseForm] = useState(false);
   const [closeType, setCloseType] = useState("");
   const [note, setNote] = useState("");
-  const [titanJobId, setTitanJobId] = useState(opportunity.titanJobId || "");
+  const [titanJobId, setTitanJobId] = useState(
+    opportunity.titanJobId || "",
+  );
   const [reopenDate, setReopenDate] = useState("");
   const [statusError, setStatusError] = useState("");
   const [statusSuccess, setStatusSuccess] = useState("");
@@ -224,10 +238,15 @@ export default function OpportunityActions({
 
     startTransition(async () => {
       try {
-        const result = await updateFollowUpModeAction(opportunity.id, nextMode);
+        const result = await updateFollowUpModeAction(
+          opportunity.id,
+          nextMode,
+        );
 
         if (!result?.success) {
-          setError(result?.error || "Unable to update the follow-up schedule.");
+          setError(
+            result?.error || "Unable to update the follow-up schedule.",
+          );
           return;
         }
 
@@ -252,7 +271,8 @@ export default function OpportunityActions({
           return;
         }
 
-        const savedDateTime = result.manualDateTime || result.nextFollowUpAt;
+        const savedDateTime =
+          result.manualDateTime || result.nextFollowUpAt;
 
         setSavedManualDateTime(savedDateTime);
         setManualDate(getLocalDateValue(savedDateTime));
@@ -327,13 +347,16 @@ export default function OpportunityActions({
         );
 
         if (!result?.success) {
-          setError(result?.error || "Unable to save the manual follow-up.");
+          setError(
+            result?.error || "Unable to save the manual follow-up.",
+          );
           return;
         }
 
         setMode("MANUAL");
 
-        const savedDateTime = result.manualDateTime || selectedDateISO;
+        const savedDateTime =
+          result.manualDateTime || selectedDateISO;
 
         setSavedManualDateTime(savedDateTime);
         setManualDate(getLocalDateValue(savedDateTime));
@@ -533,34 +556,25 @@ export default function OpportunityActions({
             </div>
           )}
 
+          {/* MANUAL FOLLOW-UP DATE */}
+
           {isManual && showEditor && (
             <div className="mt-4 ml-14 w-full max-w-sm space-y-4">
-              <div>
-                <label
-                  htmlFor="manualFollowUpDate"
-                  className="mb-2 block text-sm font-medium text-neutral-700"
-                >
-                  Select Follow-up Date
-                </label>
-
-                <input
-                  id="manualFollowUpDate"
-                  type="date"
-                  value={manualDate}
-                  min={getEarliestFollowUpDate()}
-                  onChange={(event) => {
-                    setManualDate(event.target.value);
-                    setError("");
-                    setSuccess("");
-                  }}
-                  disabled={pending}
-                  className="h-11 w-full rounded-md border border-neutral-300 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-black disabled:opacity-60"
-                />
-
-                <p className="mt-2 text-xs text-neutral-500">
-                  Follow-up time: 7:30 AM (Automatically set)
-                </p>
-              </div>
+              <Input
+                id="manualFollowUpDate"
+                name="manualFollowUpDate"
+                type="date"
+                label="Select Follow-up Date"
+                value={manualDate}
+                min={getEarliestFollowUpDate()}
+                onChange={(event) => {
+                  setManualDate(event.target.value);
+                  setError("");
+                  setSuccess("");
+                }}
+                disabled={pending}
+                hint="Follow-up time: 7:30 AM (Automatically set)"
+              />
 
               <button
                 type="button"
@@ -747,58 +761,35 @@ export default function OpportunityActions({
               {/* TITAN JOB ID */}
 
               {closeType === "WON" && (
-                <div>
-                  <label
-                    htmlFor="titanJobId"
-                    className="mb-1.5 block text-sm font-medium text-neutral-700"
-                  >
-                    Titan Job ID{" "}
-                    <span className="font-normal text-neutral-400">
-                      (Optional)
-                    </span>
-                  </label>
-
-                  <input
-                    id="titanJobId"
-                    type="text"
-                    value={titanJobId}
-                    onChange={(event) => setTitanJobId(event.target.value)}
-                    placeholder="Enter ServiceTitan Job ID"
-                    disabled={statusPending}
-                    className="h-11 w-full rounded-md border border-neutral-300 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-black disabled:opacity-60"
-                  />
-                </div>
+                <Input
+                  id="titanJobId"
+                  name="titanJobId"
+                  type="text"
+                  label="Titan Job ID (Optional)"
+                  value={titanJobId}
+                  onChange={(event) => setTitanJobId(event.target.value)}
+                  disabled={statusPending}
+                />
               )}
 
               {/* REOPEN DATE */}
 
               {closeType === "SCHEDULE_REOPEN" && (
-                <div>
-                  <label
-                    htmlFor="reopenDate"
-                    className="mb-1.5 block text-sm font-medium text-neutral-700"
-                  >
-                    Reopen Date <span className="text-red-600">*</span>
-                  </label>
-
-                  <input
-                    id="reopenDate"
-                    type="date"
-                    required
-                    min={getEarliestFollowUpDate()}
-                    value={reopenDate}
-                    onChange={(event) => {
-                      setReopenDate(event.target.value);
-                      setStatusError("");
-                    }}
-                    disabled={statusPending}
-                    className="h-11 w-full rounded-md border border-neutral-300 bg-white px-3 text-sm text-neutral-900 outline-none transition-colors focus:border-black disabled:opacity-60"
-                  />
-
-                  <p className="mt-1.5 text-xs text-neutral-500">
-                    Reopening time: 7:30 AM (Automatically set)
-                  </p>
-                </div>
+                <Input
+                  id="reopenDate"
+                  name="reopenDate"
+                  type="date"
+                  label="Reopen Date"
+                  required
+                  min={getEarliestFollowUpDate()}
+                  value={reopenDate}
+                  onChange={(event) => {
+                    setReopenDate(event.target.value);
+                    setStatusError("");
+                  }}
+                  disabled={statusPending}
+                  hint="Reopening time: 7:30 AM (Automatically set)"
+                />
               )}
             </div>
 
@@ -810,7 +801,9 @@ export default function OpportunityActions({
                 className="mb-1.5 block text-sm font-medium text-neutral-700"
               >
                 Note{" "}
-                <span className="font-normal text-neutral-400">(Optional)</span>
+                <span className="font-normal text-neutral-400">
+                  (Optional)
+                </span>
               </label>
 
               <textarea
@@ -829,6 +822,8 @@ export default function OpportunityActions({
                 {statusError}
               </p>
             )}
+
+            {/* ACTION BUTTONS */}
 
             <div className="flex flex-wrap gap-2">
               <button

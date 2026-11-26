@@ -14,29 +14,29 @@ const users = [
   },
   {
     name: "Easton Meier",
-    username: "easton.meier",
-    email: "easton.meier@advanced-sales-tracker.com",
+    username: "eastonm",
+    email: "eastonm@advancedairvac.com",
     role: "SALESPERSON",
     title: "Director of Operations",
   },
   {
     name: "David Garcia",
-    username: "david.garcia",
-    email: "david.garcia@advanced-sales-tracker.com",
+    username: "davidg",
+    email: "davidg@advancedairvac.com",
     role: "SALESPERSON",
     title: "Imperial Valley",
   },
   {
     name: "David Hunt",
-    username: "david.hunt",
-    email: "david.hunt@advanced-sales-tracker.com",
+    username: "davidh",
+    email: "davidh@advancedairvac.com",
     role: "SALESPERSON",
     title: "Account Advisor AZ/NV",
   },
   {
     name: "Brian Rosas",
-    username: "brian.rosas",
-    email: "brian.rosas@advanced-sales-tracker.com",
+    username: "brianr",
+    email: "brianr@advancedairvac.com",
     role: "SALESPERSON",
     title: "Automotive",
   },
@@ -56,7 +56,7 @@ async function main() {
         monthlyGoal: 200000,
         quarterlyGoal: 600000,
         annualGoal: 2400000,
-        isActive: true,
+        status: "ACTIVE",
       },
       create: {
         ...data,
@@ -65,11 +65,11 @@ async function main() {
         monthlyGoal: 200000,
         quarterlyGoal: 600000,
         annualGoal: 2400000,
-        isActive: true,
+        status: "ACTIVE",
       },
     });
 
-    console.log(`✓ Imported: ${user.name} (${user.role})`);
+    console.log(`✓ Imported: ${user.name} (${user.username})`);
   }
 
   console.log("\nAll 5 demo users imported successfully!");

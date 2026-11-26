@@ -98,6 +98,8 @@ export default function AppShell({
           {/* MOBILE HEADER */}
 
           <AppHeader
+            role={role}
+            user={user}
             onMenuClick={menuOpen ? closeMenu : openMenu}
             menuOpen={menuOpen}
             editHref={mobileEditHref}
