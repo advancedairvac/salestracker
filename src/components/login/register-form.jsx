@@ -1,270 +1,278 @@
+
 "use client";
 
 import { useState } from "react";
 import Link from "next/link";
+
+import Input from "@/components/ui/input";
 import { completeSalesmanRegistration } from "@/app/register/actions";
 
 const ERROR_MESSAGES = {
-  required: "Please fill in all required fields.",
+  required: "Please complete all required fields.",
   username:
     "Username must be 3–30 characters and contain only letters, numbers, or underscores.",
   "username-taken": "This username is already taken. Please choose another one.",
-  "password-length": "Password must be at least 10 characters long.",
+  "password-length": "Password must be at least 4 characters long.",
   "password-match": "Passwords do not match.",
   "invalid-token":
     "This invitation is invalid, expired, or has already been used.",
-  server: "Something went wrong. Please try again later.",
+  server: "Unable to complete registration. Please try again.",
 };
 
 export default function RegisterForm({
   token,
-  salesmanName,
-  salesmanEmail,
+  salesmanName = "",
+  salesmanEmail = "",
 }) {
-  const [name, setName] = useState(salesmanName || "");
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const [values, setValues] = useState({
+    name: salesmanName,
+    username: "",
+    password: "",
+    confirmPassword: "",
+  });
 
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
+  const [pending, setPending] = useState(false);
+  const [feedback, setFeedback] = useState(null);
+  const [completed, setCompleted] = useState(false);
+
+  function handleChange(event) {
+    const { name, value } = event.target;
+
+    setValues((previous) => ({
+      ...previous,
+      [name]: value,
+    }));
+
+    setFeedback(null);
+  }
 
   async function handleSubmit(event) {
     event.preventDefault();
 
-    setError("");
-    setLoading(true);
+    if (pending) return;
 
-    if (password.length < 10) {
-      setError(ERROR_MESSAGES["password-length"]);
-      setLoading(false);
+    setFeedback(null);
+
+    if (
+      !values.name.trim() ||
+      !values.username.trim() ||
+      !values.password ||
+      !values.confirmPassword
+    ) {
+      setFeedback({
+        type: "error",
+        message: ERROR_MESSAGES.required,
+      });
       return;
     }
 
-    if (password !== confirmPassword) {
-      setError(ERROR_MESSAGES["password-match"]);
-      setLoading(false);
+    const username = values.username.trim();
+
+    if (!/^[a-zA-Z0-9_]{3,30}$/.test(username)) {
+      setFeedback({
+        type: "error",
+        message: ERROR_MESSAGES.username,
+      });
       return;
     }
+
+    if (values.password.length < 4) {
+      setFeedback({
+        type: "error",
+        message: ERROR_MESSAGES["password-length"],
+      });
+      return;
+    }
+
+    if (values.password !== values.confirmPassword) {
+      setFeedback({
+        type: "error",
+        message: ERROR_MESSAGES["password-match"],
+      });
+      return;
+    }
+
+    setPending(true);
 
     try {
       const result = await completeSalesmanRegistration({
-        name,
+        name: values.name.trim(),
         username,
-        password,
-        confirmPassword,
+        password: values.password,
+        confirmPassword: values.confirmPassword,
         token,
       });
 
-      if (result?.success) {
-        setSuccess(true);
+      if (result?.error) {
+        setFeedback({
+          type: "error",
+          message:
+            ERROR_MESSAGES[result.error] ||
+            "Something went wrong. Please try again.",
+        });
         return;
       }
 
-      setError(
-        ERROR_MESSAGES[result?.error] ||
-          "Unable to complete registration. Please try again."
-      );
-    } catch (err) {
-      console.error("Registration form error:", err);
-      setError(ERROR_MESSAGES.server);
+      if (result?.success) {
+        setCompleted(true);
+        setFeedback({
+          type: "success",
+          message: "Your account has been successfully activated.",
+        });
+      }
+    } catch (error) {
+      console.error("Registration failed:", error);
+
+      setFeedback({
+        type: "error",
+        message: ERROR_MESSAGES.server,
+      });
     } finally {
-      setLoading(false);
+      setPending(false);
     }
   }
 
-  if (success) {
-    return (
-      <div className="rounded-2xl border border-gray-200 bg-white p-8 shadow-sm text-center">
-        <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-green-50">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="28"
-            height="28"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="text-green-600"
-          >
-            <path d="M20 6 9 17l-5-5" />
-          </svg>
-        </div>
-
-        <h1 className="text-2xl font-semibold text-gray-900">
-          Registration Completed
-        </h1>
-
-        <p className="mt-3 text-sm leading-6 text-gray-500">
-          Your account has been successfully activated. You can now log in using
-          your username and password.
-        </p>
-
-        <Link
-          href="/login"
-          className="mt-6 inline-flex w-full items-center justify-center rounded-lg bg-gray-900 px-4 py-3 text-sm font-medium text-white transition hover:bg-gray-800"
-        >
-          Go to Login
-        </Link>
-      </div>
-    );
-  }
-
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-8 shadow-sm">
-      <div className="mb-7">
-        <h1 className="text-2xl font-semibold tracking-tight text-gray-900">
-          Complete Your Registration
-        </h1>
+    <section className="w-full max-w-[700px]">
+      {!completed ? (
+        <>
+          <div className="mb-5">
+            <h1 className="text-base font-semibold uppercase text-black lg:text-lg">
+              Complete Your Registration
+            </h1>
 
-        <p className="mt-2 text-sm leading-6 text-gray-500">
-          Create your account to access the Sales Tracker.
-        </p>
-      </div>
+            <p className="mt-1 text-xs text-neutral-500 lg:text-sm">
+              Create your account to access the Sales Tracker.
+            </p>
+          </div>
 
-      {salesmanEmail && (
-        <div className="mb-6 rounded-lg bg-gray-50 p-4">
-          <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
-            Invitation for
+          {salesmanEmail && (
+            <div className="mb-5 border border-[#d9d9d9] px-3 py-3">
+              <p className="text-[10px] font-medium uppercase tracking-[0.02em] text-[#565656]">
+                Invitation For
+              </p>
+
+              <p className="mt-1 text-xs text-black lg:text-sm">
+                {salesmanName}
+              </p>
+
+              <p className="text-xs text-neutral-500 lg:text-sm">
+                {salesmanEmail}
+              </p>
+            </div>
+          )}
+
+          <form
+            onSubmit={handleSubmit}
+            className="flex w-full flex-col gap-[9px]"
+          >
+            <Input
+              name="name"
+              label="Full Name"
+              type="text"
+              value={values.name}
+              onChange={handleChange}
+              required
+              autoComplete="name"
+            />
+
+            <Input
+              name="username"
+              label="Username"
+              type="text"
+              value={values.username}
+              onChange={handleChange}
+              required
+              minLength={3}
+              maxLength={30}
+              autoComplete="username"
+              hint="3–30 characters. Letters, numbers, and underscores only."
+            />
+
+            <Input
+              name="password"
+              label="Password"
+              type="password"
+              value={values.password}
+              onChange={handleChange}
+              required
+              minLength={4}
+              autoComplete="new-password"
+              hint="Your password must be at least 4 characters long."
+            />
+
+            <Input
+              name="confirmPassword"
+              label="Confirm Password"
+              type="password"
+              value={values.confirmPassword}
+              onChange={handleChange}
+              required
+              minLength={4}
+              autoComplete="new-password"
+            />
+
+            {feedback && (
+              <p
+                role={feedback.type === "error" ? "alert" : "status"}
+                aria-live="polite"
+                className={[
+                  "mt-2 text-xs leading-5 lg:text-sm",
+                  feedback.type === "success"
+                    ? "text-green-700"
+                    : "text-red-600",
+                ].join(" ")}
+              >
+                {feedback.message}
+              </p>
+            )}
+
+            <button
+              type="submit"
+              disabled={pending}
+              className={[
+                "mt-0 flex h-[48px] w-full items-center justify-center",
+                "rounded-none border border-[#111111] bg-[#111111] px-4",
+                "text-xs font-semibold uppercase tracking-[0.03em] text-white",
+                "transition-colors hover:bg-[#333333]",
+                "disabled:cursor-not-allowed disabled:opacity-60",
+                "lg:text-sm",
+              ].join(" ")}
+            >
+              {pending ? "Creating Account..." : "Complete Registration"}
+            </button>
+          </form>
+
+          <p className="mt-5 text-xs leading-5 text-neutral-500">
+            By completing registration, you agree to use the Sales Tracker in
+            accordance with your organization's policies.
+          </p>
+        </>
+      ) : (
+        <div className="w-full">
+          <h1 className="text-base font-semibold uppercase text-black lg:text-lg">
+            Registration Completed
+          </h1>
+
+          <p className="mt-2 text-xs leading-6 text-neutral-500 lg:text-sm">
+            Your account has been successfully activated. You can now log in using
+            your username and password.
           </p>
 
-          <p className="mt-1 text-sm font-medium text-gray-900">
-            {salesmanName}
-          </p>
-
-          <p className="text-sm text-gray-500">{salesmanEmail}</p>
+          <Link
+            href="/login"
+            className={[
+              "mt-5 flex h-[48px] w-full items-center justify-center",
+              "rounded-none border border-[#111111] bg-[#111111] px-4",
+              "text-xs font-semibold uppercase tracking-[0.03em] text-white",
+              "transition-colors hover:bg-[#333333]",
+              "lg:text-sm",
+            ].join(" ")}
+          >
+            Go to Login
+          </Link>
         </div>
       )}
-
-      <form onSubmit={handleSubmit} className="space-y-5">
-        {/* Name */}
-        <div>
-          <label
-            htmlFor="name"
-            className="mb-2 block text-sm font-medium text-gray-700"
-          >
-            Full Name
-          </label>
-
-          <input
-            id="name"
-            name="name"
-            type="text"
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-            required
-            autoComplete="name"
-            className="w-full rounded-lg border border-gray-300 px-3.5 py-3 text-sm outline-none transition focus:border-gray-900 focus:ring-2 focus:ring-gray-900/10"
-            placeholder="Enter your full name"
-          />
-        </div>
-
-        {/* Username */}
-        <div>
-          <label
-            htmlFor="username"
-            className="mb-2 block text-sm font-medium text-gray-700"
-          >
-            Username
-          </label>
-
-          <input
-            id="username"
-            name="username"
-            type="text"
-            value={username}
-            onChange={(event) => setUsername(event.target.value)}
-            required
-            minLength={3}
-            maxLength={30}
-            pattern="[a-zA-Z0-9_]{3,30}"
-            autoComplete="username"
-            className="w-full rounded-lg border border-gray-300 px-3.5 py-3 text-sm outline-none transition focus:border-gray-900 focus:ring-2 focus:ring-gray-900/10"
-            placeholder="Choose a username"
-          />
-
-          <p className="mt-1.5 text-xs text-gray-400">
-            3–30 characters. Letters, numbers, and underscores only.
-          </p>
-        </div>
-
-        {/* Password */}
-        <div>
-          <label
-            htmlFor="password"
-            className="mb-2 block text-sm font-medium text-gray-700"
-          >
-            Password
-          </label>
-
-          <input
-            id="password"
-            name="password"
-            type="password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            required
-            minLength={10}
-            autoComplete="new-password"
-            className="w-full rounded-lg border border-gray-300 px-3.5 py-3 text-sm outline-none transition focus:border-gray-900 focus:ring-2 focus:ring-gray-900/10"
-            placeholder="Create a password"
-          />
-
-          <p className="mt-1.5 text-xs text-gray-400">
-            Your password must be at least 10 characters long.
-          </p>
-        </div>
-
-        {/* Confirm Password */}
-        <div>
-          <label
-            htmlFor="confirmPassword"
-            className="mb-2 block text-sm font-medium text-gray-700"
-          >
-            Confirm Password
-          </label>
-
-          <input
-            id="confirmPassword"
-            name="confirmPassword"
-            type="password"
-            value={confirmPassword}
-            onChange={(event) => setConfirmPassword(event.target.value)}
-            required
-            minLength={10}
-            autoComplete="new-password"
-            className="w-full rounded-lg border border-gray-300 px-3.5 py-3 text-sm outline-none transition focus:border-gray-900 focus:ring-2 focus:ring-gray-900/10"
-            placeholder="Confirm your password"
-          />
-        </div>
-
-        {/* Error */}
-        {error && (
-          <div
-            role="alert"
-            className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600"
-          >
-            {error}
-          </div>
-        )}
-
-        {/* Submit */}
-        <button
-          type="submit"
-          disabled={loading}
-          className="inline-flex w-full items-center justify-center rounded-lg bg-gray-900 px-4 py-3 text-sm font-medium text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {loading ? "Creating Account..." : "Complete Registration"}
-        </button>
-      </form>
-
-      <p className="mt-6 text-center text-xs leading-5 text-gray-400">
-        By completing registration, you agree to use the Sales Tracker in
-        accordance with your organization's policies.
-      </p>
-    </div>
+    </section>
   );
 }
