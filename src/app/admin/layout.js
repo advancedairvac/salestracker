@@ -14,5 +14,9 @@ export default async function AdminLayout({ children }) {
     redirect("/salesperson");
   }
 
-  return <AppShell role="admin">{children}</AppShell>;
+  return (
+    <AppShell role="admin" user={user}>
+      {children}
+    </AppShell>
+  );
 }

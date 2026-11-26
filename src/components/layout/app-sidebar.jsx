@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link";
@@ -9,6 +8,7 @@ import { getNavigation } from "@/config/navigation";
 
 export default function AppSidebar({
   role = "salesperson",
+  user = null,
   mobile = false,
   onNavigate,
   onLogout,
@@ -22,6 +22,28 @@ export default function AppSidebar({
 
   const primaryItems = items.filter((item) => item.type === "primary");
   const secondaryItems = items.filter((item) => item.type === "secondary");
+
+  // ============================================
+  // USER INITIALS
+  // ============================================
+
+  const getInitials = (name) => {
+    if (!name || typeof name !== "string") return "U";
+
+    const words = name.trim().split(/\s+/).filter(Boolean);
+
+    if (words.length === 0) return "U";
+
+    if (words.length === 1) {
+      return words[0].charAt(0).toUpperCase();
+    }
+
+    return (
+      words[0].charAt(0) + words[words.length - 1].charAt(0)
+    ).toUpperCase();
+  };
+
+  const initials = getInitials(user?.name);
 
   // ============================================
   // ROLE-BASED LOGO DESTINATION
@@ -167,11 +189,11 @@ export default function AppSidebar({
       {!mobile && (
         <div className="absolute right-8 top-8 z-10 flex h-7 w-7 items-center justify-center">
           <span
-            aria-label={isAdmin ? "Admin account" : "Salesperson account"}
-            title={isAdmin ? "Admin" : "Salesperson"}
-            className="flex h-6 w-6 items-center justify-center rounded-full bg-black text-[11px] font-medium text-white"
+            aria-label={`${user?.name || "User"} account`}
+            title={user?.name || (isAdmin ? "Admin" : "Salesperson")}
+            className="flex h-6 w-6 items-center justify-center rounded-full bg-black text-[11px] font-medium uppercase text-white"
           >
-            {isAdmin ? "AD" : "DH"}
+            {initials}
           </span>
         </div>
       )}

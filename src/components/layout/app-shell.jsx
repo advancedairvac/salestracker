@@ -29,7 +29,11 @@ export function useMobileEditAction() {
 // APP SHELL
 // ============================================
 
-export default function AppShell({ children, role = "salesperson" }) {
+export default function AppShell({
+  children,
+  role = "salesperson",
+  user = null,
+}) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const [tagline, setTagline] = useState(null);
@@ -86,7 +90,7 @@ export default function AppShell({ children, role = "salesperson" }) {
       <div className="flex min-h-screen w-full bg-white text-neutral-950">
         {/* DESKTOP SIDEBAR */}
 
-        <AppSidebar role={role} onLogout={handleLogout} />
+        <AppSidebar role={role} user={user} onLogout={handleLogout} />
 
         {/* MAIN CONTENT */}
 
@@ -122,6 +126,7 @@ export default function AppShell({ children, role = "salesperson" }) {
           open={menuOpen}
           onClose={closeMenu}
           role={role}
+          user={user}
           onLogout={handleLogout}
         />
       </div>

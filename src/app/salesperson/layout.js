@@ -1,4 +1,3 @@
-
 import { redirect } from "next/navigation";
 
 import AppShell from "@/components/layout/app-shell";
@@ -15,5 +14,9 @@ export default async function SalespersonLayout({ children }) {
     redirect("/admin");
   }
 
-  return <AppShell role="salesperson">{children}</AppShell>;
+  return (
+    <AppShell role="salesperson" user={user}>
+      {children}
+    </AppShell>
+  );
 }
