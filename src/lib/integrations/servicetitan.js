@@ -347,19 +347,53 @@ async function getCustomerContacts(customerIds) {
 }
 
 // ============================================
+// GROUP CONTACTS BY CUSTOMER ID
+// ============================================
+
+function groupCustomerContacts(contacts) {
+  const contactsByCustomerId = new Map();
+
+  for (const contact of contacts) {
+    const customerId = String(contact.customerId);
+
+    if (!contactsByCustomerId.has(customerId)) {
+      contactsByCustomerId.set(customerId, []);
+    }
+
+    contactsByCustomerId.get(customerId).push(contact);
+  }
+
+  return contactsByCustomerId;
+}
+
+// ============================================
 // FORMAT CUSTOMER DATA
 // ============================================
 
-function formatCustomer(customer, contacts) {
-  const customerContacts = contacts.filter(
-    (contact) => String(contact.customerId) === String(customer.id),
-  );
+function formatCustomer(customer, contactsByCustomerId) {
+  const customerContacts = contactsByCustomerId.get(String(customer.id)) || [];
 
-  const phone = customerContacts.find((contact) => contact.type === "Phone");
+  let phone = "";
+  let email = "";
+  let fax = "";
 
-  const email = customerContacts.find((contact) => contact.type === "Email");
+  for (const contact of customerContacts) {
+    if (!phone && contact.type === "Phone") {
+      phone = contact.value || "";
+    }
 
-  const fax = customerContacts.find((contact) => contact.type === "Fax");
+    if (!email && contact.type === "Email") {
+      email = contact.value || "";
+    }
+
+    if (!fax && contact.type === "Fax") {
+      fax = contact.value || "";
+    }
+
+    if (phone && email && fax) {
+      break;
+    }
+  }
 
   const address = customer.address || {};
 
@@ -381,9 +415,9 @@ function formatCustomer(customer, contacts) {
     pocName: customer.name || "",
     businessName: customer.businessName || "",
 
-    email: email?.value || "",
-    phone: phone?.value || "",
-    fax: fax?.value || "",
+    email,
+    phone,
+    fax,
 
     location,
     address: customer.address || null,
@@ -424,8 +458,12 @@ export async function getServiceTitanCustomers({
 
   const contacts = await getCustomerContacts(customerIds);
 
+  // Create a customer contact lookup once.
+  const contactsByCustomerId = groupCustomerContacts(contacts);
+
+  // Format customers using O(1) contact lookup.
   const formattedCustomers = customers.map((customer) =>
-    formatCustomer(customer, contacts),
+    formatCustomer(customer, contactsByCustomerId),
   );
 
   return {
@@ -444,7 +482,7 @@ export async function getAllServiceTitanCustomers({
   maxPages = 100,
 } = {}) {
   return fetchAllPages(
-    async (page, size) =>
+    (page, size) =>
       getServiceTitanCustomers({
         page,
         pageSize: size,

@@ -176,7 +176,6 @@ export default function RegisterForm({
         type="password"
         value={values.confirmPassword}
         onChange={handleChange}
-        autoComplete="new-password"
         minLength={4}
         floatLabel
         required

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -73,7 +74,7 @@ export default function Input({
           className={[
             "pointer-events-none absolute left-3 z-[1]",
             "font-medium uppercase tracking-[0.02em]",
-            "transition-all duration-150",
+            "transition-all duration-150 ease-in-out",
             error ? "text-red-600" : "text-[#565656]",
             floating
               ? "top-[6px] text-[10px]"
@@ -103,7 +104,7 @@ export default function Input({
       {!error && hint && (
         <p
           id={`${inputId}-hint`}
-          className="mt-1 text-xs text-neutral-500"
+          className="mt-1 text-xs leading-5 text-neutral-500"
         >
           {hint}
         </p>

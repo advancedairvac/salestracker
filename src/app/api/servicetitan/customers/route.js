@@ -3,6 +3,10 @@ import { getAllServiceTitanCustomers } from "@/lib/integrations/servicetitan";
 
 export const runtime = "nodejs";
 
+const DEFAULT_PAGE_SIZE = 50;
+const MAX_PAGE_SIZE = 100;
+const MAX_CUSTOMER_PAGES = 100;
+
 export async function GET(request) {
   const user = await getAuthenticatedUser();
 
@@ -21,18 +25,21 @@ export async function GET(request) {
   }
 
   const searchParams = new URL(request.url).searchParams;
+
   const search = (searchParams.get("search") || "").trim().toLowerCase();
 
   const requestedPage = Number(searchParams.get("page"));
   const requestedPageSize = Number(searchParams.get("pageSize"));
 
   const page =
-    Number.isInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
+    Number.isInteger(requestedPage) && requestedPage > 0
+      ? requestedPage
+      : 1;
 
   const pageSize =
     Number.isInteger(requestedPageSize) && requestedPageSize > 0
-      ? Math.min(requestedPageSize, 100)
-      : 50;
+      ? Math.min(requestedPageSize, MAX_PAGE_SIZE)
+      : DEFAULT_PAGE_SIZE;
 
   if (search.length < 2) {
     return Response.json({
@@ -50,7 +57,7 @@ export async function GET(request) {
   try {
     const customers = await getAllServiceTitanCustomers({
       pageSize: 100,
-      maxPages: 100,
+      maxPages: MAX_CUSTOMER_PAGES,
     });
 
     const filteredCustomers = customers.filter((customer) => {
@@ -63,9 +70,7 @@ export async function GET(request) {
       ];
 
       return searchableFields.some((field) =>
-        String(field || "")
-          .toLowerCase()
-          .includes(search),
+        String(field || "").toLowerCase().includes(search),
       );
     });
 
@@ -75,16 +80,25 @@ export async function GET(request) {
       startIndex + pageSize,
     );
 
-    return Response.json({
-      success: true,
-      message: "Customers fetched successfully.",
-      page,
-      pageSize,
-      hasMore: startIndex + pageSize < filteredCustomers.length,
-      totalCount: filteredCustomers.length,
-      search,
-      customers: paginatedCustomers,
-    });
+    const hasMore = startIndex + pageSize < filteredCustomers.length;
+
+    return Response.json(
+      {
+        success: true,
+        message: "Customers fetched successfully.",
+        page,
+        pageSize,
+        hasMore,
+        totalCount: filteredCustomers.length,
+        search,
+        customers: paginatedCustomers,
+      },
+      {
+        headers: {
+          "Cache-Control": "private, no-store, max-age=0",
+        },
+      },
+    );
   } catch (error) {
     console.error("ServiceTitan customer request failed:", error);
 

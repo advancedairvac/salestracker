@@ -55,8 +55,9 @@ function prepareInitialValues(today, initialValues, user) {
 }
 
 /* -------------------------------------------------------
-   Ui Coma using ","
+   FORMAT DOLLAR VALUE
 ------------------------------------------------------- */
+
 function formatDollarValue(value) {
   if (value === null || value === undefined || value === "") return "";
 
@@ -299,7 +300,7 @@ export default function NewEditOpportunity({
   }
 
   /* -------------------------------------------------------
-     HANDLE PHONE NUMBER - NUMBERS ONLY
+     HANDLE PHONE NUMBER
   ------------------------------------------------------- */
 
   function handlePhoneChange(event) {
@@ -388,7 +389,7 @@ export default function NewEditOpportunity({
           onSelect={handleCustomerSelect}
         />
 
-        {/* POC NAME - OPTIONAL */}
+        {/* POC NAME */}
 
         <Input
           name="pocName"
@@ -435,8 +436,6 @@ export default function NewEditOpportunity({
           onChange={handleChange}
         />
 
-        {/* PHONE NUMBER - NUMBERS ONLY */}
-
         {/* PHONE NUMBER */}
 
         <Input
@@ -448,7 +447,6 @@ export default function NewEditOpportunity({
           onChange={(event) => {
             const value = event.target.value;
 
-            // Allow only phone-number characters
             const sanitizedValue = value.replace(/[^0-9+\-() ]/g, "");
 
             setValues((previous) => ({
@@ -470,15 +468,14 @@ export default function NewEditOpportunity({
         {/* APPROXIMATE DOLLAR VALUE */}
 
         <Input
-          name="value"
           label="Approximate Dollar Value"
           type="text"
           inputMode="decimal"
           value={formatDollarValue(values.value)}
           onChange={(event) => {
-            let rawValue = event.target.value.replace(/,/g, "");
+            const rawValue = event.target.value.replace(/,/g, "");
 
-            // Allow numbers and a single decimal point
+            // Allow numbers and a single decimal point.
             if (!/^\d*\.?\d*$/.test(rawValue)) return;
 
             setValues((previous) => ({
@@ -488,6 +485,10 @@ export default function NewEditOpportunity({
           }}
           required
         />
+
+        {/* SUBMIT CLEAN DOLLAR VALUE */}
+
+        <input type="hidden" name="value" value={values.value || ""} />
 
         {/* FOLLOW-UP DATE */}
 
