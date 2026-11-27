@@ -3,92 +3,155 @@
 import { useEffect, useRef, useState } from "react";
 import Input from "@/components/ui/input";
 
+import {
+  getCustomersCache,
+  searchCustomers,
+  subscribeToCustomerCache,
+} from "@/lib/cache/servicetitan/customer-cache";
+
+const PAGE_SIZE = 50;
+
 export default function CustomerSearch({ value = "", onChange, onSelect }) {
+  const [allCustomers, setAllCustomers] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const [page, setPage] = useState(1);
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState(false);
   const [error, setError] = useState("");
+  const [cacheReady, setCacheReady] = useState(false);
 
   const wrapperRef = useRef(null);
+  const cacheRevisionRef = useRef(0);
 
-  const searchTerm = value.trim();
+  const searchTerm = String(value || "").trim();
 
-  // Search ServiceTitan customers.
+  // =========================================
+  // LOAD CACHE + SUBSCRIBE TO CACHE UPDATES
+  // =========================================
+  useEffect(() => {
+    let active = true;
+
+    async function loadCache() {
+      const revisionAtStart = cacheRevisionRef.current;
+
+      try {
+        const cache = await getCustomersCache();
+
+        if (!active) return;
+
+        // Prevent an older IndexedDB read from overwriting
+        // a newer cache subscription update.
+        if (revisionAtStart !== cacheRevisionRef.current) {
+          return;
+        }
+
+        if (cache && Array.isArray(cache.customers)) {
+          setAllCustomers(cache.customers);
+          setCacheReady(true);
+          setError("");
+        } else {
+          setAllCustomers([]);
+          setCacheReady(false);
+        }
+      } catch (error) {
+        if (!active) return;
+
+        console.error("Customer cache read failed:", error);
+
+        setError("Unable to read the customer database.");
+      }
+    }
+
+    const unsubscribe = subscribeToCustomerCache((cache) => {
+      if (!active) return;
+
+      cacheRevisionRef.current += 1;
+
+      const nextCustomers = cache?.customers;
+
+      if (!Array.isArray(nextCustomers)) {
+        setAllCustomers([]);
+        setCacheReady(false);
+        setCustomers([]);
+        setHasMore(false);
+        return;
+      }
+
+      setAllCustomers(nextCustomers);
+      setCacheReady(true);
+      setError("");
+    });
+
+    loadCache();
+
+    return () => {
+      active = false;
+      unsubscribe();
+    };
+  }, []);
+
+  // =========================================
+  // LOCAL SEARCH
+  // =========================================
   useEffect(() => {
     if (searchTerm.length < 2 || selected) {
       setCustomers([]);
       setHasMore(false);
       setLoading(false);
-      setLoadingMore(false);
       setError("");
       return;
     }
 
-    const controller = new AbortController();
-    const isFirstPage = page === 1;
+    if (!cacheReady) {
+      setCustomers([]);
+      setHasMore(false);
+      setLoading(true);
+      return;
+    }
 
-    const timeout = setTimeout(async () => {
-      try {
-        if (isFirstPage) {
-          setLoading(true);
-          setCustomers([]);
-        } else {
-          setLoadingMore(true);
+    setLoading(true);
+
+    const timeout = window.setTimeout(() => {
+      const result = searchCustomers(allCustomers, searchTerm, page, PAGE_SIZE);
+
+      setCustomers((previous) => {
+        if (page === 1) {
+          return result.customers;
         }
 
-        setError("");
+        const existingIds = new Set(previous.map((customer) => customer.id));
 
-        const params = new URLSearchParams({
-          search: searchTerm,
-          page: String(page),
-          pageSize: "50",
-        });
-
-        const response = await fetch(
-          `/api/servicetitan/customers?${params.toString()}`,
-          {
-            cache: "no-store",
-            signal: controller.signal,
-          },
+        const newCustomers = result.customers.filter(
+          (customer) => !existingIds.has(customer.id),
         );
 
-        const result = await response.json();
+        return [...previous, ...newCustomers];
+      });
 
-        if (!response.ok || !result.success) {
-          throw new Error(result.message || "Failed to search customers.");
-        }
-
-        const fetchedCustomers = result.customers || [];
-
-        setCustomers((previous) =>
-          isFirstPage ? fetchedCustomers : [...previous, ...fetchedCustomers],
-        );
-
-        setHasMore(Boolean(result.hasMore));
-      } catch (error) {
-        if (error.name !== "AbortError") {
-          console.error("Customer search error:", error);
-          setError(error.message || "Unable to search customers.");
-        }
-      } finally {
-        if (!controller.signal.aborted) {
-          setLoading(false);
-          setLoadingMore(false);
-        }
-      }
-    }, 300);
+      setHasMore(result.hasMore);
+      setLoading(false);
+      setError("");
+    }, 100);
 
     return () => {
-      clearTimeout(timeout);
-      controller.abort();
+      window.clearTimeout(timeout);
     };
-  }, [searchTerm, page, selected]);
+  }, [searchTerm, page, selected, allCustomers, cacheReady]);
 
-  // Close dropdown when clicking outside.
+  // =========================================
+  // RESET RESULTS WHEN SEARCH CHANGES
+  // =========================================
+  useEffect(() => {
+    setPage(1);
+    setCustomers([]);
+    setHasMore(false);
+  }, [searchTerm]);
+
+  // =========================================
+  // CLOSE DROPDOWN ON OUTSIDE CLICK
+  // =========================================
   useEffect(() => {
     function handleOutsideClick(event) {
       if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
@@ -103,36 +166,59 @@ export default function CustomerSearch({ value = "", onChange, onSelect }) {
     };
   }, []);
 
-  // Handle Business Name input.
+  // =========================================
+  // INPUT CHANGE
+  // =========================================
   function handleInputChange(event) {
     setSelected(false);
     setPage(1);
+    setCustomers([]);
+    setHasMore(false);
+    setError("");
     setOpen(true);
-    onChange(event);
+
+    onChange?.(event);
   }
 
-  // Select customer and use customer name as Business Name.
+  // =========================================
+  // CUSTOMER SELECT
+  // =========================================
   function handleSelect(customer) {
     const businessName =
       customer.businessName || customer.pocName || customer.name || "";
 
     setSelected(true);
     setOpen(false);
+    setCustomers([]);
     setHasMore(false);
+    setError("");
 
-    onSelect({
+    onSelect?.({
       ...customer,
       businessName,
-      // Do not automatically use the customer name as POC.
       pocName: "",
     });
   }
 
-  // Load more customers.
+  // =========================================
+  // LOAD MORE
+  // =========================================
   function handleLoadMore() {
-    if (!loadingMore && hasMore) {
-      setPage((previous) => previous + 1);
-    }
+    if (!hasMore || loading) return;
+
+    setPage((previous) => previous + 1);
+  }
+
+  // =========================================
+  // CUSTOMER DISPLAY NAME
+  // =========================================
+  function getCustomerName(customer) {
+    return (
+      customer.businessName ||
+      customer.pocName ||
+      customer.name ||
+      "Unnamed Customer"
+    );
   }
 
   return (
@@ -147,62 +233,68 @@ export default function CustomerSearch({ value = "", onChange, onSelect }) {
 
       {open && !selected && searchTerm.length >= 2 && (
         <div className="absolute left-0 top-full z-30 mt-1 max-h-[320px] w-full overflow-y-auto border border-[#d9d9d9] bg-white shadow-lg">
-          {loading ? (
+          {/* CACHE LOADING */}
+          {!cacheReady && loading && (
             <div className="px-3 py-4 text-xs text-[#666666]">
-              Searching customers...
+              Preparing customer database...
             </div>
-          ) : error ? (
+          )}
+
+          {/* CACHE ERROR */}
+          {!cacheReady && error && (
             <div className="px-3 py-4 text-xs text-red-600">{error}</div>
-          ) : customers.length > 0 ? (
+          )}
+
+          {/* SEARCH RESULTS */}
+          {cacheReady && customers.length > 0 && (
             <>
-              {customers.map((customer) => {
-                const customerName =
-                  customer.businessName ||
-                  customer.pocName ||
-                  customer.name ||
-                  "Unnamed Customer";
+              {customers.map((customer, index) => (
+                <button
+                  key={customer.id ?? `${customer.businessName}-${index}`}
+                  type="button"
+                  onClick={() => handleSelect(customer)}
+                  className="flex w-full flex-col gap-1 border-b border-[#eeeeee] px-3 py-3 text-left transition-colors hover:bg-[#f7f7f7]"
+                >
+                  <span className="text-xs font-semibold text-[#111111]">
+                    {getCustomerName(customer)}
+                  </span>
 
-                return (
-                  <button
-                    key={customer.id}
-                    type="button"
-                    onClick={() => handleSelect(customer)}
-                    className="flex w-full flex-col gap-1 border-b border-[#eeeeee] px-3 py-3 text-left transition-colors hover:bg-[#f7f7f7]"
-                  >
-                    {/* CUSTOMER / BUSINESS NAME */}
-                    <span className="text-xs font-semibold text-[#111111]">
-                      {customerName}
+                  <span className="text-[11px] text-[#666666]">
+                    {customer.phone || "No phone"}
+                    {customer.email ? ` · ${customer.email}` : ""}
+                  </span>
+
+                  {customer.location && (
+                    <span className="text-[11px] text-[#888888]">
+                      {customer.location}
                     </span>
-
-                    {/* CONTACT DETAILS */}
-                    <span className="text-[11px] text-[#666666]">
-                      {customer.phone || "No phone"}
-                      {customer.email ? ` · ${customer.email}` : ""}
-                    </span>
-
-                    {/* LOCATION */}
-                    {customer.location && (
-                      <span className="text-[11px] text-[#888888]">
-                        {customer.location}
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
+                  )}
+                </button>
+              ))}
 
               {/* LOAD MORE */}
               {hasMore && (
                 <button
                   type="button"
                   onClick={handleLoadMore}
-                  disabled={loadingMore}
-                  className="w-full px-3 py-3 text-xs font-medium text-[#333333] transition-colors hover:bg-[#f7f7f7] disabled:cursor-not-allowed disabled:opacity-50"
+                  disabled={loading}
+                  className="w-full px-3 py-3 text-xs font-medium text-[#333333] transition-colors hover:bg-[#f7f7f7] disabled:opacity-50"
                 >
-                  {loadingMore ? "Loading..." : "Load more customers"}
+                  {loading ? "Loading..." : "Load more customers"}
                 </button>
               )}
             </>
-          ) : (
+          )}
+
+          {/* LOADING MORE */}
+          {cacheReady && customers.length > 0 && loading && (
+            <div className="px-3 py-2 text-center text-[11px] text-[#666666]">
+              Loading more customers...
+            </div>
+          )}
+
+          {/* NO RESULTS */}
+          {cacheReady && customers.length === 0 && !loading && (
             <div className="px-3 py-4 text-xs text-[#666666]">
               No matching customers found. You can enter the business name
               manually.

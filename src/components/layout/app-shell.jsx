@@ -13,6 +13,8 @@ import {
   PageTaglineDisplay,
 } from "@/components/ui/page-tagline";
 
+import { clearCustomerCacheOnLogout } from "@/lib/cache/servicetitan/customer-cache";
+
 // ============================================
 // MOBILE EDIT ACTION CONTEXT
 // ============================================
@@ -63,6 +65,12 @@ export default function AppShell({
     setLoggingOut(true);
     closeMenu();
 
+    // Start cache cleanup without waiting for it.
+    clearCustomerCacheOnLogout().catch((error) => {
+      console.error("Customer cache cleanup failed:", error);
+    });
+
+    // Logout API starts immediately.
     try {
       const response = await fetch("/api/auth/logout", {
         method: "POST",
@@ -70,7 +78,7 @@ export default function AppShell({
       });
 
       if (!response.ok) {
-        throw new Error("Logout failed");
+        throw new Error("Logout failed.");
       }
 
       router.replace("/login");

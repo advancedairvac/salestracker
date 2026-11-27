@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
 import AppShell from "@/components/layout/app-shell";
+import CustomerCacheInitializer from "@/components/cache/customer-cache-initializer";
 import { getAuthenticatedUser } from "@/lib/auth";
 
 export default async function SalespersonLayout({ children }) {
@@ -15,8 +16,11 @@ export default async function SalespersonLayout({ children }) {
   }
 
   return (
-    <AppShell role="salesperson" user={user}>
-      {children}
-    </AppShell>
+    <>
+      <CustomerCacheInitializer />
+      <AppShell role="salesperson" user={user}>
+        {children}
+      </AppShell>
+    </>
   );
 }
