@@ -1,45 +1,49 @@
+
 import { getAuthenticatedUser } from "@/lib/auth";
 import { getJobs } from "@/lib/integrations/servicetitan";
 
 export const runtime = "nodejs";
 
 export async function GET(request) {
-  // 1. Authentication
   const user = await getAuthenticatedUser();
 
   if (!user) {
     return Response.json(
-      {
-        success: false,
-        message: "Unauthorized.",
-      },
+      { success: false, message: "Unauthorized." },
       { status: 401 },
     );
   }
 
-  // 2. Query parameters
   const searchParams = new URL(request.url).searchParams;
 
   const requestedPage = Number(searchParams.get("page"));
   const requestedPageSize = Number(searchParams.get("pageSize"));
 
   const page =
-    Number.isInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
+    Number.isInteger(requestedPage) && requestedPage > 0
+      ? requestedPage
+      : 1;
 
   const pageSize =
     Number.isInteger(requestedPageSize) && requestedPageSize > 0
       ? Math.min(requestedPageSize, 100)
       : 50;
 
+  const jobStatus = searchParams.get("jobStatus");
+  const completedOnOrAfter = searchParams.get("completedOnOrAfter");
+  const completedBefore = searchParams.get("completedBefore");
+
   try {
-    // 3. Fetch jobs from ServiceTitan
     const result = await getJobs({
       page,
       pageSize,
       includeTotal: true,
+
+      ...(jobStatus ? { jobStatus } : {}),
+      ...(completedOnOrAfter ? { completedOnOrAfter } : {}),
+      ...(completedBefore ? { completedBefore } : {}),
     });
 
-    // 4. API response
     return Response.json({
       success: true,
       totalCount: result.totalCount ?? null,

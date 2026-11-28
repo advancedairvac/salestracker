@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 
-import { getRevenueJobs } from "@/lib/integrations/servicetitan";
+import { getRevenueJobsForRange } from "@/lib/dashboard/servicetitan-jobs";
 
 import {
   getServiceTitanCustomersByIds,
@@ -26,10 +26,6 @@ import { getDashboardTeamMembers } from "@/lib/dashboard/dashboard-data";
 // ============================================
 
 const ALLOWED_PAGE_SIZES = [10, 20, 50, 100];
-
-const SERVICE_TITAN_PAGE_SIZE = 500;
-const MAX_SERVICE_TITAN_PAGES = 1000;
-const REVENUE_PAGE_CONCURRENCY = 4;
 
 // ============================================
 // QUERY HELPERS
@@ -84,128 +80,6 @@ function getRevenuePagination(searchParams = {}) {
     requestedPage: getPositiveInteger(getQueryValue(searchParams.page), 1),
     pageSize: getPageSize(getQueryValue(searchParams.pageSize)),
   };
-}
-
-// ============================================
-// FETCH ALL MATCHING SERVICE TITAN JOBS
-// NO CACHE - ALWAYS FETCH LIVE DATA
-// ============================================
-
-async function fetchAllRevenueJobs({ start, endExclusive } = {}) {
-  if (
-    !(start instanceof Date) ||
-    !(endExclusive instanceof Date) ||
-    Number.isNaN(start.getTime()) ||
-    Number.isNaN(endExclusive.getTime())
-  ) {
-    throw new Error("Invalid revenue date range.");
-  }
-
-  const filters = {
-    pageSize: SERVICE_TITAN_PAGE_SIZE,
-    jobStatus: "Completed",
-    completedOnOrAfter: start.toISOString(),
-    completedBefore: endExclusive.toISOString(),
-  };
-
-  const firstPage = await getRevenueJobs({
-    ...filters,
-    page: 1,
-    includeTotal: true,
-  });
-
-  if (!firstPage || !Array.isArray(firstPage.data)) {
-    throw new Error("Unable to fetch ServiceTitan revenue jobs.");
-  }
-
-  const totalCount = Number(firstPage.totalCount);
-
-  if (!Number.isFinite(totalCount) || totalCount < 0) {
-    throw new Error("Invalid ServiceTitan revenue jobs totalCount.");
-  }
-
-  const totalPages = Math.ceil(totalCount / SERVICE_TITAN_PAGE_SIZE);
-
-  if (totalPages > MAX_SERVICE_TITAN_PAGES) {
-    throw new Error(
-      "ServiceTitan revenue pagination exceeded the maximum allowed pages.",
-    );
-  }
-
-  const allJobs = [...firstPage.data];
-
-  // Fetch remaining pages in controlled parallel batches.
-  for (
-    let startPage = 2;
-    startPage <= totalPages;
-    startPage += REVENUE_PAGE_CONCURRENCY
-  ) {
-    const pageNumbers = Array.from(
-      {
-        length: Math.min(REVENUE_PAGE_CONCURRENCY, totalPages - startPage + 1),
-      },
-      (_, index) => startPage + index,
-    );
-
-    const pageResults = await Promise.all(
-      pageNumbers.map((page) =>
-        getRevenueJobs({
-          ...filters,
-          page,
-          includeTotal: false,
-        }),
-      ),
-    );
-
-    for (const result of pageResults) {
-      if (!result || !Array.isArray(result.data)) {
-        throw new Error("Unable to fetch ServiceTitan revenue jobs page.");
-      }
-
-      allJobs.push(...result.data);
-    }
-  }
-
-  if (allJobs.length !== totalCount) {
-    throw new Error(
-      `Incomplete ServiceTitan revenue data. Expected ${totalCount}, received ${allJobs.length}.`,
-    );
-  }
-
-  // Remove duplicate jobs and validate the final result.
-  const uniqueJobs = [];
-  const seenJobIds = new Set();
-
-  for (const job of allJobs) {
-    if (!job?.id) continue;
-
-    const jobId = String(job.id);
-
-    if (seenJobIds.has(jobId)) continue;
-
-    seenJobIds.add(jobId);
-    uniqueJobs.push(job);
-  }
-
-  if (uniqueJobs.length !== totalCount) {
-    throw new Error(
-      `Duplicate or missing ServiceTitan jobs. Expected ${totalCount}, received ${uniqueJobs.length}.`,
-    );
-  }
-
-  return uniqueJobs;
-}
-
-// ============================================
-// GET REVENUE JOBS FOR SELECTED DATE RANGE
-// NO CACHE
-// ============================================
-
-async function getRevenueJobsForRange({ start, endExclusive }) {
-  return fetchAllRevenueJobs({
-    start,
-    endExclusive,
-  });
 }
 
 // ============================================
@@ -355,7 +229,7 @@ async function getMatchingCompletedRevenueJobs({ start, endExclusive }) {
 // ============================================
 // REVENUE SUMMARY DATA
 // SUPPORTS SALESPERSON FILTERING
-// NO CACHE
+// ServiceTitan jobs use the shared date-range cache.
 // ============================================
 
 export async function getSalesRevenueSummaryData({
@@ -368,7 +242,7 @@ export async function getSalesRevenueSummaryData({
 
   const { preset, startDate, endDate, start, endExclusive } = dateRange;
 
-  // Fetch ServiceTitan jobs and team members directly.
+  // Reuse the shared ServiceTitan date-range result.
   const [revenueJobs, teamMembers] = await Promise.all([
     getRevenueJobsForRange({
       start,
@@ -458,7 +332,7 @@ export async function getSalesRevenueSummaryData({
 // ============================================
 // REVENUE TABLE DATA
 // SUPPORTS SALESPERSON FILTERING
-// NO CACHE
+// ServiceTitan jobs use the shared date-range cache.
 // ============================================
 
 export async function getSalesRevenueTableData({

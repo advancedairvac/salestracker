@@ -8,14 +8,12 @@ import { getGoalConfiguration } from "@/lib/date/goal-utils";
 import { resolveSelectedDateRange } from "@/lib/dashboard/date-range-helpers";
 
 import {
-  getAdminRevenueSectionData,
   getAdminPipelineSectionData,
   getDashboardRevenueSales,
   getDashboardOpportunities,
 } from "@/lib/dashboard/dashboard-data";
 
 import {
-  getRevenueMetrics,
   getPipelineMetrics,
   getSalespersonMetrics,
 } from "@/lib/dashboard/dashboard-metrics";
@@ -36,23 +34,12 @@ export const metadata = {
 
 // ============================================
 // REVENUE SECTION
-// Company-wide ServiceTitan Jobs API
-// Independent of Dashboard Date Filter
+// Client cache + summary-only API
 // ============================================
 
-async function SalespersonRevenueSection() {
-  const { jobs, revenueDateRanges } = await getAdminRevenueSectionData();
-
-  const { todayRevenue, monthRevenue, yearRevenue } = getRevenueMetrics({
-    jobs,
-    dateRanges: revenueDateRanges,
-  });
-
+function SalespersonRevenueSection() {
   return (
     <RevenueCard
-      today={todayRevenue}
-      mtd={monthRevenue}
-      ytd={yearRevenue}
       currency="$"
       href="/salesperson/sales-revenue"
     />
@@ -255,7 +242,7 @@ export default async function SalespersonDashboardPage({ searchParams }) {
       <section className="grid grid-cols-1 gap-3 lg:grid-cols-2">
         {/* REVENUE */}
 
-        <Suspense fallback={<RevenueCard loading />}>
+        <Suspense fallback={<RevenueCard href="/salesperson/sales-revenue" />}>
           <SalespersonRevenueSection />
         </Suspense>
 

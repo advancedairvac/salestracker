@@ -24,7 +24,7 @@ export async function sendReportEmailAction({
 
     const user = await getAuthenticatedUser();
 
-    if (!user || !user.isActive) {
+    if (!user || user.status !== "ACTIVE") {
       return {
         success: false,
         message: "Your session has expired. Please log in again.",

@@ -7,6 +7,7 @@ import AppHeader from "@/components/layout/app-header";
 import AppSidebar from "@/components/layout/app-sidebar";
 import MobileNavigation from "@/components/layout/mobile-navigation";
 import AppFooter from "@/components/layout/app-footer";
+import CacheInitializer from "@/components/cache/cache-initializer";
 
 import {
   PageTaglineProvider,
@@ -14,6 +15,8 @@ import {
 } from "@/components/ui/page-tagline";
 
 import { clearCustomerCacheOnLogout } from "@/lib/cache/servicetitan/customer-cache";
+import { clearJobsCacheOnLogout } from "@/lib/cache/servicetitan/jobs-cache";
+import { clearRevenueSummaryCacheOnLogout } from "@/lib/cache/servicetitan/revenue-summary-cache";
 
 // ============================================
 // MOBILE EDIT ACTION CONTEXT
@@ -65,13 +68,15 @@ export default function AppShell({
     setLoggingOut(true);
     closeMenu();
 
-    // Start cache cleanup without waiting for it.
-    clearCustomerCacheOnLogout().catch((error) => {
-      console.error("Customer cache cleanup failed:", error);
-    });
-
-    // Logout API starts immediately.
     try {
+      // Clear caches before logout
+      await Promise.all([
+        clearCustomerCacheOnLogout(),
+        clearJobsCacheOnLogout(),
+        clearRevenueSummaryCacheOnLogout(),
+      ]);
+
+      // Logout API
       const response = await fetch("/api/auth/logout", {
         method: "POST",
         credentials: "same-origin",
@@ -95,6 +100,9 @@ export default function AppShell({
 
   return (
     <MobileEditActionContext.Provider value={{ setMobileEditHref }}>
+      {/* INITIALIZE SERVICE TITAN CACHES */}
+      <CacheInitializer />
+
       <div className="flex min-h-screen w-full bg-white text-neutral-950">
         {/* DESKTOP SIDEBAR */}
 

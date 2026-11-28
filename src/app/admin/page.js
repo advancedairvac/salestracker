@@ -4,13 +4,11 @@ import { getGoalConfiguration } from "@/lib/date/goal-utils";
 import { resolveSelectedDateRange } from "@/lib/dashboard/date-range-helpers";
 
 import {
-  getAdminRevenueSectionData,
   getAdminPipelineSectionData,
   getAdminTeamSectionData,
 } from "@/lib/dashboard/dashboard-data";
 
 import {
-  getRevenueMetrics,
   getPipelineMetrics,
   getTeamMetrics,
 } from "@/lib/dashboard/dashboard-metrics";
@@ -27,24 +25,12 @@ import TeamCardSkeleton from "@/components/ui/skeleton/team-card-skeleton";
 
 // ============================================
 // REVENUE SECTION
-// ServiceTitan Jobs API
+// Client cache + summary-only API
 // ============================================
 
-async function AdminRevenueSection() {
-  const { jobs, revenueDateRanges } = await getAdminRevenueSectionData();
-
-  const { todayRevenue, monthRevenue, yearRevenue } = getRevenueMetrics({
-    jobs,
-    dateRanges: revenueDateRanges,
-  });
-
+function AdminRevenueSection() {
   return (
-    <RevenueCard
-      today={todayRevenue}
-      mtd={monthRevenue}
-      ytd={yearRevenue}
-      currency="$"
-    />
+    <RevenueCard currency="$" />
   );
 }
 
@@ -201,7 +187,7 @@ export default async function AdminDashboardPage({ searchParams }) {
       <section className="grid grid-cols-1 gap-3 lg:grid-cols-2">
         {/* REVENUE */}
 
-        <Suspense fallback={<RevenueCard loading />}>
+        <Suspense fallback={<RevenueCard />}>
           <AdminRevenueSection start={start} endExclusive={endExclusive} />
         </Suspense>
 

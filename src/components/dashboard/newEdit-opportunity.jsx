@@ -232,7 +232,7 @@ export default function NewEditOpportunity({
   const assignmentUsers = isAdmin
     ? users.filter(
         (item) =>
-          item.isActive !== false &&
+          item.status === "ACTIVE" &&
           ["ADMIN", "SALESPERSON"].includes(item.role),
       )
     : [];

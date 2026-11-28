@@ -656,7 +656,7 @@ export default function GenerateReportForm({
   const activeSalespeople = users.filter(
     (user) =>
       user.role === "SALESPERSON" &&
-      user.isActive !== false,
+      user.status === "ACTIVE",
   );
 
   const salesmanOptions = [

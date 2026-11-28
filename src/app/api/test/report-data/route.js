@@ -227,7 +227,7 @@ export async function GET(request) {
         where: {
           id: requestedSalesmanId,
           role: "SALESPERSON",
-          isActive: true,
+          status: "ACTIVE",
         },
         select: {
           id: true,

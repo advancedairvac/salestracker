@@ -47,7 +47,7 @@ export async function getDueFollowUps({
           status: "OPEN",
           assignedTo: {
             is: {
-              isActive: true,
+              status: "ACTIVE",
             },
           },
         },
@@ -68,7 +68,7 @@ export async function getDueFollowUps({
               id: true,
               name: true,
               email: true,
-              isActive: true,
+              status: true,
             },
           },
 
@@ -88,7 +88,7 @@ export async function getDueFollowUps({
     return (
       followUp.notificationAttempts < followUp.maxAttempts &&
       (!followUp.nextRetryAt || followUp.nextRetryAt <= now) &&
-      followUp.opportunity?.assignedTo?.isActive &&
+      followUp.opportunity?.assignedTo?.status === "ACTIVE" &&
       Boolean(followUp.opportunity.assignedTo.email?.trim())
     );
   });
@@ -121,7 +121,7 @@ export async function claimEmailFollowUp(followUpId, now = new Date()) {
                 id: true,
                 name: true,
                 email: true,
-                isActive: true,
+                status: true,
               },
             },
 
@@ -211,7 +211,7 @@ export async function claimEmailFollowUp(followUpId, now = new Date()) {
     const assignedUser = followUp.opportunity.assignedTo;
     const recipientEmail = assignedUser?.email?.trim();
 
-    if (!assignedUser?.isActive || !recipientEmail) {
+    if (assignedUser?.status !== "ACTIVE" || !recipientEmail) {
       return {
         claimed: false,
         reason: "ASSIGNED_USER_EMAIL_MISSING_OR_INACTIVE",

@@ -22,7 +22,7 @@ export async function saveJobAssignment({
       };
     }
 
-    if (!currentUser.isActive) {
+    if (currentUser.status !== "ACTIVE") {
       return {
         success: false,
         message: "Your account is inactive.",
@@ -50,7 +50,7 @@ export async function saveJobAssignment({
         where: {
           id: salesmanId,
           role: "SALESPERSON",
-          isActive: true,
+          status: "ACTIVE",
         },
         select: {
           id: true,

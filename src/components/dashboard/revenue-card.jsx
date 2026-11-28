@@ -1,18 +1,113 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 
 import MetricSkeleton from "@/components/ui/skeleton/metric-skeleton";
+import {
+  getRevenueSummaryCache,
+  refreshRevenueSummary,
+  subscribeToRevenueSummaryCache,
+} from "@/lib/cache/servicetitan/revenue-summary-cache";
+
+const CACHE_TTL_MS = 60 * 1000;
 
 export default function RevenueCard({
-  today = 0,
-  mtd = 0,
-  ytd = 0,
   currency = "$",
   href = "/admin/sales-revenue",
   className = "",
-  loading = false,
 }) {
+  const year = new Date().getFullYear();
+  const [revenueValues, setRevenueValues] = useState({
+    today: 0,
+    mtd: 0,
+    ytd: 0,
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+
+    function applyCache(entry) {
+      const value = entry?.value || entry;
+
+      if (
+        !value ||
+        typeof value.todayRevenue !== "number" ||
+        typeof value.monthRevenue !== "number" ||
+        typeof value.yearRevenue !== "number"
+      ) {
+        return false;
+      }
+
+      setRevenueValues({
+        today: value.todayRevenue,
+        mtd: value.monthRevenue,
+        ytd: value.yearRevenue,
+      });
+      setLoading(false);
+
+      return true;
+    }
+
+    async function refreshIfStale() {
+      const entry = await getRevenueSummaryCache(year);
+
+      if (!active) return;
+
+      const hasCache = applyCache(entry);
+      const isStale =
+        !entry || !entry.updatedAt || Date.now() - entry.updatedAt >= CACHE_TTL_MS;
+
+      if (!isStale) return;
+
+      try {
+        const value = await refreshRevenueSummary(year);
+
+        if (!active) return;
+
+        setRevenueValues({
+          today: value.todayRevenue,
+          mtd: value.monthRevenue,
+          ytd: value.yearRevenue,
+        });
+      } catch (error) {
+        console.error("Revenue summary refresh failed:", error);
+
+        if (!hasCache && active) {
+          setRevenueValues({ today: 0, mtd: 0, ytd: 0 });
+        }
+      } finally {
+        if (active) setLoading(false);
+      }
+    }
+
+    const unsubscribe = subscribeToRevenueSummaryCache(year, (entry) => {
+      if (active) applyCache(entry);
+    });
+
+    const handleFocus = () => {
+      refreshIfStale().catch((error) => {
+        console.error("Revenue summary cache check failed:", error);
+      });
+    };
+
+    refreshIfStale().catch((error) => {
+      console.error("Revenue summary cache check failed:", error);
+      if (active) setLoading(false);
+    });
+
+    const refreshTimer = window.setInterval(handleFocus, CACHE_TTL_MS);
+    window.addEventListener("focus", handleFocus);
+
+    return () => {
+      active = false;
+      unsubscribe();
+      window.clearInterval(refreshTimer);
+      window.removeEventListener("focus", handleFocus);
+    };
+  }, [year]);
+
   const formatAmount = (amount) => {
     const value = Number(amount) || 0;
 
@@ -22,10 +117,10 @@ export default function RevenueCard({
     }).format(value)}`;
   };
 
-  const metrics = [
-    { label: "Today", value: today },
-    { label: "MTD", value: mtd },
-    { label: "YTD", value: ytd },
+  const metricItems = [
+    { label: "Today", value: revenueValues.today },
+    { label: "MTD", value: revenueValues.mtd },
+    { label: "YTD", value: revenueValues.ytd },
   ];
 
   return (
@@ -59,7 +154,7 @@ export default function RevenueCard({
         className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 sm:gap-x-5"
         aria-live="polite"
       >
-        {metrics.map((metric) => (
+        {metricItems.map((metric) => (
           <div
             key={metric.label}
             className="flex items-baseline gap-2 whitespace-nowrap"

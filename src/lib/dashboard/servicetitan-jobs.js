@@ -7,19 +7,21 @@ import { getRevenueDateRanges } from "@/lib/date/date-utils";
 
 const PAGE_SIZE = 500;
 const PAGE_CONCURRENCY = 4;
+const CACHE_TTL_MS = 60 * 1000;
+const revenueJobsCache = new Map();
 
 // ============================================
 // FETCH YTD COMPLETED JOBS
 // ============================================
 
-async function fetchYtdCompletedJobs(yearStartISO, nextYearStartISO) {
+async function fetchCompletedJobsInRange(startISO, endExclusiveISO) {
   const startedAt = performance.now();
 
   const jobFilters = {
     pageSize: PAGE_SIZE,
     jobStatus: "Completed",
-    completedOnOrAfter: yearStartISO,
-    completedBefore: nextYearStartISO,
+    completedOnOrAfter: startISO,
+    completedBefore: endExclusiveISO,
   };
 
   const firstPage = await getRevenueJobs({
@@ -29,7 +31,7 @@ async function fetchYtdCompletedJobs(yearStartISO, nextYearStartISO) {
   });
 
   if (!firstPage || !Array.isArray(firstPage.data)) {
-    throw new Error("Unable to fetch ServiceTitan YTD jobs.");
+    throw new Error("Unable to fetch ServiceTitan completed jobs.");
   }
 
   const totalCount = Number(firstPage.totalCount);
@@ -39,6 +41,10 @@ async function fetchYtdCompletedJobs(yearStartISO, nextYearStartISO) {
   }
 
   const totalPages = Math.ceil(totalCount / PAGE_SIZE);
+
+  if (totalPages > 1000) {
+    throw new Error("ServiceTitan revenue pagination limit exceeded.");
+  }
 
   const jobs = [...firstPage.data];
 
@@ -114,23 +120,69 @@ async function fetchYtdCompletedJobs(yearStartISO, nextYearStartISO) {
   const duration = (performance.now() - startedAt) / 1000;
 
   console.log(
-    `[ServiceTitan Jobs] Live API data fetched: ${duration.toFixed(2)} sec`,
+    `[ServiceTitan Jobs] API data fetched: ${duration.toFixed(2)} sec`,
   );
 
   return uniqueJobs;
 }
 
 // ============================================
-// GET YTD REVENUE JOBS
-// Always fetch fresh data from ServiceTitan.
-// No persistent cache.
+// GET COMPLETED REVENUE JOBS FOR A DATE RANGE
+// Share in-flight and recent identical requests across dashboard and revenue
+// page sections so a summary and its table do not fetch the same pages twice.
 // ============================================
+
+export async function getRevenueJobsForRange({ start, endExclusive } = {}) {
+  if (
+    !(start instanceof Date) ||
+    !(endExclusive instanceof Date) ||
+    Number.isNaN(start.getTime()) ||
+    Number.isNaN(endExclusive.getTime()) ||
+    start >= endExclusive
+  ) {
+    throw new Error("A valid ServiceTitan revenue date range is required.");
+  }
+
+  const startISO = start.toISOString();
+  const endExclusiveISO = endExclusive.toISOString();
+  const key = `${startISO}|${endExclusiveISO}`;
+  const now = Date.now();
+
+  for (const [cachedKey, entry] of revenueJobsCache) {
+    if (entry.expiresAt <= now) revenueJobsCache.delete(cachedKey);
+  }
+
+  const cached = revenueJobsCache.get(key);
+
+  if (cached && cached.expiresAt > now) {
+    return cached.promise;
+  }
+
+  const cacheEntry = { promise: null, expiresAt: Number.POSITIVE_INFINITY };
+  const promise = fetchCompletedJobsInRange(startISO, endExclusiveISO)
+    .then((jobs) => {
+      cacheEntry.expiresAt = Date.now() + CACHE_TTL_MS;
+      return jobs;
+    })
+    .catch((error) => {
+      if (revenueJobsCache.get(key) === cacheEntry) {
+        revenueJobsCache.delete(key);
+      }
+
+      throw error;
+    });
+
+  cacheEntry.promise = promise;
+  revenueJobsCache.set(key, cacheEntry);
+
+  return promise;
+}
 
 export async function getYtdRevenueJobs() {
   const { yearStart, nextYearStart } = getRevenueDateRanges();
 
-  return fetchYtdCompletedJobs(
-    yearStart.toISOString(),
-    nextYearStart.toISOString(),
-  );
+  return getRevenueJobsForRange({
+    start: yearStart,
+    endExclusive: nextYearStart,
+  });
 }
