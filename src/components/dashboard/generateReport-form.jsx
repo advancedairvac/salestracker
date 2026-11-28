@@ -1176,7 +1176,8 @@ export default function GenerateReportForm({
                   placeholder="Recipient email"
                   aria-label="Recipient email"
                   required
-                  className="!h-10 !min-h-10 !w-full !min-w-[150px] !rounded-none !border-[#d9d9d9] !px-3 !py-0 !text-xs !text-[#111111] focus:!border-[#111111] sm:!w-[170px]"
+                  wrapperClassName="!w-full !shrink-0 sm:!w-[170px]"
+                  className="!h-10 !min-h-10 !w-full !rounded-none !border-[#d9d9d9] !px-3 !py-0 !text-xs !text-[#111111] focus:!border-[#111111]"
                 />
 
                 <label className="sr-only" htmlFor="reportEmailSubject">
@@ -1191,7 +1192,8 @@ export default function GenerateReportForm({
                   placeholder="Email subject (optional)"
                   aria-label="Email subject (optional)"
                   maxLength={150}
-                  className="!h-10 !min-h-10 !w-full !min-w-[150px] !rounded-none !border-[#d9d9d9] !px-3 !py-0 !text-xs !text-[#111111] focus:!border-[#111111] sm:!w-[190px]"
+                  wrapperClassName="!w-full !shrink-0 sm:!w-[190px]"
+                  className="!h-10 !min-h-10 !w-full !rounded-none !border-[#d9d9d9] !px-3 !py-0 !text-xs !text-[#111111] focus:!border-[#111111]"
                 />
 
                 <button
