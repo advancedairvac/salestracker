@@ -8,7 +8,14 @@ import { getRevenueDateRanges } from "@/lib/date/date-utils";
 const PAGE_SIZE = 500;
 const PAGE_CONCURRENCY = 4;
 const CACHE_TTL_MS = 60 * 1000;
+const MAX_STALE_MS = 5 * 60 * 1000;
 const revenueJobsCache = new Map();
+
+export function clearRevenueJobsCache() {
+  const removedCount = revenueJobsCache.size;
+  revenueJobsCache.clear();
+  return { removedCount };
+}
 
 // ============================================
 // FETCH YTD COMPLETED JOBS
@@ -132,7 +139,11 @@ async function fetchCompletedJobsInRange(startISO, endExclusiveISO) {
 // page sections so a summary and its table do not fetch the same pages twice.
 // ============================================
 
-export async function getRevenueJobsForRange({ start, endExclusive } = {}) {
+export async function getRevenueJobsForRange({
+  start,
+  endExclusive,
+  waitForFresh = false,
+} = {}) {
   if (
     !(start instanceof Date) ||
     !(endExclusive instanceof Date) ||
@@ -149,23 +160,70 @@ export async function getRevenueJobsForRange({ start, endExclusive } = {}) {
   const now = Date.now();
 
   for (const [cachedKey, entry] of revenueJobsCache) {
-    if (entry.expiresAt <= now) revenueJobsCache.delete(cachedKey);
+    if (
+      !entry.promise &&
+      (entry.value === undefined ||
+        (entry.updatedAt && entry.updatedAt + MAX_STALE_MS <= now))
+    ) {
+      revenueJobsCache.delete(cachedKey);
+    }
   }
 
   const cached = revenueJobsCache.get(key);
 
-  if (cached && cached.expiresAt > now) {
-    return cached.promise;
+  if (cached?.value !== undefined) {
+    if (cached.expiresAt > now) return Promise.resolve(cached.value);
+
+    let refreshPromise = cached.promise;
+
+    if (!cached.promise) {
+      refreshPromise = startRevenueJobsRefresh(
+        key,
+        cached,
+        startISO,
+        endExclusiveISO,
+      );
+
+      refreshPromise.catch(
+        (error) => {
+          console.error("Background ServiceTitan jobs refresh failed:", error);
+        },
+      );
+    }
+
+    if (waitForFresh) return refreshPromise;
+    return Promise.resolve(cached.value);
   }
 
-  const cacheEntry = { promise: null, expiresAt: Number.POSITIVE_INFINITY };
+  if (cached?.promise) return cached.promise;
+
+  const cacheEntry = {
+    value: undefined,
+    promise: null,
+    expiresAt: Number.POSITIVE_INFINITY,
+  };
+  return startRevenueJobsRefresh(key, cacheEntry, startISO, endExclusiveISO);
+}
+
+function startRevenueJobsRefresh(key, cacheEntry, startISO, endExclusiveISO) {
+  if (cacheEntry.promise) return cacheEntry.promise;
+
+  const startedAt = performance.now();
   const promise = fetchCompletedJobsInRange(startISO, endExclusiveISO)
     .then((jobs) => {
+      cacheEntry.value = jobs;
+      cacheEntry.updatedAt = Date.now();
+      cacheEntry.rowCount = jobs.length;
+      cacheEntry.syncDurationMs = Math.round(performance.now() - startedAt);
       cacheEntry.expiresAt = Date.now() + CACHE_TTL_MS;
+      cacheEntry.promise = null;
       return jobs;
     })
     .catch((error) => {
-      if (revenueJobsCache.get(key) === cacheEntry) {
+      if (cacheEntry.value !== undefined) {
+        cacheEntry.expiresAt = Date.now() + 5000;
+        cacheEntry.promise = null;
+      } else if (revenueJobsCache.get(key) === cacheEntry) {
         revenueJobsCache.delete(key);
       }
 
@@ -174,15 +232,46 @@ export async function getRevenueJobsForRange({ start, endExclusive } = {}) {
 
   cacheEntry.promise = promise;
   revenueJobsCache.set(key, cacheEntry);
-
   return promise;
 }
 
-export async function getYtdRevenueJobs() {
+export function getRevenueJobsCacheMetadata() {
+  const now = Date.now();
+  const entries = [...revenueJobsCache.values()].filter(
+    (entry) => entry.expiresAt > now || entry.promise,
+  );
+
+  const latestEntry = entries.reduce(
+    (latest, entry) =>
+      !latest || (entry.updatedAt || 0) > (latest.updatedAt || 0)
+        ? entry
+        : latest,
+    null,
+  );
+
+  return {
+    status: entries.some((entry) => entry.promise)
+      ? "refreshing"
+      : entries.length
+        ? "available"
+        : "idle",
+    updatedAt: entries.reduce(
+      (latest, entry) => Math.max(latest, entry.updatedAt || 0),
+      0,
+    ) || null,
+    totalCount: entries.reduce((total, entry) => total + (entry.rowCount || 0), 0),
+    queryCount: entries.length,
+    storage: "Server memory",
+    syncDurationMs: latestEntry?.syncDurationMs ?? null,
+  };
+}
+
+export async function getYtdRevenueJobs({ waitForFresh = false } = {}) {
   const { yearStart, nextYearStart } = getRevenueDateRanges();
 
   return getRevenueJobsForRange({
     start: yearStart,
     endExclusive: nextYearStart,
+    waitForFresh,
   });
 }

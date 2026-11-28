@@ -1,13 +1,15 @@
 
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import DateSelector from "@/components/ui/date-selector";
+import Input from "@/components/ui/input";
 import SvgIcon from "@/components/icons/svg-icons";
 
 import { generateReportAction } from "@/app/actions/report-actions";
 import { sendReportEmailAction } from "@/app/actions/report-email-actions";
+import { formatCurrency } from "@/lib/format/currency";
 
 // ============================================
 // REPORT TYPES
@@ -205,14 +207,6 @@ function toNumber(value) {
   return Number.isFinite(number) ? number : 0;
 }
 
-function formatCurrency(value) {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 2,
-  }).format(toNumber(value));
-}
-
 function formatDate(value) {
   if (!value || value === "—") return "—";
 
@@ -308,32 +302,114 @@ function FloatingSelect({
   required = false,
 }) {
   const [focused, setFocused] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(() => {
+    const selectedIndex = options.findIndex((option) => option.value === value);
+    return selectedIndex >= 0 ? selectedIndex : 0;
+  });
+  const containerRef = useRef(null);
 
   const floating = focused || value !== "";
+  const selectedOption = options.find((option) => option.value === value);
+
+  useEffect(() => {
+    function handleOutsideClick(event) {
+      if (containerRef.current && !containerRef.current.contains(event.target)) {
+        setIsOpen(false);
+        setFocused(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
+  }, []);
+
+  function selectOption(option) {
+    onChange(option.value);
+    setActiveIndex(options.indexOf(option));
+    setIsOpen(false);
+  }
+
+  function handleKeyDown(event) {
+    if (event.key === "Escape") {
+      setIsOpen(false);
+      return;
+    }
+
+    if (event.key === "Tab") {
+      setIsOpen(false);
+      return;
+    }
+
+    if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+      event.preventDefault();
+      const direction = event.key === "ArrowDown" ? 1 : -1;
+
+      if (!isOpen) {
+        setIsOpen(true);
+        const selectedIndex = options.findIndex((option) => option.value === value);
+        setActiveIndex(
+          (Math.max(selectedIndex, 0) + direction + options.length) %
+            options.length,
+        );
+      } else {
+        setActiveIndex((current) => (current + direction + options.length) % options.length);
+      }
+      return;
+    }
+
+    if (event.key === "Home" || event.key === "End") {
+      event.preventDefault();
+      setIsOpen(true);
+      setActiveIndex(event.key === "Home" ? 0 : options.length - 1);
+      return;
+    }
+
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      if (!isOpen) {
+        setIsOpen(true);
+      } else if (options[activeIndex]) {
+        selectOption(options[activeIndex]);
+      }
+    }
+  }
 
   return (
-    <div className="relative w-full">
-      <select
+    <div ref={containerRef} className="relative w-full">
+      <input type="hidden" name={name} value={value} />
+
+      <button
         id={name}
-        name={name}
-        value={value}
-        onChange={onChange}
+        type="button"
+        aria-label={label}
+        aria-haspopup="listbox"
+        aria-expanded={isOpen}
+        aria-controls={`${name}-options`}
+        aria-activedescendant={
+          isOpen ? `${name}-option-${activeIndex}` : undefined
+        }
+        onClick={() => {
+          if (!isOpen) {
+            const selectedIndex = options.findIndex(
+              (option) => option.value === value,
+            );
+            setActiveIndex(selectedIndex >= 0 ? selectedIndex : 0);
+          }
+          setIsOpen((open) => !open);
+        }}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
-        required={required}
+        onKeyDown={handleKeyDown}
         className={[
           selectClass,
-          floating ? "text-[#111111]" : "text-transparent",
+          "text-left text-[#111111]",
         ].join(" ")}
       >
-        <option value="" disabled hidden />
-
-        {options.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
+        <span className={floating ? "" : "text-transparent"}>
+          {selectedOption?.label || " "}
+        </span>
+      </button>
 
       <label
         htmlFor={name}
@@ -356,10 +432,46 @@ function FloatingSelect({
         name="chevronDown"
         className={[
           "pointer-events-none absolute right-3 top-1/2",
-          "h-4 w-4 -translate-y-1/2 shrink-0",
+          "h-4 w-4 -translate-y-1/2 shrink-0 transition-transform duration-200 ease-in-out",
           "text-[#555555]",
+          isOpen ? "rotate-180" : "",
         ].join(" ")}
       />
+
+      {isOpen && (
+        <div
+          id={`${name}-options`}
+          role="listbox"
+          aria-label={label}
+          className="absolute left-0 right-0 top-full z-50 max-h-60 overflow-y-auto border border-t-0 border-[#d9d9d9] bg-white shadow-md"
+        >
+          {options.map((option, index) => {
+            const selected = option.value === value;
+            const active = index === activeIndex;
+
+            return (
+              <button
+                key={option.value}
+                type="button"
+                id={`${name}-option-${index}`}
+                role="option"
+                aria-selected={selected}
+                tabIndex={-1}
+                onMouseEnter={() => setActiveIndex(index)}
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={() => selectOption(option)}
+                className={`block min-h-6 w-full px-3 py-1 text-left text-xs transition-colors ${
+                  active || selected
+                    ? "bg-[#0690c8] text-white"
+                    : "text-[#111111] hover:bg-[#0690c8] hover:text-white"
+                }`}
+              >
+                {option.label}
+              </button>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
@@ -917,6 +1029,7 @@ export default function GenerateReportForm({
             setReport(null);
           }}
           className="[&>div>button]:!h-[48px] [&>div>button]:!min-h-[48px]"
+          fullWidth
           compact
         />
 
@@ -926,8 +1039,8 @@ export default function GenerateReportForm({
           name="type"
           label="TYPE"
           value={reportType}
-          onChange={(event) => {
-            setReportType(event.target.value);
+          onChange={(selectedValue) => {
+            setReportType(selectedValue);
             setMessage("");
             setEmailMessage("");
             setReport(null);
@@ -943,8 +1056,8 @@ export default function GenerateReportForm({
             name="salesmanId"
             label="SALESPERSON"
             value={salesmanId}
-            onChange={(event) => {
-              setSalesmanId(event.target.value);
+            onChange={(selectedValue) => {
+              setSalesmanId(selectedValue);
               setMessage("");
               setEmailMessage("");
               setReport(null);
@@ -1139,7 +1252,8 @@ export default function GenerateReportForm({
                   Recipient Email
                 </label>
 
-                <input
+                <Input
+                  variant="plain"
                   id="reportRecipientEmail"
                   type="email"
                   value={recipientEmail}
@@ -1149,7 +1263,7 @@ export default function GenerateReportForm({
                   }}
                   placeholder="Enter recipient email address"
                   required
-                  className="h-[46px] w-full rounded-none border border-[#d9d9d9] px-3 text-xs text-[#111111] outline-none transition-colors focus:border-[#111111]"
+                  className="!h-[46px] !min-h-[46px] !rounded-none !border-[#d9d9d9] !px-3 !py-0 !text-xs !text-[#111111] focus:!border-[#111111]"
                 />
               </div>
 
@@ -1167,7 +1281,8 @@ export default function GenerateReportForm({
                   </span>
                 </label>
 
-                <input
+                <Input
+                  variant="plain"
                   id="reportEmailSubject"
                   type="text"
                   value={emailSubject}
@@ -1176,7 +1291,7 @@ export default function GenerateReportForm({
                   }
                   placeholder="Sales Tracker Report"
                   maxLength={150}
-                  className="h-[46px] w-full rounded-none border border-[#d9d9d9] px-3 text-xs text-[#111111] outline-none transition-colors focus:border-[#111111]"
+                  className="!h-[46px] !min-h-[46px] !rounded-none !border-[#d9d9d9] !px-3 !py-0 !text-xs !text-[#111111] focus:!border-[#111111]"
                 />
               </div>
 

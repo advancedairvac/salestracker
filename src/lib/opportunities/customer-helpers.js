@@ -1,4 +1,76 @@
 
+import { getAllServiceTitanCustomers } from "@/lib/integrations/servicetitan";
+import { getServiceTitanCustomerById } from "@/lib/dashboard/customer-sync";
+
+function normalizePhone(value) {
+  return String(value || "").replace(/\D/g, "");
+}
+
+function normalizeEmail(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
+/**
+ * Resolve a selected ServiceTitan customer from the shared API cache and
+ * protect manual entry from creating a second customer with matching contact
+ * details. The warning intentionally does not disclose which field matched.
+ */
+export async function resolveServiceTitanOpportunityCustomer(values) {
+  const requestedId = String(values.stCustomerId || "").trim();
+  const email = normalizeEmail(values.email);
+  const phone = normalizePhone(values.phone);
+
+  if (!requestedId && !email && phone.length < 7) return null;
+
+  if (requestedId) {
+    const selected = await getServiceTitanCustomerById(requestedId);
+    if (!selected) throw new Error("TITAN_CUSTOMER_UNAVAILABLE");
+
+    return {
+      ...selected,
+      stCustomerId: requestedId,
+      businessName: selected.businessName || values.businessName || "",
+      pocName: selected.pocName || selected.name || values.pocName || "",
+      phone: selected.phone || values.phone || "",
+      email: selected.email || values.email || "",
+      location: selected.location || values.location || "",
+    };
+  }
+
+  // A fresh Titan cache check has already run in the opportunity form.
+  // Avoid repeating a full ServiceTitan scan during the save action.
+  if (values.titanCustomerCacheVerified === "true") return null;
+
+  const customers = await getAllServiceTitanCustomers({
+    pageSize: 100,
+    maxPages: 100,
+  });
+
+  return (
+    customers.find((customer) => {
+      const sameEmail =
+        email && normalizeEmail(customer.email) === email;
+      const candidatePhone = normalizePhone(customer.phone);
+      const samePhone =
+        phone.length >= 7 &&
+        candidatePhone.length >= 7 &&
+        candidatePhone === phone;
+      return sameEmail || samePhone;
+    }) || null
+  );
+}
+
+export function toOpportunityCustomerSnapshot(customer, values = {}) {
+  return {
+    stCustomerId: String(customer.stCustomerId || customer.id),
+    businessName: values.businessName || customer.businessName || null,
+    pocName: values.pocName || customer.pocName || customer.name || null,
+    phone: values.phone || customer.phone || null,
+    email: values.email || customer.email || null,
+    location: values.location || customer.location || null,
+  };
+}
+
 export async function findOrCreateOpportunityCustomer(
   tx,
   values,

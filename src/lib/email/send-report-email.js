@@ -1,18 +1,11 @@
 
 import { resend } from "@/lib/email/resend";
+import { escapeHtml } from "@/lib/email/html-escape";
+import { formatCurrency } from "@/lib/format/currency";
 
 // ============================================
 // HELPERS
 // ============================================
-
-function escapeHtml(value) {
-  return String(value ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
 
 function getValue(row, keys, fallback = "—") {
   for (const key of keys) {
@@ -28,16 +21,6 @@ function getValue(row, keys, fallback = "—") {
   }
 
   return fallback;
-}
-
-function formatCurrency(value) {
-  const amount = Number(value);
-
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 2,
-  }).format(Number.isFinite(amount) ? amount : 0);
 }
 
 function formatDate(value) {

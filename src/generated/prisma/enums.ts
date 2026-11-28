@@ -44,6 +44,14 @@ export const OpportunityStatus = {
 export type OpportunityStatus = (typeof OpportunityStatus)[keyof typeof OpportunityStatus]
 
 
+export const OpportunityCustomerSource = {
+  POSTGRES: 'POSTGRES',
+  SERVICETITAN: 'SERVICETITAN'
+} as const
+
+export type OpportunityCustomerSource = (typeof OpportunityCustomerSource)[keyof typeof OpportunityCustomerSource]
+
+
 export const FollowUpStatus = {
   PENDING: 'PENDING',
   COMPLETED: 'COMPLETED',

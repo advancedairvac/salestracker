@@ -2,6 +2,7 @@
 "use client";
 
 import { useState } from "react";
+import Input from "@/components/ui/input";
 
 const WEEK_DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -274,19 +275,22 @@ export default function CustomDateCalendar({
     <div className="w-full bg-white pt-3">
       {/* MANUAL DATE INPUTS */}
       <div className="mb-5 flex items-center gap-2">
-        <input
+        <Input
+          variant="plain"
           type="date"
           value={formatDateInput(startDate)}
           max={todayKey}
           onChange={(event) =>
             handleStartDateChange(event.target.value)
           }
-          className="h-11 min-w-0 flex-1 border border-[#d5d5d5] bg-white px-3 text-sm text-[#555] outline-none focus:border-black"
+          wrapperClassName="min-w-0 flex-1 !w-auto"
+          className="!h-11 !min-h-[44px] !min-w-0 !px-3 !py-0 !text-sm !text-[#555] focus:!border-black"
         />
 
         <span className="shrink-0 text-sm text-[#777]">→</span>
 
-        <input
+        <Input
+          variant="plain"
           type="date"
           value={formatDateInput(endDate)}
           min={startDate || undefined}
@@ -294,7 +298,8 @@ export default function CustomDateCalendar({
           onChange={(event) =>
             handleEndDateChange(event.target.value)
           }
-          className="h-11 min-w-0 flex-1 border border-[#d5d5d5] bg-white px-3 text-sm text-[#555] outline-none focus:border-black"
+          wrapperClassName="min-w-0 flex-1 !w-auto"
+          className="!h-11 !min-h-[44px] !min-w-0 !px-3 !py-0 !text-sm !text-[#555] focus:!border-black"
         />
       </div>
 

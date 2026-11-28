@@ -1,8 +1,4 @@
-function formatCurrency(amount, currency) {
-  return `${currency}${new Intl.NumberFormat("en-US", {
-    maximumFractionDigits: 0,
-  }).format(Number(amount) || 0)}`;
-}
+import { formatCurrency } from "@/lib/format/currency";
 
 export default function RevenueSummary({
   revenue = 0,
@@ -74,7 +70,7 @@ export default function RevenueSummary({
 
         <div className="min-w-0">
           <p className="text-2xl font-medium leading-tight text-black lg:text-3xl">
-            {formatCurrency(totalGoal, currency)}
+            {formatCurrency(totalGoal, { currencySymbol: currency, maximumFractionDigits: 0 })}
           </p>
 
           <p className="mt-1 text-sm uppercase tracking-wide text-[#555]">
@@ -85,11 +81,11 @@ export default function RevenueSummary({
 
       <div className="mt-7 space-y-1 pl-1">
         <h2 className="text-3xl font-bold leading-tight text-black lg:text-5xl">
-          {formatCurrency(totalRevenue, currency)}
+          {formatCurrency(totalRevenue, { currencySymbol: currency, maximumFractionDigits: 0 })}
         </h2>
 
         <p className="text-sm font-normal uppercase tracking-wide text-[#333] sm:text-base">
-          {formatCurrency(commission, currency)} Est. Commission
+          {formatCurrency(commission, { currencySymbol: currency, maximumFractionDigits: 0 })} Est. Commission
         </p>
       </div>
     </section>

@@ -1,3 +1,5 @@
+export { addDays } from "@/lib/date/date-utils";
+
 export function parseDate(value) {
   if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
     return null;
@@ -35,18 +37,6 @@ export function addHours(date, hours) {
   }
 
   return new Date(result.getTime() + hours * 60 * 60 * 1000);
-}
-
-export function addDays(date, days) {
-  const result = new Date(date);
-
-  if (Number.isNaN(result.getTime()) || !Number.isInteger(days)) {
-    throw new Error("Invalid date or day value.");
-  }
-
-  result.setDate(result.getDate() + days);
-
-  return result;
 }
 
 export function addOneMonth(date) {

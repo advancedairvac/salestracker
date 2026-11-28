@@ -1,9 +1,10 @@
 "use client";
 
 import { cacheManager } from "./cache-manager";
+import { resetServiceTitanCache } from "@/lib/cache/admin-cache-client";
 
 const CACHE_KEY = "customers:all";
-const REFRESH_INTERVAL = 13 * 60 * 1000;
+export const CUSTOMER_CACHE_TTL_MS = 13 * 60 * 1000;
 
 const GLOBAL_KEY = "__ADVANCED_SALES_CUSTOMER_CACHE_STATE__";
 
@@ -202,7 +203,7 @@ function refreshIfNeeded() {
     .then((entry) => {
       const cacheAge = Date.now() - (entry?.updatedAt || 0);
 
-      if (!entry || cacheAge >= REFRESH_INTERVAL) {
+      if (!entry || cacheAge >= CUSTOMER_CACHE_TTL_MS) {
         syncCustomers().catch(() => {
           // Preserve the previous cache if refresh fails.
         });
@@ -243,7 +244,7 @@ export function initializeCustomerCache() {
       const cacheAge = Date.now() - (entry.updatedAt || 0);
 
       // Refresh in background if expired.
-      if (cacheAge >= REFRESH_INTERVAL) {
+      if (cacheAge >= CUSTOMER_CACHE_TTL_MS) {
         syncCustomers().catch(() => {});
       }
     } catch (error) {
@@ -255,7 +256,7 @@ export function initializeCustomerCache() {
   // Periodic background refresh.
   state.timer = window.setInterval(() => {
     refreshIfNeeded();
-  }, REFRESH_INTERVAL);
+  }, CUSTOMER_CACHE_TTL_MS);
 
   // Refresh when user returns to the app.
   state.visibilityHandler = () => {
@@ -283,6 +284,7 @@ export async function resetCustomerCache() {
   // Do NOT delete the existing cache.
   // Existing customers remain searchable during refresh.
   try {
+    await resetServiceTitanCache("customers");
     await syncCustomers(true);
 
     return true;

@@ -1,17 +1,11 @@
 
 import Link from "next/link";
+import { formatCurrency } from "@/lib/format/currency";
+import { getOpportunityCustomer } from "@/lib/opportunities/opportunity-customer";
 
 // ============================================
 // HELPERS
 // ============================================
-
-function formatCurrency(value) {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  }).format(Number(value || 0));
-}
 
 function formatDate(date) {
   if (!date) return "—";
@@ -62,7 +56,7 @@ export default function OpportunityCard({
   opportunity,
   role = "ADMIN",
 }) {
-  const customer = opportunity.customer;
+  const customer = getOpportunityCustomer(opportunity);
   const assignedTo = opportunity.assignedTo;
 
   const basePath =
@@ -99,7 +93,7 @@ export default function OpportunityCard({
 
       <div className="mt-4">
         <strong className="text-xl font-extrabold tracking-tight text-black sm:text-2xl">
-          {formatCurrency(opportunity.value)}
+          {formatCurrency(opportunity.value, { maximumFractionDigits: 0 })}
         </strong>
 
         <p className="mt-0.5 text-xs uppercase tracking-wide text-[#777]">

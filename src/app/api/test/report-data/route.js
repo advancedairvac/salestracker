@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth";
+import { getDateBounds } from "@/lib/date/date-utils";
 
 import {
   getJobs,
@@ -28,51 +29,7 @@ function parseDateRange(startDate, endDate) {
     throw new Error("Dates must use YYYY-MM-DD format.");
   }
 
-  const [startYear, startMonth, startDay] = startDate
-    .split("-")
-    .map(Number);
-
-  const [endYear, endMonth, endDay] = endDate
-    .split("-")
-    .map(Number);
-
-  // Local timezone dates
-  const start = new Date(
-    startYear,
-    startMonth - 1,
-    startDay,
-    0, 0, 0, 0
-  );
-
-  const end = new Date(
-    endYear,
-    endMonth - 1,
-    endDay,
-    0, 0, 0, 0
-  );
-
-  // Validate actual calendar dates
-  const validStart =
-    start.getFullYear() === startYear &&
-    start.getMonth() === startMonth - 1 &&
-    start.getDate() === startDay;
-
-  const validEnd =
-    end.getFullYear() === endYear &&
-    end.getMonth() === endMonth - 1 &&
-    end.getDate() === endDay;
-
-  if (!validStart || !validEnd || start > end) {
-    throw new Error("Invalid date range.");
-  }
-
-  const endExclusive = new Date(end);
-  endExclusive.setDate(endExclusive.getDate() + 1);
-
-  return {
-    start,
-    endExclusive,
-  };
+  return getDateBounds(startDate, endDate);
 }
 
 

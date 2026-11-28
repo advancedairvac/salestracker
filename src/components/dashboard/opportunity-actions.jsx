@@ -796,24 +796,15 @@ export default function OpportunityActions({
             {/* OPTIONAL NOTE */}
 
             <div>
-              <label
-                htmlFor="statusNote"
-                className="mb-1.5 block text-sm font-medium text-neutral-700"
-              >
-                Note{" "}
-                <span className="font-normal text-neutral-400">
-                  (Optional)
-                </span>
-              </label>
-
-              <textarea
+              <Input
+                as="textarea"
                 id="statusNote"
+                name="statusNote"
+                label="Note (Optional)"
                 rows={3}
                 value={note}
                 onChange={(event) => setNote(event.target.value)}
-                placeholder="Add an optional note..."
                 disabled={statusPending}
-                className="w-full resize-y rounded-md border border-neutral-300 bg-white px-3 py-2.5 text-sm text-neutral-900 outline-none transition-colors focus:border-black disabled:opacity-60"
               />
             </div>
 

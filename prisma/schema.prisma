@@ -35,6 +35,11 @@ enum OpportunityStatus {
   SCHEDULED_TO_REOPEN
 }
 
+enum OpportunityCustomerSource {
+  POSTGRES
+  SERVICETITAN
+}
+
 enum FollowUpStatus {
   PENDING
   COMPLETED
@@ -164,9 +169,13 @@ model Opportunity {
   titanEstimateId String? @unique
   titanJobId      String? @unique
 
-  // Customer relationship
-  customerId String
-  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  // customerId is source-specific: Customer.id for PostgreSQL customers or
+  // the ServiceTitan customer ID for ServiceTitan customers.
+  customerId         String
+  customerSource     OpportunityCustomerSource @default(POSTGRES)
+  localCustomerId    String?
+  customer           Customer? @relation(fields: [localCustomerId], references: [id], onDelete: Restrict)
+  customerSnapshot   Json?
 
   // Opportunity details
   opportunityDate DateTime
@@ -202,7 +211,8 @@ model Opportunity {
   followUps        FollowUp[]
   activities       Activity[]
 
-  @@index([customerId])
+  @@index([customerId, customerSource])
+  @@index([localCustomerId])
   @@index([assignedToId])
   @@index([createdById])
   @@index([closedById])

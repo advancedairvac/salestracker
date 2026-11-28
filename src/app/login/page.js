@@ -3,6 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import Breadcrumbs from "@/components/ui/breadcrumbs";
+import Input from "@/components/ui/input";
 import AppFooter from "@/components/layout/app-footer";
 import { getAuthenticatedUser } from "@/lib/auth";
 
@@ -60,7 +61,8 @@ export default async function LoginPage({ searchParams }) {
 
               {/* Username */}
 
-              <input
+              <Input
+                variant="plain"
                 id="username"
                 name="username"
                 type="text"
@@ -68,18 +70,13 @@ export default async function LoginPage({ searchParams }) {
                 autoComplete="username"
                 aria-label="Username or email"
                 required
-                className={[
-                  "min-h-[42px] w-full rounded-none",
-                  "border border-black bg-white px-3 py-2",
-                  "text-sm text-black placeholder:text-black",
-                  "outline-none focus:border-black focus:outline-none",
-                  "focus:ring-0",
-                ].join(" ")}
+                className="!min-h-[42px] !border-black !px-3 !py-2 placeholder:text-black focus:outline-none focus:ring-0"
               />
 
               {/* Password */}
 
-              <input
+              <Input
+                variant="plain"
                 id="password"
                 name="password"
                 type="password"
@@ -87,13 +84,7 @@ export default async function LoginPage({ searchParams }) {
                 autoComplete="current-password"
                 aria-label="Password"
                 required
-                className={[
-                  "min-h-[42px] w-full rounded-none",
-                  "border border-black bg-white px-3 py-2",
-                  "text-sm text-black placeholder:text-black",
-                  "outline-none focus:border-black focus:outline-none",
-                  "focus:ring-0",
-                ].join(" ")}
+                className="!min-h-[42px] !border-black !px-3 !py-2 placeholder:text-black focus:outline-none focus:ring-0"
               />
 
               {/* Submit Button */}

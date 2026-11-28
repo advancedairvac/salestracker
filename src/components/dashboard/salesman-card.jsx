@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { formatCurrency } from "@/lib/format/currency";
 
 export default function SalesmanCard({
   id,
@@ -25,13 +26,6 @@ export default function SalesmanCard({
       : 0;
 
   const safeCloseRate = Math.max(0, Math.min(Number(closeRate) || 0, 100));
-
-  const formatAmount = (amount) => {
-    return `${currency}${new Intl.NumberFormat("en-US", {
-      notation: "compact",
-      maximumFractionDigits: 1,
-    }).format(Number(amount) || 0)}`;
-  };
 
   const cardClass = `
     block w-full border border-[#d5d5d5] bg-white
@@ -79,11 +73,11 @@ export default function SalesmanCard({
           {/* Revenue / Commission */}
           <div className="flex items-baseline gap-1 whitespace-nowrap">
             <strong className="text-sm font-extrabold text-black sm:text-[15px]">
-              {formatAmount(safeRevenue)}
+              {formatCurrency(safeRevenue, { currencySymbol: currency, notation: "compact", maximumFractionDigits: 1 })}
             </strong>
 
             <span className="text-xs text-[#333] sm:text-sm">
-              / {formatAmount(safeCommission)}
+              / {formatCurrency(safeCommission, { currencySymbol: currency, notation: "compact", maximumFractionDigits: 1 })}
             </span>
           </div>
 

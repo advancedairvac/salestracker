@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth";
+import { getOpportunityCustomer } from "@/lib/opportunities/opportunity-customer";
 
 import { updateOpportunity } from "../actions";
 
@@ -84,20 +85,24 @@ export default async function EditOpportunityPage({ params }) {
   // PREPARE INITIAL FORM VALUES
   // ============================================
 
+  const customer = getOpportunityCustomer(opportunity);
   const initialValues = {
     opportunityDate: formatDateForInput(opportunity.opportunityDate),
 
-    stCustomerId: opportunity.customer?.stCustomerId || "",
+    stCustomerId:
+      opportunity.customerSource === "SERVICETITAN"
+        ? opportunity.customerId
+        : customer?.stCustomerId || "",
 
-    businessName: opportunity.customer?.businessName || "",
-    pocName: opportunity.customer?.pocName || "",
+    businessName: customer?.businessName || "",
+    pocName: customer?.pocName || "",
 
     jobType: opportunity.jobType || "",
 
-    email: opportunity.customer?.email || "",
+    email: customer?.email || "",
     textMessage: opportunity.textMessage || "",
-    phone: opportunity.customer?.phone || "",
-    location: opportunity.customer?.location || "",
+    phone: customer?.phone || "",
+    location: customer?.location || "",
 
     value: Number(opportunity.value || 0),
 

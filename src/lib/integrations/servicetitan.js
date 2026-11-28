@@ -10,6 +10,15 @@ const SERVICE_TITAN_CONFIG = {
       : "https://auth-integration.servicetitan.io/connect/token",
 };
 
+const API_CACHE_TTL_MS = 60 * 1000;
+const CUSTOMER_LIST_CACHE_TTL_MS = 13 * 60 * 1000;
+const API_CACHE_MAX_ENTRIES = 600;
+const serviceTitanApiCache = new Map();
+let allCustomersCache = null;
+let allCustomersCacheExpiresAt = 0;
+let allCustomersRequestPromise = null;
+let allCustomersCacheGeneration = 0;
+
 // ============================================
 // ENVIRONMENT VARIABLES
 // ============================================
@@ -109,6 +118,138 @@ function invalidateAccessToken(accessToken) {
 // SHARED API REQUEST
 // ============================================
 
+function startCachedServiceTitanRequest(cacheKey, makeRequest, existing = null) {
+  const entry = existing || {
+    value: undefined,
+    expiresAt: Number.POSITIVE_INFINITY,
+    promise: null,
+  };
+
+  entry.expiresAt = Number.POSITIVE_INFINITY;
+  const startedAt = performance.now();
+  entry.promise = makeRequest()
+    .then((result) => {
+      entry.value = result;
+      entry.updatedAt = Date.now();
+      entry.syncDurationMs = Math.round(performance.now() - startedAt);
+      entry.rowCount = Array.isArray(result?.data)
+        ? result.data.length
+        : Array.isArray(result?.customers)
+          ? result.customers.length
+          : 1;
+      const reportedTotalCount =
+        result?.totalCount === undefined || result?.totalCount === null
+          ? Number.NaN
+          : Number(result.totalCount);
+      entry.reportedTotalCount = Number.isFinite(reportedTotalCount)
+        ? reportedTotalCount
+        : null;
+      entry.expiresAt = Date.now() + API_CACHE_TTL_MS;
+      entry.promise = null;
+      return result;
+    })
+    .catch((error) => {
+      if (entry.value === undefined) {
+        if (serviceTitanApiCache.get(cacheKey) === entry) {
+          serviceTitanApiCache.delete(cacheKey);
+        }
+      } else {
+        entry.expiresAt = Date.now() + 5000;
+        entry.promise = null;
+      }
+
+      throw error;
+    });
+
+  serviceTitanApiCache.set(cacheKey, entry);
+
+  while (serviceTitanApiCache.size > API_CACHE_MAX_ENTRIES) {
+    const oldestKey = serviceTitanApiCache.keys().next().value;
+    if (oldestKey === cacheKey) break;
+    serviceTitanApiCache.delete(oldestKey);
+  }
+
+  return entry.promise;
+}
+
+export function clearServiceTitanApiCache(collection = "all") {
+  const selected = String(collection || "all").toLowerCase();
+  let removedCount = 0;
+
+  for (const key of serviceTitanApiCache.keys()) {
+    let remove = selected === "all";
+
+    if (!remove) {
+      try {
+        const pathname = new URL(key).pathname.toLowerCase();
+        remove = pathname.split("/").includes(selected);
+      } catch {
+        remove = true;
+      }
+    }
+
+    if (remove) {
+      serviceTitanApiCache.delete(key);
+      removedCount += 1;
+    }
+  }
+
+  if (selected === "all" || selected === "customers") {
+    allCustomersCacheGeneration += 1;
+    allCustomersCache = null;
+    allCustomersCacheExpiresAt = 0;
+    allCustomersRequestPromise = null;
+  }
+
+  return { removedCount, collection: selected };
+}
+
+export function getServiceTitanApiCacheMetadata(collection = "all") {
+  const selected = String(collection || "all").toLowerCase();
+  const entries = [...serviceTitanApiCache.entries()]
+    .filter(([key, entry]) => {
+      if (entry.expiresAt <= Date.now() && !entry.promise) return false;
+      if (selected === "all") return true;
+
+      try {
+        return new URL(key).pathname.toLowerCase().split("/").includes(selected);
+      } catch {
+        return false;
+      }
+    })
+    .map(([, entry]) => entry);
+  const latestEntry = entries.reduce(
+    (latest, entry) =>
+      !latest || (entry.updatedAt || 0) > (latest.updatedAt || 0)
+        ? entry
+        : latest,
+    null,
+  );
+
+  return {
+    status: entries.some((entry) => entry.promise)
+      ? "refreshing"
+      : entries.length
+        ? "available"
+        : "idle",
+    updatedAt: entries.reduce(
+      (latest, entry) => Math.max(latest, entry.updatedAt || 0),
+      0,
+    ) || null,
+    totalCount:
+      selected === "estimates"
+        ? entries.reduce(
+            (total, entry) =>
+              Math.max(total, entry.reportedTotalCount || 0),
+            0,
+          )
+        : entries.reduce((total, entry) => total + (entry.rowCount || 0), 0),
+    queryCount: entries.length,
+    storage: "Server memory",
+    syncDurationMs: latestEntry?.syncDurationMs ?? null,
+  };
+}
+
 export async function serviceTitanRequest(path, params = {}) {
   const tenantId = getRequiredEnv("SERVICETITAN_TENANT_ID");
   const appKey = getRequiredEnv("SERVICETITAN_APP_KEY");
@@ -123,6 +264,29 @@ export async function serviceTitanRequest(path, params = {}) {
     }
   });
 
+  const orderedParams = [...url.searchParams.entries()].sort(([left], [right]) =>
+    left.localeCompare(right),
+  );
+  url.search = new URLSearchParams(orderedParams).toString();
+
+  const cacheKey = url.toString();
+  const now = Date.now();
+
+  for (const [key, entry] of serviceTitanApiCache) {
+    if (entry.expiresAt <= now) serviceTitanApiCache.delete(key);
+  }
+
+  const cached = serviceTitanApiCache.get(cacheKey);
+
+  if (cached && cached.expiresAt > now && cached.value !== undefined) {
+    return cached.value;
+  }
+
+  if (cached?.promise) {
+    if (cached.value !== undefined) return cached.value;
+    return cached.promise;
+  }
+
   async function makeRequest(accessToken) {
     return fetch(url, {
       method: "GET",
@@ -135,32 +299,36 @@ export async function serviceTitanRequest(path, params = {}) {
     });
   }
 
-  let accessToken = await getAccessToken();
+  const requestData = async () => {
+    let accessToken = await getAccessToken();
 
-  let response = await makeRequest(accessToken);
+    let response = await makeRequest(accessToken);
 
-  if (response.status === 401) {
-    invalidateAccessToken(accessToken);
+    if (response.status === 401) {
+      invalidateAccessToken(accessToken);
 
-    accessToken = await getAccessToken();
+      accessToken = await getAccessToken();
 
-    response = await makeRequest(accessToken);
-  }
+      response = await makeRequest(accessToken);
+    }
 
-  const result = await response.json().catch(() => null);
+    const result = await response.json().catch(() => null);
 
-  if (!response.ok || !result) {
-    throw new Error(
-      `ServiceTitan API request failed (${response.status}): ${
-        result?.title ||
-        result?.message ||
-        result?.error ||
-        "Unable to fetch ServiceTitan data."
-      }`,
-    );
-  }
+    if (!response.ok || !result) {
+      throw new Error(
+        `ServiceTitan API request failed (${response.status}): ${
+          result?.title ||
+          result?.message ||
+          result?.error ||
+          "Unable to fetch ServiceTitan data."
+        }`,
+      );
+    }
 
-  return result;
+    return result;
+  };
+
+  return startCachedServiceTitanRequest(cacheKey, requestData, cached);
 }
 
 // ============================================
@@ -481,12 +649,88 @@ export async function getAllServiceTitanCustomers({
   pageSize = 100,
   maxPages = 100,
 } = {}) {
-  return fetchAllPages(
-    (page, size) =>
-      getServiceTitanCustomers({
-        page,
-        pageSize: size,
-      }),
-    { pageSize, maxPages },
-  );
+  const now = Date.now();
+
+  if (allCustomersCache && now < allCustomersCacheExpiresAt) {
+    return allCustomersCache;
+  }
+
+  if (allCustomersRequestPromise) {
+    return allCustomersRequestPromise;
+  }
+
+  const generationAtStart = allCustomersCacheGeneration;
+  let requestPromise;
+
+  requestPromise = fetchAllServiceTitanCustomers({ pageSize, maxPages })
+    .then((customers) => {
+      if (allCustomersCacheGeneration === generationAtStart) {
+        allCustomersCache = customers;
+        allCustomersCacheExpiresAt = Date.now() + CUSTOMER_LIST_CACHE_TTL_MS;
+      }
+      return customers;
+    })
+    .finally(() => {
+      if (allCustomersRequestPromise === requestPromise) {
+        allCustomersRequestPromise = null;
+      }
+    });
+
+  allCustomersRequestPromise = requestPromise;
+  return requestPromise;
+}
+
+async function fetchAllServiceTitanCustomers({ pageSize, maxPages }) {
+  const firstPage = await getServiceTitanCustomers({ page: 1, pageSize });
+  const firstItems = Array.isArray(firstPage.data) ? firstPage.data : [];
+  const reportedTotal = Number(firstPage.totalCount);
+
+  if (!Number.isFinite(reportedTotal) || reportedTotal < firstItems.length) {
+    const customers = [...firstItems];
+    let page = 2;
+
+    while (page <= maxPages) {
+      const result = await getServiceTitanCustomers({ page, pageSize });
+      const items = Array.isArray(result.data) ? result.data : [];
+      customers.push(...items);
+
+      if (
+        items.length === 0 ||
+        result.hasMore === false ||
+        (result.hasMore === undefined && items.length < pageSize)
+      ) {
+        break;
+      }
+      page += 1;
+    }
+
+    return customers;
+  }
+
+  const pageCount = Math.min(maxPages, Math.ceil(reportedTotal / pageSize));
+  const customers = [...firstItems];
+  const pageConcurrency = 3;
+
+  for (
+    let firstPageNumber = 2;
+    firstPageNumber <= pageCount;
+    firstPageNumber += pageConcurrency
+  ) {
+    const pageNumbers = Array.from(
+      { length: Math.min(pageConcurrency, pageCount - firstPageNumber + 1) },
+      (_, index) => firstPageNumber + index,
+    );
+    const responses = await Promise.all(
+      pageNumbers.map((page) => getServiceTitanCustomers({ page, pageSize })),
+    );
+
+    for (const response of responses) {
+      if (!Array.isArray(response.data)) {
+        throw new Error("Invalid ServiceTitan customers page response.");
+      }
+      customers.push(...response.data);
+    }
+  }
+
+  return customers;
 }

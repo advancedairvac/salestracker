@@ -1,19 +1,16 @@
 "use client";
 
+import { getOpportunityCustomer } from "@/lib/opportunities/opportunity-customer";
+
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 import TablePagination from "@/components/dashboard/table-pagination";
+import { formatCurrency } from "@/lib/format/currency";
 
 // ============================================
 // HELPERS
 // ============================================
-
-function formatCurrency(amount, currency = "$") {
-  return `${currency}${new Intl.NumberFormat("en-US", {
-    maximumFractionDigits: 0,
-  }).format(Number(amount) || 0)}`;
-}
 
 function formatDueDate(date) {
   const value = new Date(date);
@@ -170,7 +167,7 @@ export default function FollowUpsTable({
             {paginatedFollowUps.length > 0 ? (
               paginatedFollowUps.map((followUp) => {
                 const opportunity = followUp.opportunity;
-                const customer = opportunity?.customer;
+                const customer = getOpportunityCustomer(opportunity);
 
                 const customerName =
                   customer?.businessName?.trim() ||
@@ -262,10 +259,10 @@ export default function FollowUpsTable({
                     {/* COMMISSION ESTIMATE */}
 
                     <td className="whitespace-nowrap px-3 py-2 text-xs text-black lg:text-sm">
-                      {formatCurrency(
-                        followUp.commissionEstimate || 0,
-                        currency,
-                      )}
+                      {formatCurrency(followUp.commissionEstimate || 0, {
+                        currencySymbol: currency,
+                        maximumFractionDigits: 0,
+                      })}
                     </td>
                   </tr>
                 );

@@ -364,22 +364,44 @@ export async function updateFollowUpModeService({
         );
 
         for (const item of standardFollowUps) {
-          await tx.followUp.updateMany({
+          const existing = await tx.followUp.findUnique({
             where: {
-              opportunityId: opportunity.id,
-              scheduleId: schedule.id,
-              scheduleType: "STANDARD",
-              sequence: item.sequence,
-              status: "PENDING",
-            },
-            data: {
-              eventType: item.eventType,
-              type: item.type,
-              dueAt: item.dueAt,
-              assignedToId: opportunity.assignedToId,
-              isActive: true,
+              scheduleId_sequence: {
+                scheduleId: schedule.id,
+                sequence: item.sequence,
+              },
             },
           });
+
+          if (existing?.status === "PENDING") {
+            await tx.followUp.update({
+              where: { id: existing.id },
+              data: {
+                eventType: item.eventType,
+                type: item.type,
+                dueAt: item.dueAt,
+                assignedToId: opportunity.assignedToId,
+                scheduleType: "STANDARD",
+                isActive: true,
+              },
+            });
+          } else if (!existing) {
+            await tx.followUp.create({
+              data: {
+                opportunityId: opportunity.id,
+                scheduleId: schedule.id,
+                assignedToId: opportunity.assignedToId,
+                eventType: item.eventType,
+                type: item.type,
+                sequence: item.sequence,
+                dueAt: item.dueAt,
+                status: "PENDING",
+                scheduleType: "STANDARD",
+                isActive: true,
+                notes: "Automatically scheduled standard follow-up.",
+              },
+            });
+          }
         }
 
         // Deactivate pending manual follow-ups.

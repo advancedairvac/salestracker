@@ -16,11 +16,19 @@ export async function GET() {
     );
   }
 
+  if (!["ADMIN", "SALESPERSON"].includes(user.role)) {
+    return Response.json(
+      { success: false, message: "You do not have permission." },
+      { status: 403, headers: { "Cache-Control": "private, no-store" } },
+    );
+  }
+
   try {
     const dateRanges = getRevenueDateRanges();
     const jobs = await getRevenueJobsForRange({
       start: dateRanges.yearStart,
       endExclusive: dateRanges.nextYearStart,
+      waitForFresh: true,
     });
     const { todayRevenue, monthRevenue, yearRevenue } = getRevenueMetrics({
       jobs,

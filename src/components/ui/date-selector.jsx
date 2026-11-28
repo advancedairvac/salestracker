@@ -23,6 +23,7 @@ export default function DateSelector({
   className = "",
   disabled = false,
   compact = false,
+  fullWidth = false,
 }) {
   const initialRange = getInitialRange();
 
@@ -200,7 +201,9 @@ export default function DateSelector({
   return (
     <div
       ref={containerRef}
-      className={`relative z-30 lg:w-1/2 w-full lg:pr-1.5 ${className}`}
+      className={`relative z-30 w-full ${
+        fullWidth ? "" : "lg:w-1/2 lg:pr-1.5"
+      } ${className}`}
     >
       {/* DATE SELECTOR TRIGGER */}
 
@@ -235,7 +238,7 @@ export default function DateSelector({
             name="chevronDown"
             className={[
               "shrink-0 text-[#555]",
-              "transition-transform duration-200",
+              "transition-transform duration-200 ease-in-out",
               chevronClass,
               isOpen ? "rotate-180" : "",
             ].join(" ")}
@@ -246,7 +249,11 @@ export default function DateSelector({
       {/* DROPDOWN */}
 
       {isOpen && (
-        <div className="absolute left-0 right-0 top-full z-50 border border-t-0 border-[#d5d5d5] bg-white shadow-md mr-[6px]">
+        <div
+          className={`absolute left-0 right-0 top-full z-50 border border-t-0 border-[#d5d5d5] bg-white shadow-md ${
+            fullWidth ? "" : "mr-[6px]"
+          }`}
+        >
           <div className="max-h-[min(75vh,700px)] overflow-y-auto overscroll-contain px-5 pb-4 pt-1 sm:px-6">
             {!customMode ? (
               <div className="flex flex-col">

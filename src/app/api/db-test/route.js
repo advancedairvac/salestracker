@@ -1,36 +1,28 @@
-
-import { NextResponse } from "next/server";
-import { PrismaPg } from "@prisma/adapter-pg";
-import { PrismaClient } from "@/generated/prisma/client";
+import { prisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const adapter = new PrismaPg({
-    connectionString: process.env.DATABASE_URL,
-  });
-
-  const prisma = new PrismaClient({ adapter });
-
   try {
+    // This diagnostic intentionally reaches PostgreSQL directly so it reports
+    // the live connection state rather than a cached application read.
     const result = await prisma.$queryRaw`
       SELECT current_database() AS database
     `;
 
-    return NextResponse.json({
+    return Response.json({
       success: true,
       message: "Prisma connection successful!",
       database: result[0].database,
     });
   } catch (error) {
-    return NextResponse.json(
+    return Response.json(
       {
         success: false,
         message: error.message,
       },
-      { status: 500 }
+      { status: 500 },
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }

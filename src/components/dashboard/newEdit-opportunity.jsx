@@ -4,6 +4,11 @@ import { useActionState, useEffect, useState } from "react";
 
 import Input from "@/components/ui/input";
 import CustomerSearch from "@/components/ui/customer-search";
+import {
+  CUSTOMER_CACHE_TTL_MS,
+  getCustomersCache,
+  subscribeToCustomerCache,
+} from "@/lib/cache/servicetitan/customer-cache";
 
 const initialState = {
   error: null,
@@ -72,132 +77,6 @@ function formatDollarValue(value) {
 }
 
 /* -------------------------------------------------------
-   SHARED FORM STYLES
-------------------------------------------------------- */
-
-const textareaClass = [
-  "peer min-h-[58px] w-full resize-y rounded-none",
-  "border border-[#d9d9d9] bg-white",
-  "px-3 pt-[20px] pb-2",
-  "text-xs font-normal text-[#111111] lg:text-sm",
-  "outline-none transition-colors",
-  "focus:border-[#111111]",
-].join(" ");
-
-const labelBase = [
-  "pointer-events-none absolute left-3 z-[1]",
-  "font-medium uppercase tracking-[0.02em]",
-  "text-[#565656] transition-all duration-150",
-].join(" ");
-
-/* -------------------------------------------------------
-   FLOATING SELECT
-------------------------------------------------------- */
-
-function FloatingSelect({
-  name,
-  label,
-  value = "",
-  onChange,
-  children,
-  required = false,
-}) {
-  const [focused, setFocused] = useState(false);
-
-  const floating = focused || value !== "";
-
-  return (
-    <div className="relative w-full">
-      <select
-        id={name}
-        name={name}
-        value={value}
-        onChange={onChange}
-        onFocus={() => setFocused(true)}
-        onBlur={() => setFocused(false)}
-        required={required}
-        className={[
-          "peer h-[50px] w-full rounded-none",
-          "border border-[#d9d9d9] bg-white",
-          "px-3 pt-[15px] pb-[4px]",
-          "text-xs font-normal outline-none transition-colors",
-          "focus:border-[#111111]",
-          "appearance-none",
-          floating ? "text-[#111111]" : "text-transparent",
-        ].join(" ")}
-      >
-        <option value="" disabled hidden></option>
-        {children}
-      </select>
-
-      <label
-        htmlFor={name}
-        className={`${labelBase} ${
-          floating
-            ? "top-[6px] text-[10px]"
-            : "top-1/2 -translate-y-1/2 text-[10px]"
-        }`}
-      >
-        {label}
-
-        {required && (
-          <span className="ml-1 text-red-600" aria-hidden="true">
-            *
-          </span>
-        )}
-      </label>
-
-      <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#666666]">
-        <svg
-          width="11"
-          height="7"
-          viewBox="0 0 11 7"
-          fill="none"
-          aria-hidden="true"
-        >
-          <path d="M1 1L5.5 5.5L10 1" stroke="currentColor" strokeWidth="1" />
-        </svg>
-      </span>
-    </div>
-  );
-}
-
-/* -------------------------------------------------------
-   FLOATING TEXTAREA
-------------------------------------------------------- */
-
-function FloatingTextarea({ name, label, value = "", onChange }) {
-  const [focused, setFocused] = useState(false);
-
-  const floating = focused || value !== "";
-
-  return (
-    <div className="relative w-full">
-      <textarea
-        id={name}
-        name={name}
-        value={value}
-        onChange={onChange}
-        onFocus={() => setFocused(true)}
-        onBlur={() => setFocused(false)}
-        placeholder=" "
-        rows={2}
-        className={textareaClass}
-      />
-
-      <label
-        htmlFor={name}
-        className={`${labelBase} ${
-          floating ? "top-[6px] text-[10px]" : "top-[16px] text-[10px]"
-        }`}
-      >
-        {label}
-      </label>
-    </div>
-  );
-}
-
-/* -------------------------------------------------------
    NEW / EDIT OPPORTUNITY FORM
 ------------------------------------------------------- */
 
@@ -224,6 +103,46 @@ export default function NewEditOpportunity({
   const [values, setValues] = useState(() =>
     prepareInitialValues(today, initialValues, user),
   );
+  const [cachedTitanCustomers, setCachedTitanCustomers] = useState([]);
+  const [titanCustomerCacheVerified, setTitanCustomerCacheVerified] =
+    useState(false);
+  const [cachedDuplicateCustomer, setCachedDuplicateCustomer] = useState(null);
+
+  useEffect(() => {
+    let active = true;
+
+    function applyCache(cache) {
+      if (!active) return;
+
+      if (!Array.isArray(cache?.customers)) {
+        setCachedTitanCustomers([]);
+        setTitanCustomerCacheVerified(false);
+        return;
+      }
+
+      const numericTimestamp = Number(cache.syncedAt);
+      const syncedAt = Number.isFinite(numericTimestamp)
+        ? numericTimestamp
+        : Date.parse(cache.syncedAt || "");
+
+      setCachedTitanCustomers(cache.customers);
+      setTitanCustomerCacheVerified(
+        Number.isFinite(syncedAt) &&
+          syncedAt > 0 &&
+          Date.now() - syncedAt <= CUSTOMER_CACHE_TTL_MS,
+      );
+    }
+
+    const unsubscribe = subscribeToCustomerCache(applyCache);
+    getCustomersCache().then(applyCache).catch((error) => {
+      console.error("Opportunity customer cache read failed:", error);
+    });
+
+    return () => {
+      active = false;
+      unsubscribe();
+    };
+  }, []);
 
   /* -------------------------------------------------------
      ASSIGNMENT OPTIONS
@@ -260,6 +179,7 @@ export default function NewEditOpportunity({
 
   function handleChange(event) {
     const { name, value } = event.target;
+    setCachedDuplicateCustomer(null);
 
     setValues((previous) => ({
       ...previous,
@@ -273,6 +193,7 @@ export default function NewEditOpportunity({
 
   function handleBusinessNameChange(event) {
     const value = event.target.value;
+    setCachedDuplicateCustomer(null);
 
     setValues((previous) => ({
       ...previous,
@@ -287,12 +208,19 @@ export default function NewEditOpportunity({
   ------------------------------------------------------- */
 
   function handleCustomerSelect(customer) {
+    setCachedDuplicateCustomer(null);
+
+    const hasBusinessName = Boolean(String(customer.businessName || "").trim());
+    const businessName =
+      customer.businessName || customer.pocName || customer.name || "";
+    const pocName = hasBusinessName ? customer.pocName || "" : "";
+
     setValues((previous) => ({
       ...previous,
       customerId: "",
       stCustomerId: customer.stCustomerId || "",
-      businessName: customer.businessName || "",
-      pocName: customer.pocName || "",
+      businessName,
+      pocName,
       email: customer.email || "",
       phone: customer.phone || "",
       location: customer.location || "",
@@ -305,11 +233,43 @@ export default function NewEditOpportunity({
 
   function handlePhoneChange(event) {
     const numericValue = event.target.value.replace(/\D/g, "");
+    setCachedDuplicateCustomer(null);
 
     setValues((previous) => ({
       ...previous,
       phone: numericValue,
     }));
+  }
+
+  function handleSubmit(event) {
+    if (cachedTitanCustomers.length === 0) return;
+
+    const email = String(values.email || "").trim().toLowerCase();
+    const phone = String(values.phone || "").replace(/\D/g, "");
+
+    if (!email && phone.length < 7) return;
+
+    const duplicate = cachedTitanCustomers.find((customer) => {
+      const customerId = String(customer.stCustomerId || customer.id || "");
+      if (values.stCustomerId && customerId === String(values.stCustomerId)) {
+        return false;
+      }
+
+      const sameEmail =
+        email && String(customer.email || "").trim().toLowerCase() === email;
+      const candidatePhone = String(customer.phone || "").replace(/\D/g, "");
+      const samePhone =
+        phone.length >= 7 &&
+        candidatePhone.length >= 7 &&
+        candidatePhone === phone;
+
+      return Boolean(sameEmail || samePhone);
+    });
+
+    if (duplicate) {
+      event.preventDefault();
+      setCachedDuplicateCustomer(duplicate);
+    }
   }
 
   /* -------------------------------------------------------
@@ -329,6 +289,10 @@ export default function NewEditOpportunity({
     opportunity: "Opportunity not found.",
     status: "This opportunity can no longer be edited.",
     permission: "You do not have permission to perform this action.",
+    duplicateCustomer:
+      "This customer appears to already exist in ServiceTitan. Search for the existing customer and select it before continuing.",
+    customerLookup:
+      "We could not verify the customer with ServiceTitan. Please try again.",
   };
 
   /* -------------------------------------------------------
@@ -347,7 +311,35 @@ export default function NewEditOpportunity({
         </div>
       )}
 
-      <form action={formAction} className="flex w-full flex-col gap-[9px]">
+      {cachedDuplicateCustomer && (
+        <div
+          role="alert"
+          className="mb-4 flex flex-wrap items-center justify-between gap-3 border border-[#f1caca] bg-[#fff5f5] px-3 py-2.5 text-xs font-normal text-[#b42318] lg:text-sm"
+        >
+          <span>
+            This customer appears to already exist in ServiceTitan. Select the
+            existing customer to continue.
+          </span>
+          <button
+            type="button"
+            onClick={() => handleCustomerSelect(cachedDuplicateCustomer)}
+            className="border border-[#b42318] px-3 py-1.5 font-semibold text-[#b42318] transition-colors hover:bg-[#b42318] hover:text-white"
+          >
+            Use existing customer
+          </button>
+        </div>
+      )}
+
+      <form
+        action={formAction}
+        onSubmit={handleSubmit}
+        className="flex w-full flex-col gap-[9px]"
+      >
+        <input
+          type="hidden"
+          name="titanCustomerCacheVerified"
+          value={titanCustomerCacheVerified ? "true" : "false"}
+        />
         {/* OPPORTUNITY ID */}
 
         {isEdit && (
@@ -400,7 +392,8 @@ export default function NewEditOpportunity({
 
         {/* JOB TYPE */}
 
-        <FloatingSelect
+        <Input
+          as="select"
           name="jobType"
           label="Job Type"
           value={values.jobType}
@@ -415,7 +408,7 @@ export default function NewEditOpportunity({
           <option value="AUTOMOTIVE">AUTOMOTIVE</option>
           <option value="HVACR">HVACR</option>
           <option value="OTHER">OTHER</option>
-        </FloatingSelect>
+        </Input>
 
         {/* EMAIL */}
 
@@ -429,11 +422,13 @@ export default function NewEditOpportunity({
 
         {/* TEXT MESSAGE */}
 
-        <FloatingTextarea
+        <Input
+          as="textarea"
           name="textMessage"
           label="Text Message"
           value={values.textMessage}
           onChange={handleChange}
+          rows={2}
         />
 
         {/* PHONE NUMBER */}
@@ -506,7 +501,8 @@ export default function NewEditOpportunity({
         {/* ASSIGNED TO */}
 
         {isAdmin ? (
-          <FloatingSelect
+          <Input
+            as="select"
             name="assignedToId"
             label="Assigned To"
             value={values.assignedToId}
@@ -518,7 +514,7 @@ export default function NewEditOpportunity({
                 {item.id === user.id ? `${item.name} (You)` : item.name}
               </option>
             ))}
-          </FloatingSelect>
+          </Input>
         ) : (
           <input type="hidden" name="assignedToId" value={user.id} />
         )}

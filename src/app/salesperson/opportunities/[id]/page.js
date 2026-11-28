@@ -34,12 +34,13 @@ export default async function SalespersonOpportunityDetailsPage({ params }) {
 
   // ============================================
   // FETCH OPPORTUNITY
-  // All Salespersons can view all opportunities.
+  // Salespersons can only view opportunities assigned to themselves.
   // ============================================
 
-  const opportunity = await prisma.opportunity.findUnique({
+  const opportunity = await prisma.opportunity.findFirst({
     where: {
       id,
+      assignedToId: user.id,
     },
     include: {
       customer: true,
@@ -76,10 +77,6 @@ export default async function SalespersonOpportunityDetailsPage({ params }) {
   if (!opportunity) {
     notFound();
   }
-
-  // ============================================
-  // CHECK MANAGEMENT PERMISSION
-  // ============================================
 
   const canManage = opportunity.assignedToId === user.id;
 

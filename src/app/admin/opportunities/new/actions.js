@@ -57,6 +57,7 @@ export async function createOpportunity(previousState, formData) {
   revalidatePath("/admin");
   revalidatePath("/admin/opportunities");
   revalidatePath("/admin/pipeline");
+  revalidatePath(`/admin/opportunities/${result.opportunityId}`);
 
-  redirect("/admin/opportunities?created=1");
+  redirect(`/admin/opportunities/${result.opportunityId}`);
 }

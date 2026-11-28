@@ -34,7 +34,7 @@ export default function SalespersonSettingsPage() {
         {/* GENERAL SETTINGS */}
 
         <div className="w-full">
-          <SettingsContent />
+          <SettingsContent role="SALESPERSON" />
         </div>
       </section>
 

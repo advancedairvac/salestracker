@@ -14,6 +14,15 @@ const CUSTOMER_LOOKUP_CONCURRENCY = 10;
 
 const customerCache = new Map();
 const customerRequests = new Map();
+let customerCacheGeneration = 0;
+
+export function clearServiceTitanCustomerCache() {
+  customerCacheGeneration += 1;
+  const removedCount = customerCache.size;
+  customerCache.clear();
+  customerRequests.clear();
+  return { removedCount };
+}
 
 // ============================================
 // GET CUSTOMER NAME
@@ -57,7 +66,10 @@ export async function getServiceTitanCustomerById(customerId) {
     return customerRequests.get(id);
   }
 
-  const requestPromise = (async () => {
+  const generationAtStart = customerCacheGeneration;
+  let requestPromise;
+
+  requestPromise = (async () => {
     try {
       const customer = await serviceTitanRequest(
         `/crm/v2/tenant/{tenant}/customers/${encodeURIComponent(id)}`,
@@ -67,14 +79,19 @@ export async function getServiceTitanCustomerById(customerId) {
         return null;
       }
 
-      customerCache.set(id, {
-        data: customer,
-        expiresAt: Date.now() + CUSTOMER_CACHE_TTL,
-      });
+      if (customerCacheGeneration === generationAtStart) {
+        customerCache.set(id, {
+          data: customer,
+          expiresAt: Date.now() + CUSTOMER_CACHE_TTL,
+          updatedAt: Date.now(),
+        });
+      }
 
       return customer;
     } finally {
-      customerRequests.delete(id);
+      if (customerRequests.get(id) === requestPromise) {
+        customerRequests.delete(id);
+      }
     }
   })();
 

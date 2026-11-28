@@ -39,6 +39,8 @@ export type OpportunityMinAggregateOutputType = {
   titanEstimateId: string | null
   titanJobId: string | null
   customerId: string | null
+  customerSource: $Enums.OpportunityCustomerSource | null
+  localCustomerId: string | null
   opportunityDate: Date | null
   jobType: string | null
   textMessage: string | null
@@ -60,6 +62,8 @@ export type OpportunityMaxAggregateOutputType = {
   titanEstimateId: string | null
   titanJobId: string | null
   customerId: string | null
+  customerSource: $Enums.OpportunityCustomerSource | null
+  localCustomerId: string | null
   opportunityDate: Date | null
   jobType: string | null
   textMessage: string | null
@@ -81,6 +85,9 @@ export type OpportunityCountAggregateOutputType = {
   titanEstimateId: number
   titanJobId: number
   customerId: number
+  customerSource: number
+  localCustomerId: number
+  customerSnapshot: number
   opportunityDate: number
   jobType: number
   textMessage: number
@@ -112,6 +119,8 @@ export type OpportunityMinAggregateInputType = {
   titanEstimateId?: true
   titanJobId?: true
   customerId?: true
+  customerSource?: true
+  localCustomerId?: true
   opportunityDate?: true
   jobType?: true
   textMessage?: true
@@ -133,6 +142,8 @@ export type OpportunityMaxAggregateInputType = {
   titanEstimateId?: true
   titanJobId?: true
   customerId?: true
+  customerSource?: true
+  localCustomerId?: true
   opportunityDate?: true
   jobType?: true
   textMessage?: true
@@ -154,6 +165,9 @@ export type OpportunityCountAggregateInputType = {
   titanEstimateId?: true
   titanJobId?: true
   customerId?: true
+  customerSource?: true
+  localCustomerId?: true
+  customerSnapshot?: true
   opportunityDate?: true
   jobType?: true
   textMessage?: true
@@ -262,6 +276,9 @@ export type OpportunityGroupByOutputType = {
   titanEstimateId: string | null
   titanJobId: string | null
   customerId: string
+  customerSource: $Enums.OpportunityCustomerSource
+  localCustomerId: string | null
+  customerSnapshot: runtime.JsonValue | null
   opportunityDate: Date
   jobType: string | null
   textMessage: string | null
@@ -306,6 +323,9 @@ export type OpportunityWhereInput = {
   titanEstimateId?: Prisma.StringNullableFilter<"Opportunity"> | string | null
   titanJobId?: Prisma.StringNullableFilter<"Opportunity"> | string | null
   customerId?: Prisma.StringFilter<"Opportunity"> | string
+  customerSource?: Prisma.EnumOpportunityCustomerSourceFilter<"Opportunity"> | $Enums.OpportunityCustomerSource
+  localCustomerId?: Prisma.StringNullableFilter<"Opportunity"> | string | null
+  customerSnapshot?: Prisma.JsonNullableFilter<"Opportunity">
   opportunityDate?: Prisma.DateTimeFilter<"Opportunity"> | Date | string
   jobType?: Prisma.StringNullableFilter<"Opportunity"> | string | null
   textMessage?: Prisma.StringNullableFilter<"Opportunity"> | string | null
@@ -320,7 +340,7 @@ export type OpportunityWhereInput = {
   reopenAt?: Prisma.DateTimeNullableFilter<"Opportunity"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"Opportunity"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Opportunity"> | Date | string
-  customer?: Prisma.XOR<Prisma.CustomerScalarRelationFilter, Prisma.CustomerWhereInput>
+  customer?: Prisma.XOR<Prisma.CustomerNullableScalarRelationFilter, Prisma.CustomerWhereInput> | null
   assignedTo?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
   createdBy?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   closedBy?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
@@ -334,6 +354,9 @@ export type OpportunityOrderByWithRelationInput = {
   titanEstimateId?: Prisma.SortOrderInput | Prisma.SortOrder
   titanJobId?: Prisma.SortOrderInput | Prisma.SortOrder
   customerId?: Prisma.SortOrder
+  customerSource?: Prisma.SortOrder
+  localCustomerId?: Prisma.SortOrderInput | Prisma.SortOrder
+  customerSnapshot?: Prisma.SortOrderInput | Prisma.SortOrder
   opportunityDate?: Prisma.SortOrder
   jobType?: Prisma.SortOrderInput | Prisma.SortOrder
   textMessage?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -365,6 +388,9 @@ export type OpportunityWhereUniqueInput = Prisma.AtLeast<{
   OR?: Prisma.OpportunityWhereInput[]
   NOT?: Prisma.OpportunityWhereInput | Prisma.OpportunityWhereInput[]
   customerId?: Prisma.StringFilter<"Opportunity"> | string
+  customerSource?: Prisma.EnumOpportunityCustomerSourceFilter<"Opportunity"> | $Enums.OpportunityCustomerSource
+  localCustomerId?: Prisma.StringNullableFilter<"Opportunity"> | string | null
+  customerSnapshot?: Prisma.JsonNullableFilter<"Opportunity">
   opportunityDate?: Prisma.DateTimeFilter<"Opportunity"> | Date | string
   jobType?: Prisma.StringNullableFilter<"Opportunity"> | string | null
   textMessage?: Prisma.StringNullableFilter<"Opportunity"> | string | null
@@ -379,7 +405,7 @@ export type OpportunityWhereUniqueInput = Prisma.AtLeast<{
   reopenAt?: Prisma.DateTimeNullableFilter<"Opportunity"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"Opportunity"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Opportunity"> | Date | string
-  customer?: Prisma.XOR<Prisma.CustomerScalarRelationFilter, Prisma.CustomerWhereInput>
+  customer?: Prisma.XOR<Prisma.CustomerNullableScalarRelationFilter, Prisma.CustomerWhereInput> | null
   assignedTo?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
   createdBy?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   closedBy?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
@@ -393,6 +419,9 @@ export type OpportunityOrderByWithAggregationInput = {
   titanEstimateId?: Prisma.SortOrderInput | Prisma.SortOrder
   titanJobId?: Prisma.SortOrderInput | Prisma.SortOrder
   customerId?: Prisma.SortOrder
+  customerSource?: Prisma.SortOrder
+  localCustomerId?: Prisma.SortOrderInput | Prisma.SortOrder
+  customerSnapshot?: Prisma.SortOrderInput | Prisma.SortOrder
   opportunityDate?: Prisma.SortOrder
   jobType?: Prisma.SortOrderInput | Prisma.SortOrder
   textMessage?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -422,6 +451,9 @@ export type OpportunityScalarWhereWithAggregatesInput = {
   titanEstimateId?: Prisma.StringNullableWithAggregatesFilter<"Opportunity"> | string | null
   titanJobId?: Prisma.StringNullableWithAggregatesFilter<"Opportunity"> | string | null
   customerId?: Prisma.StringWithAggregatesFilter<"Opportunity"> | string
+  customerSource?: Prisma.EnumOpportunityCustomerSourceWithAggregatesFilter<"Opportunity"> | $Enums.OpportunityCustomerSource
+  localCustomerId?: Prisma.StringNullableWithAggregatesFilter<"Opportunity"> | string | null
+  customerSnapshot?: Prisma.JsonNullableWithAggregatesFilter<"Opportunity">
   opportunityDate?: Prisma.DateTimeWithAggregatesFilter<"Opportunity"> | Date | string
   jobType?: Prisma.StringNullableWithAggregatesFilter<"Opportunity"> | string | null
   textMessage?: Prisma.StringNullableWithAggregatesFilter<"Opportunity"> | string | null
@@ -442,6 +474,9 @@ export type OpportunityCreateInput = {
   id?: string
   titanEstimateId?: string | null
   titanJobId?: string | null
+  customerId: string
+  customerSource?: $Enums.OpportunityCustomerSource
+  customerSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   opportunityDate: Date | string
   jobType?: string | null
   textMessage?: string | null
@@ -453,7 +488,7 @@ export type OpportunityCreateInput = {
   reopenAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  customer: Prisma.CustomerCreateNestedOneWithoutOpportunitiesInput
+  customer?: Prisma.CustomerCreateNestedOneWithoutOpportunitiesInput
   assignedTo?: Prisma.UserCreateNestedOneWithoutAssignedOpportunitiesInput
   createdBy: Prisma.UserCreateNestedOneWithoutCreatedOpportunitiesInput
   closedBy?: Prisma.UserCreateNestedOneWithoutClosedOpportunitiesInput
@@ -467,6 +502,9 @@ export type OpportunityUncheckedCreateInput = {
   titanEstimateId?: string | null
   titanJobId?: string | null
   customerId: string
+  customerSource?: $Enums.OpportunityCustomerSource
+  localCustomerId?: string | null
+  customerSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   opportunityDate: Date | string
   jobType?: string | null
   textMessage?: string | null
@@ -490,6 +528,9 @@ export type OpportunityUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   titanEstimateId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   titanJobId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  customerId?: Prisma.StringFieldUpdateOperationsInput | string
+  customerSource?: Prisma.EnumOpportunityCustomerSourceFieldUpdateOperationsInput | $Enums.OpportunityCustomerSource
+  customerSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   opportunityDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   jobType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   textMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -501,7 +542,7 @@ export type OpportunityUpdateInput = {
   reopenAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  customer?: Prisma.CustomerUpdateOneRequiredWithoutOpportunitiesNestedInput
+  customer?: Prisma.CustomerUpdateOneWithoutOpportunitiesNestedInput
   assignedTo?: Prisma.UserUpdateOneWithoutAssignedOpportunitiesNestedInput
   createdBy?: Prisma.UserUpdateOneRequiredWithoutCreatedOpportunitiesNestedInput
   closedBy?: Prisma.UserUpdateOneWithoutClosedOpportunitiesNestedInput
@@ -515,6 +556,9 @@ export type OpportunityUncheckedUpdateInput = {
   titanEstimateId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   titanJobId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerId?: Prisma.StringFieldUpdateOperationsInput | string
+  customerSource?: Prisma.EnumOpportunityCustomerSourceFieldUpdateOperationsInput | $Enums.OpportunityCustomerSource
+  localCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  customerSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   opportunityDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   jobType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   textMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -539,6 +583,9 @@ export type OpportunityCreateManyInput = {
   titanEstimateId?: string | null
   titanJobId?: string | null
   customerId: string
+  customerSource?: $Enums.OpportunityCustomerSource
+  localCustomerId?: string | null
+  customerSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   opportunityDate: Date | string
   jobType?: string | null
   textMessage?: string | null
@@ -559,6 +606,9 @@ export type OpportunityUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   titanEstimateId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   titanJobId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  customerId?: Prisma.StringFieldUpdateOperationsInput | string
+  customerSource?: Prisma.EnumOpportunityCustomerSourceFieldUpdateOperationsInput | $Enums.OpportunityCustomerSource
+  customerSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   opportunityDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   jobType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   textMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -577,6 +627,9 @@ export type OpportunityUncheckedUpdateManyInput = {
   titanEstimateId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   titanJobId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerId?: Prisma.StringFieldUpdateOperationsInput | string
+  customerSource?: Prisma.EnumOpportunityCustomerSourceFieldUpdateOperationsInput | $Enums.OpportunityCustomerSource
+  localCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  customerSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   opportunityDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   jobType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   textMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -608,6 +661,9 @@ export type OpportunityCountOrderByAggregateInput = {
   titanEstimateId?: Prisma.SortOrder
   titanJobId?: Prisma.SortOrder
   customerId?: Prisma.SortOrder
+  customerSource?: Prisma.SortOrder
+  localCustomerId?: Prisma.SortOrder
+  customerSnapshot?: Prisma.SortOrder
   opportunityDate?: Prisma.SortOrder
   jobType?: Prisma.SortOrder
   textMessage?: Prisma.SortOrder
@@ -633,6 +689,8 @@ export type OpportunityMaxOrderByAggregateInput = {
   titanEstimateId?: Prisma.SortOrder
   titanJobId?: Prisma.SortOrder
   customerId?: Prisma.SortOrder
+  customerSource?: Prisma.SortOrder
+  localCustomerId?: Prisma.SortOrder
   opportunityDate?: Prisma.SortOrder
   jobType?: Prisma.SortOrder
   textMessage?: Prisma.SortOrder
@@ -654,6 +712,8 @@ export type OpportunityMinOrderByAggregateInput = {
   titanEstimateId?: Prisma.SortOrder
   titanJobId?: Prisma.SortOrder
   customerId?: Prisma.SortOrder
+  customerSource?: Prisma.SortOrder
+  localCustomerId?: Prisma.SortOrder
   opportunityDate?: Prisma.SortOrder
   jobType?: Prisma.SortOrder
   textMessage?: Prisma.SortOrder
@@ -847,6 +907,10 @@ export type OpportunityUncheckedUpdateManyWithoutCustomerNestedInput = {
   deleteMany?: Prisma.OpportunityScalarWhereInput | Prisma.OpportunityScalarWhereInput[]
 }
 
+export type EnumOpportunityCustomerSourceFieldUpdateOperationsInput = {
+  set?: $Enums.OpportunityCustomerSource
+}
+
 export type EnumLeadSourceFieldUpdateOperationsInput = {
   set?: $Enums.LeadSource
 }
@@ -901,6 +965,9 @@ export type OpportunityCreateWithoutAssignedToInput = {
   id?: string
   titanEstimateId?: string | null
   titanJobId?: string | null
+  customerId: string
+  customerSource?: $Enums.OpportunityCustomerSource
+  customerSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   opportunityDate: Date | string
   jobType?: string | null
   textMessage?: string | null
@@ -912,7 +979,7 @@ export type OpportunityCreateWithoutAssignedToInput = {
   reopenAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  customer: Prisma.CustomerCreateNestedOneWithoutOpportunitiesInput
+  customer?: Prisma.CustomerCreateNestedOneWithoutOpportunitiesInput
   createdBy: Prisma.UserCreateNestedOneWithoutCreatedOpportunitiesInput
   closedBy?: Prisma.UserCreateNestedOneWithoutClosedOpportunitiesInput
   followUpSchedule?: Prisma.FollowUpScheduleCreateNestedOneWithoutOpportunityInput
@@ -925,6 +992,9 @@ export type OpportunityUncheckedCreateWithoutAssignedToInput = {
   titanEstimateId?: string | null
   titanJobId?: string | null
   customerId: string
+  customerSource?: $Enums.OpportunityCustomerSource
+  localCustomerId?: string | null
+  customerSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   opportunityDate: Date | string
   jobType?: string | null
   textMessage?: string | null
@@ -957,6 +1027,9 @@ export type OpportunityCreateWithoutCreatedByInput = {
   id?: string
   titanEstimateId?: string | null
   titanJobId?: string | null
+  customerId: string
+  customerSource?: $Enums.OpportunityCustomerSource
+  customerSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   opportunityDate: Date | string
   jobType?: string | null
   textMessage?: string | null
@@ -968,7 +1041,7 @@ export type OpportunityCreateWithoutCreatedByInput = {
   reopenAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  customer: Prisma.CustomerCreateNestedOneWithoutOpportunitiesInput
+  customer?: Prisma.CustomerCreateNestedOneWithoutOpportunitiesInput
   assignedTo?: Prisma.UserCreateNestedOneWithoutAssignedOpportunitiesInput
   closedBy?: Prisma.UserCreateNestedOneWithoutClosedOpportunitiesInput
   followUpSchedule?: Prisma.FollowUpScheduleCreateNestedOneWithoutOpportunityInput
@@ -981,6 +1054,9 @@ export type OpportunityUncheckedCreateWithoutCreatedByInput = {
   titanEstimateId?: string | null
   titanJobId?: string | null
   customerId: string
+  customerSource?: $Enums.OpportunityCustomerSource
+  localCustomerId?: string | null
+  customerSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   opportunityDate: Date | string
   jobType?: string | null
   textMessage?: string | null
@@ -1013,6 +1089,9 @@ export type OpportunityCreateWithoutClosedByInput = {
   id?: string
   titanEstimateId?: string | null
   titanJobId?: string | null
+  customerId: string
+  customerSource?: $Enums.OpportunityCustomerSource
+  customerSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   opportunityDate: Date | string
   jobType?: string | null
   textMessage?: string | null
@@ -1024,7 +1103,7 @@ export type OpportunityCreateWithoutClosedByInput = {
   reopenAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  customer: Prisma.CustomerCreateNestedOneWithoutOpportunitiesInput
+  customer?: Prisma.CustomerCreateNestedOneWithoutOpportunitiesInput
   assignedTo?: Prisma.UserCreateNestedOneWithoutAssignedOpportunitiesInput
   createdBy: Prisma.UserCreateNestedOneWithoutCreatedOpportunitiesInput
   followUpSchedule?: Prisma.FollowUpScheduleCreateNestedOneWithoutOpportunityInput
@@ -1037,6 +1116,9 @@ export type OpportunityUncheckedCreateWithoutClosedByInput = {
   titanEstimateId?: string | null
   titanJobId?: string | null
   customerId: string
+  customerSource?: $Enums.OpportunityCustomerSource
+  localCustomerId?: string | null
+  customerSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   opportunityDate: Date | string
   jobType?: string | null
   textMessage?: string | null
@@ -1089,6 +1171,9 @@ export type OpportunityScalarWhereInput = {
   titanEstimateId?: Prisma.StringNullableFilter<"Opportunity"> | string | null
   titanJobId?: Prisma.StringNullableFilter<"Opportunity"> | string | null
   customerId?: Prisma.StringFilter<"Opportunity"> | string
+  customerSource?: Prisma.EnumOpportunityCustomerSourceFilter<"Opportunity"> | $Enums.OpportunityCustomerSource
+  localCustomerId?: Prisma.StringNullableFilter<"Opportunity"> | string | null
+  customerSnapshot?: Prisma.JsonNullableFilter<"Opportunity">
   opportunityDate?: Prisma.DateTimeFilter<"Opportunity"> | Date | string
   jobType?: Prisma.StringNullableFilter<"Opportunity"> | string | null
   textMessage?: Prisma.StringNullableFilter<"Opportunity"> | string | null
@@ -1141,6 +1226,9 @@ export type OpportunityCreateWithoutCustomerInput = {
   id?: string
   titanEstimateId?: string | null
   titanJobId?: string | null
+  customerId: string
+  customerSource?: $Enums.OpportunityCustomerSource
+  customerSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   opportunityDate: Date | string
   jobType?: string | null
   textMessage?: string | null
@@ -1164,6 +1252,9 @@ export type OpportunityUncheckedCreateWithoutCustomerInput = {
   id?: string
   titanEstimateId?: string | null
   titanJobId?: string | null
+  customerId: string
+  customerSource?: $Enums.OpportunityCustomerSource
+  customerSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   opportunityDate: Date | string
   jobType?: string | null
   textMessage?: string | null
@@ -1213,6 +1304,9 @@ export type OpportunityCreateWithoutFollowUpScheduleInput = {
   id?: string
   titanEstimateId?: string | null
   titanJobId?: string | null
+  customerId: string
+  customerSource?: $Enums.OpportunityCustomerSource
+  customerSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   opportunityDate: Date | string
   jobType?: string | null
   textMessage?: string | null
@@ -1224,7 +1318,7 @@ export type OpportunityCreateWithoutFollowUpScheduleInput = {
   reopenAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  customer: Prisma.CustomerCreateNestedOneWithoutOpportunitiesInput
+  customer?: Prisma.CustomerCreateNestedOneWithoutOpportunitiesInput
   assignedTo?: Prisma.UserCreateNestedOneWithoutAssignedOpportunitiesInput
   createdBy: Prisma.UserCreateNestedOneWithoutCreatedOpportunitiesInput
   closedBy?: Prisma.UserCreateNestedOneWithoutClosedOpportunitiesInput
@@ -1237,6 +1331,9 @@ export type OpportunityUncheckedCreateWithoutFollowUpScheduleInput = {
   titanEstimateId?: string | null
   titanJobId?: string | null
   customerId: string
+  customerSource?: $Enums.OpportunityCustomerSource
+  localCustomerId?: string | null
+  customerSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   opportunityDate: Date | string
   jobType?: string | null
   textMessage?: string | null
@@ -1275,6 +1372,9 @@ export type OpportunityUpdateWithoutFollowUpScheduleInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   titanEstimateId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   titanJobId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  customerId?: Prisma.StringFieldUpdateOperationsInput | string
+  customerSource?: Prisma.EnumOpportunityCustomerSourceFieldUpdateOperationsInput | $Enums.OpportunityCustomerSource
+  customerSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   opportunityDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   jobType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   textMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1286,7 +1386,7 @@ export type OpportunityUpdateWithoutFollowUpScheduleInput = {
   reopenAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  customer?: Prisma.CustomerUpdateOneRequiredWithoutOpportunitiesNestedInput
+  customer?: Prisma.CustomerUpdateOneWithoutOpportunitiesNestedInput
   assignedTo?: Prisma.UserUpdateOneWithoutAssignedOpportunitiesNestedInput
   createdBy?: Prisma.UserUpdateOneRequiredWithoutCreatedOpportunitiesNestedInput
   closedBy?: Prisma.UserUpdateOneWithoutClosedOpportunitiesNestedInput
@@ -1299,6 +1399,9 @@ export type OpportunityUncheckedUpdateWithoutFollowUpScheduleInput = {
   titanEstimateId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   titanJobId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerId?: Prisma.StringFieldUpdateOperationsInput | string
+  customerSource?: Prisma.EnumOpportunityCustomerSourceFieldUpdateOperationsInput | $Enums.OpportunityCustomerSource
+  localCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  customerSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   opportunityDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   jobType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   textMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1321,6 +1424,9 @@ export type OpportunityCreateWithoutFollowUpsInput = {
   id?: string
   titanEstimateId?: string | null
   titanJobId?: string | null
+  customerId: string
+  customerSource?: $Enums.OpportunityCustomerSource
+  customerSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   opportunityDate: Date | string
   jobType?: string | null
   textMessage?: string | null
@@ -1332,7 +1438,7 @@ export type OpportunityCreateWithoutFollowUpsInput = {
   reopenAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  customer: Prisma.CustomerCreateNestedOneWithoutOpportunitiesInput
+  customer?: Prisma.CustomerCreateNestedOneWithoutOpportunitiesInput
   assignedTo?: Prisma.UserCreateNestedOneWithoutAssignedOpportunitiesInput
   createdBy: Prisma.UserCreateNestedOneWithoutCreatedOpportunitiesInput
   closedBy?: Prisma.UserCreateNestedOneWithoutClosedOpportunitiesInput
@@ -1345,6 +1451,9 @@ export type OpportunityUncheckedCreateWithoutFollowUpsInput = {
   titanEstimateId?: string | null
   titanJobId?: string | null
   customerId: string
+  customerSource?: $Enums.OpportunityCustomerSource
+  localCustomerId?: string | null
+  customerSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   opportunityDate: Date | string
   jobType?: string | null
   textMessage?: string | null
@@ -1383,6 +1492,9 @@ export type OpportunityUpdateWithoutFollowUpsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   titanEstimateId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   titanJobId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  customerId?: Prisma.StringFieldUpdateOperationsInput | string
+  customerSource?: Prisma.EnumOpportunityCustomerSourceFieldUpdateOperationsInput | $Enums.OpportunityCustomerSource
+  customerSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   opportunityDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   jobType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   textMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1394,7 +1506,7 @@ export type OpportunityUpdateWithoutFollowUpsInput = {
   reopenAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  customer?: Prisma.CustomerUpdateOneRequiredWithoutOpportunitiesNestedInput
+  customer?: Prisma.CustomerUpdateOneWithoutOpportunitiesNestedInput
   assignedTo?: Prisma.UserUpdateOneWithoutAssignedOpportunitiesNestedInput
   createdBy?: Prisma.UserUpdateOneRequiredWithoutCreatedOpportunitiesNestedInput
   closedBy?: Prisma.UserUpdateOneWithoutClosedOpportunitiesNestedInput
@@ -1407,6 +1519,9 @@ export type OpportunityUncheckedUpdateWithoutFollowUpsInput = {
   titanEstimateId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   titanJobId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerId?: Prisma.StringFieldUpdateOperationsInput | string
+  customerSource?: Prisma.EnumOpportunityCustomerSourceFieldUpdateOperationsInput | $Enums.OpportunityCustomerSource
+  localCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  customerSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   opportunityDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   jobType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   textMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1429,6 +1544,9 @@ export type OpportunityCreateWithoutActivitiesInput = {
   id?: string
   titanEstimateId?: string | null
   titanJobId?: string | null
+  customerId: string
+  customerSource?: $Enums.OpportunityCustomerSource
+  customerSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   opportunityDate: Date | string
   jobType?: string | null
   textMessage?: string | null
@@ -1440,7 +1558,7 @@ export type OpportunityCreateWithoutActivitiesInput = {
   reopenAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  customer: Prisma.CustomerCreateNestedOneWithoutOpportunitiesInput
+  customer?: Prisma.CustomerCreateNestedOneWithoutOpportunitiesInput
   assignedTo?: Prisma.UserCreateNestedOneWithoutAssignedOpportunitiesInput
   createdBy: Prisma.UserCreateNestedOneWithoutCreatedOpportunitiesInput
   closedBy?: Prisma.UserCreateNestedOneWithoutClosedOpportunitiesInput
@@ -1453,6 +1571,9 @@ export type OpportunityUncheckedCreateWithoutActivitiesInput = {
   titanEstimateId?: string | null
   titanJobId?: string | null
   customerId: string
+  customerSource?: $Enums.OpportunityCustomerSource
+  localCustomerId?: string | null
+  customerSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   opportunityDate: Date | string
   jobType?: string | null
   textMessage?: string | null
@@ -1491,6 +1612,9 @@ export type OpportunityUpdateWithoutActivitiesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   titanEstimateId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   titanJobId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  customerId?: Prisma.StringFieldUpdateOperationsInput | string
+  customerSource?: Prisma.EnumOpportunityCustomerSourceFieldUpdateOperationsInput | $Enums.OpportunityCustomerSource
+  customerSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   opportunityDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   jobType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   textMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1502,7 +1626,7 @@ export type OpportunityUpdateWithoutActivitiesInput = {
   reopenAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  customer?: Prisma.CustomerUpdateOneRequiredWithoutOpportunitiesNestedInput
+  customer?: Prisma.CustomerUpdateOneWithoutOpportunitiesNestedInput
   assignedTo?: Prisma.UserUpdateOneWithoutAssignedOpportunitiesNestedInput
   createdBy?: Prisma.UserUpdateOneRequiredWithoutCreatedOpportunitiesNestedInput
   closedBy?: Prisma.UserUpdateOneWithoutClosedOpportunitiesNestedInput
@@ -1515,6 +1639,9 @@ export type OpportunityUncheckedUpdateWithoutActivitiesInput = {
   titanEstimateId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   titanJobId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerId?: Prisma.StringFieldUpdateOperationsInput | string
+  customerSource?: Prisma.EnumOpportunityCustomerSourceFieldUpdateOperationsInput | $Enums.OpportunityCustomerSource
+  localCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  customerSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   opportunityDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   jobType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   textMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1538,6 +1665,9 @@ export type OpportunityCreateManyAssignedToInput = {
   titanEstimateId?: string | null
   titanJobId?: string | null
   customerId: string
+  customerSource?: $Enums.OpportunityCustomerSource
+  localCustomerId?: string | null
+  customerSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   opportunityDate: Date | string
   jobType?: string | null
   textMessage?: string | null
@@ -1558,6 +1688,9 @@ export type OpportunityCreateManyCreatedByInput = {
   titanEstimateId?: string | null
   titanJobId?: string | null
   customerId: string
+  customerSource?: $Enums.OpportunityCustomerSource
+  localCustomerId?: string | null
+  customerSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   opportunityDate: Date | string
   jobType?: string | null
   textMessage?: string | null
@@ -1578,6 +1711,9 @@ export type OpportunityCreateManyClosedByInput = {
   titanEstimateId?: string | null
   titanJobId?: string | null
   customerId: string
+  customerSource?: $Enums.OpportunityCustomerSource
+  localCustomerId?: string | null
+  customerSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   opportunityDate: Date | string
   jobType?: string | null
   textMessage?: string | null
@@ -1597,6 +1733,9 @@ export type OpportunityUpdateWithoutAssignedToInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   titanEstimateId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   titanJobId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  customerId?: Prisma.StringFieldUpdateOperationsInput | string
+  customerSource?: Prisma.EnumOpportunityCustomerSourceFieldUpdateOperationsInput | $Enums.OpportunityCustomerSource
+  customerSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   opportunityDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   jobType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   textMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1608,7 +1747,7 @@ export type OpportunityUpdateWithoutAssignedToInput = {
   reopenAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  customer?: Prisma.CustomerUpdateOneRequiredWithoutOpportunitiesNestedInput
+  customer?: Prisma.CustomerUpdateOneWithoutOpportunitiesNestedInput
   createdBy?: Prisma.UserUpdateOneRequiredWithoutCreatedOpportunitiesNestedInput
   closedBy?: Prisma.UserUpdateOneWithoutClosedOpportunitiesNestedInput
   followUpSchedule?: Prisma.FollowUpScheduleUpdateOneWithoutOpportunityNestedInput
@@ -1621,6 +1760,9 @@ export type OpportunityUncheckedUpdateWithoutAssignedToInput = {
   titanEstimateId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   titanJobId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerId?: Prisma.StringFieldUpdateOperationsInput | string
+  customerSource?: Prisma.EnumOpportunityCustomerSourceFieldUpdateOperationsInput | $Enums.OpportunityCustomerSource
+  localCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  customerSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   opportunityDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   jobType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   textMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1644,6 +1786,9 @@ export type OpportunityUncheckedUpdateManyWithoutAssignedToInput = {
   titanEstimateId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   titanJobId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerId?: Prisma.StringFieldUpdateOperationsInput | string
+  customerSource?: Prisma.EnumOpportunityCustomerSourceFieldUpdateOperationsInput | $Enums.OpportunityCustomerSource
+  localCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  customerSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   opportunityDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   jobType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   textMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1663,6 +1808,9 @@ export type OpportunityUpdateWithoutCreatedByInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   titanEstimateId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   titanJobId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  customerId?: Prisma.StringFieldUpdateOperationsInput | string
+  customerSource?: Prisma.EnumOpportunityCustomerSourceFieldUpdateOperationsInput | $Enums.OpportunityCustomerSource
+  customerSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   opportunityDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   jobType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   textMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1674,7 +1822,7 @@ export type OpportunityUpdateWithoutCreatedByInput = {
   reopenAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  customer?: Prisma.CustomerUpdateOneRequiredWithoutOpportunitiesNestedInput
+  customer?: Prisma.CustomerUpdateOneWithoutOpportunitiesNestedInput
   assignedTo?: Prisma.UserUpdateOneWithoutAssignedOpportunitiesNestedInput
   closedBy?: Prisma.UserUpdateOneWithoutClosedOpportunitiesNestedInput
   followUpSchedule?: Prisma.FollowUpScheduleUpdateOneWithoutOpportunityNestedInput
@@ -1687,6 +1835,9 @@ export type OpportunityUncheckedUpdateWithoutCreatedByInput = {
   titanEstimateId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   titanJobId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerId?: Prisma.StringFieldUpdateOperationsInput | string
+  customerSource?: Prisma.EnumOpportunityCustomerSourceFieldUpdateOperationsInput | $Enums.OpportunityCustomerSource
+  localCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  customerSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   opportunityDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   jobType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   textMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1710,6 +1861,9 @@ export type OpportunityUncheckedUpdateManyWithoutCreatedByInput = {
   titanEstimateId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   titanJobId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerId?: Prisma.StringFieldUpdateOperationsInput | string
+  customerSource?: Prisma.EnumOpportunityCustomerSourceFieldUpdateOperationsInput | $Enums.OpportunityCustomerSource
+  localCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  customerSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   opportunityDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   jobType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   textMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1729,6 +1883,9 @@ export type OpportunityUpdateWithoutClosedByInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   titanEstimateId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   titanJobId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  customerId?: Prisma.StringFieldUpdateOperationsInput | string
+  customerSource?: Prisma.EnumOpportunityCustomerSourceFieldUpdateOperationsInput | $Enums.OpportunityCustomerSource
+  customerSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   opportunityDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   jobType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   textMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1740,7 +1897,7 @@ export type OpportunityUpdateWithoutClosedByInput = {
   reopenAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  customer?: Prisma.CustomerUpdateOneRequiredWithoutOpportunitiesNestedInput
+  customer?: Prisma.CustomerUpdateOneWithoutOpportunitiesNestedInput
   assignedTo?: Prisma.UserUpdateOneWithoutAssignedOpportunitiesNestedInput
   createdBy?: Prisma.UserUpdateOneRequiredWithoutCreatedOpportunitiesNestedInput
   followUpSchedule?: Prisma.FollowUpScheduleUpdateOneWithoutOpportunityNestedInput
@@ -1753,6 +1910,9 @@ export type OpportunityUncheckedUpdateWithoutClosedByInput = {
   titanEstimateId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   titanJobId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerId?: Prisma.StringFieldUpdateOperationsInput | string
+  customerSource?: Prisma.EnumOpportunityCustomerSourceFieldUpdateOperationsInput | $Enums.OpportunityCustomerSource
+  localCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  customerSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   opportunityDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   jobType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   textMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1776,6 +1936,9 @@ export type OpportunityUncheckedUpdateManyWithoutClosedByInput = {
   titanEstimateId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   titanJobId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerId?: Prisma.StringFieldUpdateOperationsInput | string
+  customerSource?: Prisma.EnumOpportunityCustomerSourceFieldUpdateOperationsInput | $Enums.OpportunityCustomerSource
+  localCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  customerSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   opportunityDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   jobType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   textMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1795,6 +1958,9 @@ export type OpportunityCreateManyCustomerInput = {
   id?: string
   titanEstimateId?: string | null
   titanJobId?: string | null
+  customerId: string
+  customerSource?: $Enums.OpportunityCustomerSource
+  customerSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   opportunityDate: Date | string
   jobType?: string | null
   textMessage?: string | null
@@ -1815,6 +1981,9 @@ export type OpportunityUpdateWithoutCustomerInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   titanEstimateId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   titanJobId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  customerId?: Prisma.StringFieldUpdateOperationsInput | string
+  customerSource?: Prisma.EnumOpportunityCustomerSourceFieldUpdateOperationsInput | $Enums.OpportunityCustomerSource
+  customerSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   opportunityDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   jobType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   textMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1838,6 +2007,9 @@ export type OpportunityUncheckedUpdateWithoutCustomerInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   titanEstimateId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   titanJobId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  customerId?: Prisma.StringFieldUpdateOperationsInput | string
+  customerSource?: Prisma.EnumOpportunityCustomerSourceFieldUpdateOperationsInput | $Enums.OpportunityCustomerSource
+  customerSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   opportunityDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   jobType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   textMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1861,6 +2033,9 @@ export type OpportunityUncheckedUpdateManyWithoutCustomerInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   titanEstimateId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   titanJobId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  customerId?: Prisma.StringFieldUpdateOperationsInput | string
+  customerSource?: Prisma.EnumOpportunityCustomerSourceFieldUpdateOperationsInput | $Enums.OpportunityCustomerSource
+  customerSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   opportunityDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   jobType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   textMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1922,6 +2097,9 @@ export type OpportunitySelect<ExtArgs extends runtime.Types.Extensions.InternalA
   titanEstimateId?: boolean
   titanJobId?: boolean
   customerId?: boolean
+  customerSource?: boolean
+  localCustomerId?: boolean
+  customerSnapshot?: boolean
   opportunityDate?: boolean
   jobType?: boolean
   textMessage?: boolean
@@ -1936,7 +2114,7 @@ export type OpportunitySelect<ExtArgs extends runtime.Types.Extensions.InternalA
   reopenAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  customer?: boolean | Prisma.CustomerDefaultArgs<ExtArgs>
+  customer?: boolean | Prisma.Opportunity$customerArgs<ExtArgs>
   assignedTo?: boolean | Prisma.Opportunity$assignedToArgs<ExtArgs>
   createdBy?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   closedBy?: boolean | Prisma.Opportunity$closedByArgs<ExtArgs>
@@ -1951,6 +2129,9 @@ export type OpportunitySelectCreateManyAndReturn<ExtArgs extends runtime.Types.E
   titanEstimateId?: boolean
   titanJobId?: boolean
   customerId?: boolean
+  customerSource?: boolean
+  localCustomerId?: boolean
+  customerSnapshot?: boolean
   opportunityDate?: boolean
   jobType?: boolean
   textMessage?: boolean
@@ -1965,7 +2146,7 @@ export type OpportunitySelectCreateManyAndReturn<ExtArgs extends runtime.Types.E
   reopenAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  customer?: boolean | Prisma.CustomerDefaultArgs<ExtArgs>
+  customer?: boolean | Prisma.Opportunity$customerArgs<ExtArgs>
   assignedTo?: boolean | Prisma.Opportunity$assignedToArgs<ExtArgs>
   createdBy?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   closedBy?: boolean | Prisma.Opportunity$closedByArgs<ExtArgs>
@@ -1976,6 +2157,9 @@ export type OpportunitySelectUpdateManyAndReturn<ExtArgs extends runtime.Types.E
   titanEstimateId?: boolean
   titanJobId?: boolean
   customerId?: boolean
+  customerSource?: boolean
+  localCustomerId?: boolean
+  customerSnapshot?: boolean
   opportunityDate?: boolean
   jobType?: boolean
   textMessage?: boolean
@@ -1990,7 +2174,7 @@ export type OpportunitySelectUpdateManyAndReturn<ExtArgs extends runtime.Types.E
   reopenAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  customer?: boolean | Prisma.CustomerDefaultArgs<ExtArgs>
+  customer?: boolean | Prisma.Opportunity$customerArgs<ExtArgs>
   assignedTo?: boolean | Prisma.Opportunity$assignedToArgs<ExtArgs>
   createdBy?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   closedBy?: boolean | Prisma.Opportunity$closedByArgs<ExtArgs>
@@ -2001,6 +2185,9 @@ export type OpportunitySelectScalar = {
   titanEstimateId?: boolean
   titanJobId?: boolean
   customerId?: boolean
+  customerSource?: boolean
+  localCustomerId?: boolean
+  customerSnapshot?: boolean
   opportunityDate?: boolean
   jobType?: boolean
   textMessage?: boolean
@@ -2017,9 +2204,9 @@ export type OpportunitySelectScalar = {
   updatedAt?: boolean
 }
 
-export type OpportunityOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "titanEstimateId" | "titanJobId" | "customerId" | "opportunityDate" | "jobType" | "textMessage" | "value" | "source" | "status" | "assignedToId" | "createdById" | "closedById" | "notes" | "closedAt" | "reopenAt" | "createdAt" | "updatedAt", ExtArgs["result"]["opportunity"]>
+export type OpportunityOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "titanEstimateId" | "titanJobId" | "customerId" | "customerSource" | "localCustomerId" | "customerSnapshot" | "opportunityDate" | "jobType" | "textMessage" | "value" | "source" | "status" | "assignedToId" | "createdById" | "closedById" | "notes" | "closedAt" | "reopenAt" | "createdAt" | "updatedAt", ExtArgs["result"]["opportunity"]>
 export type OpportunityInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  customer?: boolean | Prisma.CustomerDefaultArgs<ExtArgs>
+  customer?: boolean | Prisma.Opportunity$customerArgs<ExtArgs>
   assignedTo?: boolean | Prisma.Opportunity$assignedToArgs<ExtArgs>
   createdBy?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   closedBy?: boolean | Prisma.Opportunity$closedByArgs<ExtArgs>
@@ -2029,13 +2216,13 @@ export type OpportunityInclude<ExtArgs extends runtime.Types.Extensions.Internal
   _count?: boolean | Prisma.OpportunityCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type OpportunityIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  customer?: boolean | Prisma.CustomerDefaultArgs<ExtArgs>
+  customer?: boolean | Prisma.Opportunity$customerArgs<ExtArgs>
   assignedTo?: boolean | Prisma.Opportunity$assignedToArgs<ExtArgs>
   createdBy?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   closedBy?: boolean | Prisma.Opportunity$closedByArgs<ExtArgs>
 }
 export type OpportunityIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  customer?: boolean | Prisma.CustomerDefaultArgs<ExtArgs>
+  customer?: boolean | Prisma.Opportunity$customerArgs<ExtArgs>
   assignedTo?: boolean | Prisma.Opportunity$assignedToArgs<ExtArgs>
   createdBy?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   closedBy?: boolean | Prisma.Opportunity$closedByArgs<ExtArgs>
@@ -2044,7 +2231,7 @@ export type OpportunityIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.
 export type $OpportunityPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Opportunity"
   objects: {
-    customer: Prisma.$CustomerPayload<ExtArgs>
+    customer: Prisma.$CustomerPayload<ExtArgs> | null
     assignedTo: Prisma.$UserPayload<ExtArgs> | null
     createdBy: Prisma.$UserPayload<ExtArgs>
     closedBy: Prisma.$UserPayload<ExtArgs> | null
@@ -2057,6 +2244,9 @@ export type $OpportunityPayload<ExtArgs extends runtime.Types.Extensions.Interna
     titanEstimateId: string | null
     titanJobId: string | null
     customerId: string
+    customerSource: $Enums.OpportunityCustomerSource
+    localCustomerId: string | null
+    customerSnapshot: runtime.JsonValue | null
     opportunityDate: Date
     jobType: string | null
     textMessage: string | null
@@ -2465,7 +2655,7 @@ readonly fields: OpportunityFieldRefs;
  */
 export interface Prisma__OpportunityClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
-  customer<T extends Prisma.CustomerDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.CustomerDefaultArgs<ExtArgs>>): Prisma.Prisma__CustomerClient<runtime.Types.Result.GetResult<Prisma.$CustomerPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  customer<T extends Prisma.Opportunity$customerArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Opportunity$customerArgs<ExtArgs>>): Prisma.Prisma__CustomerClient<runtime.Types.Result.GetResult<Prisma.$CustomerPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   assignedTo<T extends Prisma.Opportunity$assignedToArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Opportunity$assignedToArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   createdBy<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   closedBy<T extends Prisma.Opportunity$closedByArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Opportunity$closedByArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
@@ -2505,6 +2695,9 @@ export interface OpportunityFieldRefs {
   readonly titanEstimateId: Prisma.FieldRef<"Opportunity", 'String'>
   readonly titanJobId: Prisma.FieldRef<"Opportunity", 'String'>
   readonly customerId: Prisma.FieldRef<"Opportunity", 'String'>
+  readonly customerSource: Prisma.FieldRef<"Opportunity", 'OpportunityCustomerSource'>
+  readonly localCustomerId: Prisma.FieldRef<"Opportunity", 'String'>
+  readonly customerSnapshot: Prisma.FieldRef<"Opportunity", 'Json'>
   readonly opportunityDate: Prisma.FieldRef<"Opportunity", 'DateTime'>
   readonly jobType: Prisma.FieldRef<"Opportunity", 'String'>
   readonly textMessage: Prisma.FieldRef<"Opportunity", 'String'>
@@ -2917,6 +3110,25 @@ export type OpportunityDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.I
    * Limit how many Opportunities to delete.
    */
   limit?: number
+}
+
+/**
+ * Opportunity.customer
+ */
+export type Opportunity$customerArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Customer
+   */
+  select?: Prisma.CustomerSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Customer
+   */
+  omit?: Prisma.CustomerOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.CustomerInclude<ExtArgs> | null
+  where?: Prisma.CustomerWhereInput
 }
 
 /**

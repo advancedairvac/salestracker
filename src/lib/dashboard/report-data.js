@@ -1,9 +1,11 @@
 
 import { prisma } from "@/lib/prisma";
+import { getOpportunityCustomer } from "@/lib/opportunities/opportunity-customer";
+import { getDateBounds, isWithinRange } from "@/lib/date/date-utils";
 
 import {
-  getJobs,
-  getEstimates,
+  getAllJobs,
+  getAllEstimates,
 } from "@/lib/integrations/servicetitan";
 
 // ============================================
@@ -26,57 +28,14 @@ const REPORT_TYPES = [
 // ============================================
 
 function parseDateRange(startDate, endDate) {
-  const datePattern = /^\d{4}-\d{2}-\d{2}$/;
-
-  if (
-    !datePattern.test(startDate || "") ||
-    !datePattern.test(endDate || "")
-  ) {
-    throw new Error("Invalid date range.");
-  }
-
-  const [sy, sm, sd] = startDate.split("-").map(Number);
-  const [ey, em, ed] = endDate.split("-").map(Number);
-
-  const start = new Date(sy, sm - 1, sd, 0, 0, 0, 0);
-  const end = new Date(ey, em - 1, ed, 0, 0, 0, 0);
-
-  const validStart =
-    start.getFullYear() === sy &&
-    start.getMonth() === sm - 1 &&
-    start.getDate() === sd;
-
-  const validEnd =
-    end.getFullYear() === ey &&
-    end.getMonth() === em - 1 &&
-    end.getDate() === ed;
-
-  if (!validStart || !validEnd || start > end) {
-    throw new Error("Invalid date range.");
-  }
-
-  const endExclusive = new Date(end);
-  endExclusive.setDate(endExclusive.getDate() + 1);
+  const { start, endExclusive } = getDateBounds(startDate, endDate);
 
   return {
     start,
-    end,
     endExclusive,
     startISO: start.toISOString(),
     endExclusiveISO: endExclusive.toISOString(),
   };
-}
-
-function isDateInRange(value, start, endExclusive) {
-  if (!value) return false;
-
-  const date = new Date(value);
-
-  return (
-    !Number.isNaN(date.getTime()) &&
-    date >= start &&
-    date < endExclusive
-  );
 }
 
 // ============================================
@@ -155,32 +114,13 @@ function validateReportType(reportType) {
 // ============================================
 
 async function fetchAllJobs(dateRange) {
-  const allJobs = [];
-
-  for (let page = 1; page <= MAX_PAGES; page += 1) {
-    const result = await getJobs({
-      page,
-      pageSize: PAGE_SIZE,
-      includeTotal: true,
-      jobStatus: "Completed",
-      completedOnOrAfter: dateRange.startISO,
-      completedBefore: dateRange.endExclusiveISO,
-    });
-
-    const items = Array.isArray(result?.data)
-      ? result.data
-      : [];
-
-    allJobs.push(...items);
-
-    if (
-      items.length === 0 ||
-      result.hasMore === false ||
-      (result.hasMore === undefined && items.length < PAGE_SIZE)
-    ) {
-      break;
-    }
-  }
+  const allJobs = await getAllJobs({
+    pageSize: PAGE_SIZE,
+    maxPages: MAX_PAGES,
+    jobStatus: "Completed",
+    completedOnOrAfter: dateRange.startISO,
+    completedBefore: dateRange.endExclusiveISO,
+  });
 
   const uniqueJobs = new Map();
 
@@ -193,7 +133,7 @@ async function fetchAllJobs(dateRange) {
   return [...uniqueJobs.values()].filter(
     (job) =>
       job.jobStatus === "Completed" &&
-      isDateInRange(
+      isWithinRange(
         job.completedOn,
         dateRange.start,
         dateRange.endExclusive,
@@ -202,31 +142,12 @@ async function fetchAllJobs(dateRange) {
 }
 
 async function fetchAllEstimates(dateRange) {
-  const allEstimates = [];
-
-  for (let page = 1; page <= MAX_PAGES; page += 1) {
-    const result = await getEstimates({
-      page,
-      pageSize: PAGE_SIZE,
-      includeTotal: true,
-      createdOnOrAfter: dateRange.startISO,
-      createdBefore: dateRange.endExclusiveISO,
-    });
-
-    const items = Array.isArray(result?.data)
-      ? result.data
-      : [];
-
-    allEstimates.push(...items);
-
-    if (
-      items.length === 0 ||
-      result.hasMore === false ||
-      (result.hasMore === undefined && items.length < PAGE_SIZE)
-    ) {
-      break;
-    }
-  }
+  const allEstimates = await getAllEstimates({
+    pageSize: PAGE_SIZE,
+    maxPages: MAX_PAGES,
+    createdOnOrAfter: dateRange.startISO,
+    createdBefore: dateRange.endExclusiveISO,
+  });
 
   const uniqueEstimates = new Map();
 
@@ -240,7 +161,7 @@ async function fetchAllEstimates(dateRange) {
   }
 
   return [...uniqueEstimates.values()].filter((estimate) =>
-    isDateInRange(
+    isWithinRange(
       estimate.createdOn,
       dateRange.start,
       dateRange.endExclusive,
@@ -443,31 +364,27 @@ function buildSalesReport(jobs, sales, customers) {
 // ============================================
 
 function buildOpportunityReport(opportunities) {
-  return opportunities.map((opportunity) => ({
-    id: opportunity.id,
-    opportunityDate: formatDate(opportunity.opportunityDate),
-    customerName:
-      opportunity.customer?.businessName ||
-      opportunity.customer?.pocName ||
-      "Unknown Customer",
-    customerId: opportunity.customerId,
-    jobType: opportunity.jobType,
-    value: toNumber(opportunity.value),
-    source: opportunity.source,
-    status: opportunity.status,
-
-    assignedToId: opportunity.assignedToId,
-    assignedToName:
-      opportunity.assignedTo?.name || "Unassigned",
-
-    closedById: opportunity.closedById,
-    closedByName:
-      opportunity.closedBy?.name || null,
-
-    closedAt: formatDate(opportunity.closedAt),
-    titanEstimateId: opportunity.titanEstimateId,
-    titanJobId: opportunity.titanJobId,
-  }));
+  return opportunities.map((opportunity) => {
+    const customer = getOpportunityCustomer(opportunity);
+    return {
+      id: opportunity.id,
+      opportunityDate: formatDate(opportunity.opportunityDate),
+      customerName:
+        customer?.businessName || customer?.pocName || "Unknown Customer",
+      customerId: opportunity.customerId,
+      jobType: opportunity.jobType,
+      value: toNumber(opportunity.value),
+      source: opportunity.source,
+      status: opportunity.status,
+      assignedToId: opportunity.assignedToId,
+      assignedToName: opportunity.assignedTo?.name || "Unassigned",
+      closedById: opportunity.closedById,
+      closedByName: opportunity.closedBy?.name || null,
+      closedAt: formatDate(opportunity.closedAt),
+      titanEstimateId: opportunity.titanEstimateId,
+      titanJobId: opportunity.titanJobId,
+    };
+  });
 }
 
 // ============================================

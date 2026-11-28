@@ -3,6 +3,7 @@
 import Link from "next/link";
 
 import MetricSkeleton from "@/components/ui/skeleton/metric-skeleton";
+import { formatCurrency } from "@/lib/format/currency";
 
 export default function PipelineCard({
   opportunities = 0,
@@ -13,13 +14,6 @@ export default function PipelineCard({
   className = "",
   loading = false,
 }) {
-  const formatAmount = (amount) => {
-    return `${currency}${new Intl.NumberFormat("en-US", {
-      notation: "compact",
-      maximumFractionDigits: 1,
-    }).format(Number(amount) || 0)}`;
-  };
-
   const metrics = [
     {
       value: opportunities,
@@ -32,7 +26,11 @@ export default function PipelineCard({
       width: "35px",
     },
     {
-      value: formatAmount(estimateValue),
+      value: formatCurrency(estimateValue, {
+        currencySymbol: currency,
+        notation: "compact",
+        maximumFractionDigits: 1,
+      }),
       label: null,
       width: "55px",
     },

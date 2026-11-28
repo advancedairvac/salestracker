@@ -1,6 +1,30 @@
 import "dotenv/config";
 import bcrypt from "bcryptjs";
-import { prisma } from "../src/lib/prisma.js";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { PrismaClient } from "../src/generated/prisma/client.ts";
+
+const prisma = new PrismaClient({
+  adapter: new PrismaPg({
+    connectionString: getSeedConnectionString(),
+    ssl: { rejectUnauthorized: true },
+  }),
+});
+
+function getSeedConnectionString() {
+  const connectionString = process.env.DATABASE_URL;
+  if (!connectionString) return connectionString;
+
+  try {
+    const parsedUrl = new URL(connectionString);
+    const sslMode = parsedUrl.searchParams.get("sslmode")?.toLowerCase();
+    if (["prefer", "require", "verify-ca"].includes(sslMode)) {
+      parsedUrl.searchParams.set("sslmode", "verify-full");
+    }
+    return parsedUrl.toString();
+  } catch {
+    return connectionString;
+  }
+}
 
 const passwordHash = await bcrypt.hash("1234", 10);
 

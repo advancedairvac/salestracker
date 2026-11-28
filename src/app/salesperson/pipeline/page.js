@@ -35,6 +35,7 @@ async function PipelineFollowUpsSection({
 }) {
   const followUpData = await getPipelineFollowUpsData({
     selectedFilter,
+    salesmanId: currentUserId,
   });
 
   return (
@@ -162,6 +163,7 @@ export default async function SalespersonPipelinePage({
     selectedFilter,
   } = await getPipelinePageData({
     requestedFilter,
+    salesmanId: authenticatedUser.id,
   });
 
   // ============================================
@@ -198,6 +200,7 @@ export default async function SalespersonPipelinePage({
       <PipelineFilter
         users={users}
         selectedFilter={selectedFilter}
+        basePath="/salesperson/pipeline"
       />
 
       {/* FOLLOW-UPS */}

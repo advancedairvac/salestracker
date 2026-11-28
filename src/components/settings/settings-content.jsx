@@ -2,6 +2,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import SvgIcon from "@/components/icons/svg-icons";
 import CacheCard from "./cache-card";
 
 import {
@@ -10,6 +11,12 @@ import {
   subscribeToCustomerCacheStatus,
   resetCustomerCache,
 } from "@/lib/cache/servicetitan/customer-cache";
+import {
+  getAdminCacheMetadata,
+  resetPostgresCache,
+  resetServiceTitanCache,
+} from "@/lib/cache/admin-cache-client";
+import { invalidateRevenueSummaryCache } from "@/lib/cache/servicetitan/revenue-summary-cache";
 
 // ============================================
 // ACCORDION COMPONENT
@@ -40,22 +47,12 @@ function SettingsAccordion({ title, description, children }) {
 
         {/* ARROW */}
 
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          className={`h-6 w-6 shrink-0 text-[#555] transition-transform duration-200 ${
-            isOpen ? "rotate-90" : ""
+        <SvgIcon
+          name="chevronDown"
+          className={`h-6 w-6 shrink-0 text-[#555] transition-transform duration-200 ease-in-out ${
+            isOpen ? "rotate-180" : ""
           }`}
-          aria-hidden="true"
-        >
-          <path
-            d="M9 5L16 12L9 19"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
+        />
       </button>
 
       {/* DROPDOWN CONTENT */}
@@ -87,10 +84,15 @@ function FollowUpCard({ title, description }) {
 // SETTINGS CONTENT
 // ============================================
 
-export default function SettingsContent() {
+export default function SettingsContent({ role = "ADMIN" }) {
+  const canManageCache = role === "ADMIN";
   const [customerMetadata, setCustomerMetadata] = useState(null);
   const [customerStatus, setCustomerStatus] = useState("idle");
-  const [isResetting, setIsResetting] = useState(false);
+  const [estimatesStatus, setEstimatesStatus] = useState("idle");
+  const [serviceTitanMetadata, setServiceTitanMetadata] = useState(null);
+  const [jobsStatus, setJobsStatus] = useState("idle");
+  const [databaseMetadata, setDatabaseMetadata] = useState(null);
+  const [databaseStatus, setDatabaseStatus] = useState("idle");
 
   // --------------------------------------------
   // LOAD CUSTOMER CACHE INFORMATION
@@ -101,30 +103,44 @@ export default function SettingsContent() {
     setCustomerMetadata(metadata);
   };
 
+  const loadServerMetadata = async () => {
+    const result = await getAdminCacheMetadata();
+    setServiceTitanMetadata(result.serviceTitan);
+    setDatabaseMetadata(result.database);
+    setEstimatesStatus(result.serviceTitan?.estimates?.status || "idle");
+    setJobsStatus(result.serviceTitan?.jobs?.status || "idle");
+    setDatabaseStatus(result.database?.status || "idle");
+  };
+
   // --------------------------------------------
   // CUSTOMER CACHE SUBSCRIPTION
   // --------------------------------------------
 
   useEffect(() => {
+    if (!canManageCache) return undefined;
+
     let mounted = true;
 
     const initialize = async () => {
       try {
-        const metadata = await getCustomerCacheMetadata();
-        const status = getCustomerCacheStatus();
+        const customer = await getCustomerCacheMetadata();
+        const server = await getAdminCacheMetadata();
 
         if (!mounted) return;
 
-        setCustomerMetadata(metadata);
-        setCustomerStatus(status);
+        setCustomerMetadata(customer);
+        setCustomerStatus(getCustomerCacheStatus().status);
+        setServiceTitanMetadata(server.serviceTitan);
+        setDatabaseMetadata(server.database);
+        setEstimatesStatus(server.serviceTitan?.estimates?.status || "idle");
+        setJobsStatus(server.serviceTitan?.jobs?.status || "idle");
+        setDatabaseStatus(server.database?.status || "idle");
       } catch (error) {
         console.error("Failed to load cache information:", error);
       }
     };
 
-    initialize();
-
-    const unsubscribe = subscribeToCustomerCacheStatus((status) => {
+    const updateCustomerStatus = ({ status }) => {
       if (!mounted) return;
 
       setCustomerStatus(status);
@@ -132,35 +148,81 @@ export default function SettingsContent() {
       if (status === "available") {
         loadCustomerMetadata().catch(console.error);
       }
-    });
+    };
+
+    const unsubscribeCustomer = subscribeToCustomerCacheStatus(updateCustomerStatus);
+
+    initialize();
 
     return () => {
       mounted = false;
-      unsubscribe?.();
+      unsubscribeCustomer?.();
     };
-  }, []);
+  }, [canManageCache]);
 
   // --------------------------------------------
   // RESET CUSTOMER CACHE
   // --------------------------------------------
 
   const handleCustomerCacheReset = async () => {
-    if (isResetting) return;
-
     try {
-      setIsResetting(true);
       setCustomerStatus("refreshing");
-
-      await resetCustomerCache();
-
+      const refreshed = await resetCustomerCache();
+      if (!refreshed) throw new Error("Customer cache refresh failed.");
       await loadCustomerMetadata();
-
       setCustomerStatus("available");
     } catch (error) {
       console.error("Customer cache reset failed:", error);
       setCustomerStatus("error");
-    } finally {
-      setIsResetting(false);
+      throw error;
+    }
+  };
+
+  const handleEstimatesCacheReset = async () => {
+    try {
+      setEstimatesStatus("refreshing");
+      const result = await resetServiceTitanCache("estimates");
+      const refreshedAt = new Date().toISOString();
+
+      setServiceTitanMetadata((previous) => ({
+        ...previous,
+        estimates: {
+          ...result.estimatesCache,
+          updatedAt: refreshedAt,
+          storage: "Server memory",
+        },
+      }));
+      setEstimatesStatus("available");
+    } catch (error) {
+      console.error("Estimates cache reset failed:", error);
+      setEstimatesStatus("error");
+      throw error;
+    }
+  };
+
+  const handleJobsCacheReset = async () => {
+    try {
+      setJobsStatus("refreshing");
+      await resetServiceTitanCache("jobs");
+      await invalidateRevenueSummaryCache();
+      await loadServerMetadata();
+      setJobsStatus("available");
+    } catch (error) {
+      console.error("Jobs cache reset failed:", error);
+      setJobsStatus("error");
+      throw error;
+    }
+  };
+
+  const handleDatabaseCacheReset = async () => {
+    try {
+      setDatabaseStatus("refreshing");
+      await resetPostgresCache();
+      await loadServerMetadata();
+    } catch (error) {
+      console.error("PostgreSQL cache reset failed:", error);
+      setDatabaseStatus("error");
+      throw error;
     }
   };
 
@@ -241,23 +303,12 @@ export default function SettingsContent() {
             CACHE MANAGEMENT - SEPARATE DROPDOWN
         ======================================== */}
 
-        <SettingsAccordion
-          title="Cache Management"
-          description="View, reset, and refresh locally stored application data."
-        >
+        {canManageCache && (
+          <SettingsAccordion
+            title="Cache Management"
+            description="View, reset, and refresh cached ServiceTitan and PostgreSQL data."
+          >
           <div className="space-y-5">
-            {/* SECTION HEADER */}
-
-            <div className="space-y-1">
-              <h3 className="text-sm font-bold uppercase tracking-wide text-black">
-                Local Cache
-              </h3>
-
-              <p className="text-sm leading-relaxed text-[#777]">
-                Manage locally cached data used to improve application
-                performance and reduce unnecessary API requests.
-              </p>
-            </div>
 
             {/* CACHE CARDS */}
 
@@ -282,20 +333,42 @@ export default function SettingsContent() {
 
               <CacheCard
                 title="Jobs Cache"
-                description="Locally stored job records for faster access and lookup."
-                status="idle"
-                storage="IndexedDB"
-                placeholder
+                description="ServiceTitan job results used by dashboard and revenue views."
+                status={jobsStatus}
+                updatedAt={serviceTitanMetadata?.jobs?.updatedAt}
+                totalCount={serviceTitanMetadata?.jobs?.totalCount}
+                syncDurationMs={serviceTitanMetadata?.jobs?.syncDurationMs}
+                storage="Server memory"
+                onRefresh={handleJobsCacheReset}
               />
 
               {/* ESTIMATES CACHE */}
 
               <CacheCard
                 title="Estimates Cache"
-                description="Locally stored estimate records for sales and follow-up workflows."
-                status="idle"
-                storage="IndexedDB"
-                placeholder
+                description="Estimate records used by pipeline and follow-up views."
+                status={estimatesStatus}
+                updatedAt={
+                  serviceTitanMetadata?.estimates?.updatedAt
+                }
+                totalCount={serviceTitanMetadata?.estimates?.totalCount}
+                syncDurationMs={serviceTitanMetadata?.estimates?.syncDurationMs}
+                storage="Server memory"
+                onRefresh={handleEstimatesCacheReset}
+              />
+
+              {/* POSTGRESQL CACHE */}
+
+              <CacheCard
+                title="PostgreSQL Cache"
+                description="Cached database reads for dashboards, lists, and reports. Writes invalidate affected cached results."
+                status={databaseStatus}
+                updatedAt={databaseMetadata?.updatedAt}
+                totalCount={databaseMetadata?.totalCount}
+                syncDurationMs={databaseMetadata?.syncDurationMs}
+                storage="Server memory"
+                onRefresh={handleDatabaseCacheReset}
+                actionLabel="Reset PostgreSQL Cache"
               />
             </div>
 
@@ -307,14 +380,16 @@ export default function SettingsContent() {
               </h4>
 
               <p className="mt-2 text-sm leading-relaxed text-[#777]">
-                Customer data is stored locally in IndexedDB and
-                refreshed in the background. The application uses this
-                local data to provide faster search and a smoother
-                experience without waiting for API requests.
+                Customer searches and revenue summaries refresh in the
+                background. A completed refresh replaces saved data only after
+                the full fetch succeeds; a failure keeps the last complete
+                copy. PostgreSQL query results stay in server memory briefly
+                and clear automatically after a database write.
               </p>
             </div>
           </div>
-        </SettingsAccordion>
+          </SettingsAccordion>
+        )}
 
         {/* ========================================
             NOTIFICATIONS

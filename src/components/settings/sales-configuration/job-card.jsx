@@ -2,13 +2,7 @@
 
 import { useState } from "react";
 import JobAssignmentModal from "./job-assignment-modal";
-
-function formatCurrency(value) {
-  return Number(value || 0).toLocaleString("en-US", {
-    style: "currency",
-    currency: "USD",
-  });
-}
+import { formatCurrency } from "@/lib/format/currency";
 
 function getSourceLabel(source) {
   if (source === "SELF_GENERATED") return "Self Generated";

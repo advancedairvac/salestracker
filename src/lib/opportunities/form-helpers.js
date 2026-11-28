@@ -7,6 +7,10 @@ export function getFormValues(formData) {
   return {
     customerId: getFormValue(formData, "customerId"),
     stCustomerId: getFormValue(formData, "stCustomerId"),
+    titanCustomerCacheVerified: getFormValue(
+      formData,
+      "titanCustomerCacheVerified",
+    ),
     opportunityDate: getFormValue(formData, "opportunityDate"),
     pocName: getFormValue(formData, "pocName"),
     businessName: getFormValue(formData, "businessName"),

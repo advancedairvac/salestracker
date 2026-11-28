@@ -3,17 +3,11 @@
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import TablePagination from "@/components/dashboard/table-pagination";
+import { formatCurrency } from "@/lib/format/currency";
 
 // ============================================
 // HELPERS
 // ============================================
-
-function formatCurrency(amount, currency) {
-  return `${currency}${new Intl.NumberFormat("en-US", {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
-  }).format(Number(amount) || 0)}`;
-}
 
 function formatSource(source) {
   if (source === "SELF_GENERATED") {
@@ -144,7 +138,7 @@ export default function RevenueTable({
                   </td>
 
                   <td className="whitespace-nowrap px-4 py-2 text-sm text-black sm:text-base">
-                    {formatCurrency(sale.saleValue, currency)}
+                    {formatCurrency(sale.saleValue, { currencySymbol: currency })}
                   </td>
 
                   <td className="whitespace-nowrap px-4 py-2 text-sm text-black sm:text-base">
@@ -158,7 +152,7 @@ export default function RevenueTable({
                   )}
 
                   <td className="whitespace-nowrap px-4 py-2 text-sm text-black sm:text-base">
-                    {formatCurrency(sale.commissionEstimate, currency)}
+                    {formatCurrency(sale.commissionEstimate, { currencySymbol: currency })}
                   </td>
                 </tr>
               ))

@@ -2,6 +2,8 @@ import { getEstimates } from "@/lib/integrations/servicetitan";
 
 const PAGE_SIZE = 500;
 const PAGE_CONCURRENCY = 4;
+const CACHE_TTL_MS = 60 * 1000;
+const summaryCache = new Map();
 
 function measureTime(label, startTime) {
   const durationSeconds = ((performance.now() - startTime) / 1000).toFixed(2);
@@ -20,10 +22,10 @@ function validateEstimateResponse(response, page) {
 /**
  * Fetches only the summary required by the Dashboard.
  *
- * Value = subtotal + tax
+ * Only Open estimates are included. Value = subtotal + tax.
  * Date field = createdOn
  */
-export async function getDashboardEstimateSummary({ start, endExclusive }) {
+async function fetchDashboardEstimateSummary({ start, endExclusive }) {
   if (
     !(start instanceof Date) ||
     !(endExclusive instanceof Date) ||
@@ -63,9 +65,16 @@ export async function getDashboardEstimateSummary({ start, endExclusive }) {
   // Store currency as integer cents to avoid floating-point errors.
   let totalValueInCents = 0;
   let fetchedCount = 0;
+  let openEstimateCount = 0;
 
   function addPageToSummary(estimates) {
     for (const estimate of estimates) {
+      fetchedCount += 1;
+
+      if (String(estimate.status?.name || "").toLowerCase() !== "open") {
+        continue;
+      }
+
       const subtotal = Number(estimate.subtotal ?? 0);
       const tax = Number(estimate.tax ?? 0);
 
@@ -74,7 +83,7 @@ export async function getDashboardEstimateSummary({ start, endExclusive }) {
       }
 
       totalValueInCents += Math.round((subtotal + tax) * 100);
-      fetchedCount += 1;
+      openEstimateCount += 1;
     }
   }
 
@@ -122,7 +131,58 @@ export async function getDashboardEstimateSummary({ start, endExclusive }) {
   measureTime("Summary fetched", startedAt);
 
   return {
-    totalCount,
+    totalCount: openEstimateCount,
     totalValue: totalValueInCents / 100,
   };
+}
+
+export function clearDashboardEstimateSummaryCache() {
+  const removedCount = summaryCache.size;
+  summaryCache.clear();
+  return { removedCount };
+}
+
+export function getDashboardEstimateSummary({ start, endExclusive }) {
+  const key = `${start?.toISOString()}|${endExclusive?.toISOString()}`;
+  const now = Date.now();
+  const cached = summaryCache.get(key);
+
+  if (cached && cached.expiresAt > now) {
+    return cached.promise || Promise.resolve(cached.value);
+  }
+
+  const entry = cached || {
+    value: undefined,
+    expiresAt: Number.POSITIVE_INFINITY,
+    promise: null,
+  };
+
+  entry.expiresAt = Number.POSITIVE_INFINITY;
+  entry.promise = fetchDashboardEstimateSummary({ start, endExclusive })
+    .then((value) => {
+      entry.value = value;
+      entry.expiresAt = Date.now() + CACHE_TTL_MS;
+      entry.promise = null;
+      return value;
+    })
+    .catch((error) => {
+      if (entry.value === undefined) {
+        if (summaryCache.get(key) === entry) summaryCache.delete(key);
+      } else {
+        entry.expiresAt = Date.now() + 5000;
+        entry.promise = null;
+      }
+      throw error;
+    });
+
+  summaryCache.set(key, entry);
+
+  if (cached?.value !== undefined) {
+    entry.promise.catch((error) => {
+      console.error("Background dashboard estimate refresh failed:", error);
+    });
+    return Promise.resolve(cached.value);
+  }
+
+  return entry.promise;
 }

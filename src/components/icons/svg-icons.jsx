@@ -59,14 +59,21 @@ const icons = {
   chevronDown: (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 9.53 5.3"
+      viewBox="0 0 24 24"
+      width="100%"
+      height="100%"
       fill="none"
       stroke="#565656"
     >
       <title>chevronDown</title>
       <g id="Layer_2" data-name="Layer 2">
         <g id="Sales_Tracker" data-name="Sales Tracker">
-          <polyline className="cls-1" points="9.27 0.27 4.76 4.76 0.27 0.27" />
+          <polyline
+            points="5 9 12 16 19 9"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
         </g>
       </g>
     </svg>

@@ -16,10 +16,12 @@ export function subscribeToRevenueSummaryCache(year, callback) {
   return cacheManager.subscribe(getCacheKey(year), callback);
 }
 
-export function clearRevenueSummaryCacheOnLogout() {
+export function invalidateRevenueSummaryCache() {
   cacheGeneration += 1;
   return cacheManager.remove(getCacheKey(new Date().getFullYear()));
 }
+
+export const clearRevenueSummaryCacheOnLogout = invalidateRevenueSummaryCache;
 
 export function refreshRevenueSummary(year) {
   if (requests.has(year)) {

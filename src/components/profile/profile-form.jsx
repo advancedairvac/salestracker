@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 import Input from "@/components/ui/input";
+import { formatCurrency } from "@/lib/format/currency";
 
 function getInitials(name = "") {
   return name
@@ -13,14 +14,6 @@ function getInitials(name = "") {
     .slice(0, 2)
     .map((part) => part.charAt(0).toUpperCase())
     .join("");
-}
-
-function formatCurrency(value) {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  }).format(Number(value || 0));
 }
 
 function InfoItem({ label, value }) {
@@ -72,7 +65,7 @@ function GoalItem({ label, value }) {
       </p>
 
       <p className="mt-2 text-xl font-bold tracking-tight text-black">
-        {formatCurrency(value)}
+        {formatCurrency(value, { maximumFractionDigits: 0 })}
       </p>
     </div>
   );

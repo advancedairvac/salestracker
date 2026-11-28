@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Input from "@/components/ui/input";
 
 import {
   updateEmailTemplate,
@@ -60,25 +61,26 @@ function FieldLabel({ children }) {
 
 function FormInput({ value, onChange, placeholder, maxLength }) {
   return (
-    <input
+    <Input
+      variant="plain"
       value={value}
       onChange={onChange}
       placeholder={placeholder}
       maxLength={maxLength}
-      className="w-full border border-[#d5d5d5] bg-white px-3 py-3 text-sm text-black outline-none transition-colors focus:border-black"
     />
   );
 }
 
 function FormTextarea({ value, onChange, placeholder }) {
   return (
-    <textarea
+    <Input
+      as="textarea"
+      variant="plain"
       value={value}
       onChange={onChange}
       placeholder={placeholder}
       rows={6}
       maxLength={5000}
-      className="w-full resize-y border border-[#d5d5d5] bg-white px-3 py-3 text-sm leading-relaxed text-black outline-none transition-colors focus:border-black"
     />
   );
 }

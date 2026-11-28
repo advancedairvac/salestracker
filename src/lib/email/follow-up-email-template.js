@@ -1,3 +1,6 @@
+import { escapeHtml } from "@/lib/email/html-escape";
+import { formatCurrency } from "@/lib/format/currency";
+
 const DEFAULT_MESSAGES = {
   H24: "Morning, did you get those couple emails from yesterday?",
   H36: "I wanted to follow up regarding your estimate. Have you had a chance to review it?",
@@ -6,15 +9,6 @@ const DEFAULT_MESSAGES = {
   M1: "I wanted to check in one more time regarding your estimate. Please let us know if we can help.",
   MANUAL: "I wanted to follow up with you regarding this opportunity.",
 };
-
-function escapeHtml(value) {
-  return String(value ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
 
 function formatDate(date) {
   if (!date) return "";
@@ -51,22 +45,6 @@ function formatDateTime(date) {
       hour12: true,
     }).format(value),
   };
-}
-
-function formatCurrency(value) {
-  if (value === null || value === undefined || value === "") {
-    return "";
-  }
-
-  const amount = Number(value);
-
-  if (!Number.isFinite(amount)) return "";
-
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 2,
-  }).format(amount);
 }
 
 function renderOptionalLine(value) {
@@ -109,7 +87,11 @@ export function renderFollowUpEmail({
   const address = customer.location || "";
   const phone = customer.phone || "";
   const email = customer.email || "";
-  const value = formatCurrency(opportunity.value);
+  const value = formatCurrency(opportunity.value, {
+    maximumFractionDigits: 2,
+    invalidValue: "",
+    emptyValue: "",
+  });
 
   const followUpDate = formatDateTime(followUp.dueAt);
   const opportunityCreatedDate = formatDate(opportunity.createdAt);

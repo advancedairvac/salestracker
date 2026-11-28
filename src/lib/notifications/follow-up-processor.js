@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { getOpportunityCustomer } from "@/lib/opportunities/opportunity-customer";
 import { renderFollowUpEmail } from "@/lib/email/follow-up-email-template";
 
 const MAX_BATCH_SIZE = 50;
@@ -84,7 +85,17 @@ export async function getDueFollowUps({
     take: safeLimit,
   });
 
-  return followUps.filter((followUp) => {
+  const enrichedFollowUps = followUps.map((followUp) => ({
+    ...followUp,
+    opportunity: followUp.opportunity
+      ? {
+          ...followUp.opportunity,
+          customer: getOpportunityCustomer(followUp.opportunity),
+        }
+      : followUp.opportunity,
+  }));
+
+  return enrichedFollowUps.filter((followUp) => {
     return (
       followUp.notificationAttempts < followUp.maxAttempts &&
       (!followUp.nextRetryAt || followUp.nextRetryAt <= now) &&
@@ -139,6 +150,10 @@ export async function claimEmailFollowUp(followUpId, now = new Date()) {
         reason: "FOLLOW_UP_NOT_FOUND",
       };
     }
+
+    followUp.opportunity.customer = getOpportunityCustomer(
+      followUp.opportunity,
+    );
 
     // ----------------------------------------
     // VALIDATE FOLLOW-UP STATUS

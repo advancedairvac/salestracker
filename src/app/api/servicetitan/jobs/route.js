@@ -14,6 +14,13 @@ export async function GET(request) {
     );
   }
 
+  if (!["ADMIN", "SALESPERSON"].includes(user.role)) {
+    return Response.json(
+      { success: false, message: "You do not have permission." },
+      { status: 403, headers: { "Cache-Control": "private, no-store" } },
+    );
+  }
+
   const searchParams = new URL(request.url).searchParams;
 
   const requestedPage = Number(searchParams.get("page"));

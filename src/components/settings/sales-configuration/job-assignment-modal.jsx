@@ -2,6 +2,8 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { saveJobAssignment } from "@/app/admin/settings/sales-configuration/actions";
+import Input from "@/components/ui/input";
+import { formatCurrency } from "@/lib/format/currency";
 
 const SOURCE_OPTIONS = [
   {
@@ -13,13 +15,6 @@ const SOURCE_OPTIONS = [
     label: "Company",
   },
 ];
-
-function formatCurrency(value) {
-  return Number(value || 0).toLocaleString("en-US", {
-    style: "currency",
-    currency: "USD",
-  });
-}
 
 export default function JobAssignmentModal({
   isOpen,
@@ -160,57 +155,47 @@ export default function JobAssignmentModal({
           </div>
 
           {/* Source */}
-          <div>
-            <label
-              htmlFor="job-source"
-              className="mb-2 block text-[12px] font-bold uppercase tracking-wide text-[#404040]"
-            >
-              Source <span className="text-red-500">*</span>
-            </label>
-
-            <select
-              id="job-source"
-              value={source}
-              onChange={(event) => setSource(event.target.value)}
-              required
-              disabled={isPending}
-              className="h-11 w-full rounded-lg border border-[#d5d5d5] bg-white px-3 text-[13px] text-[#171717] outline-none transition focus:border-[#171717]"
-            >
-              <option value="">Select Source</option>
-
-              {SOURCE_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
+          <Input
+            as="select"
+            variant="plain"
+            id="job-source"
+            name="source"
+            label="Source"
+            value={source}
+            onChange={(event) => setSource(event.target.value)}
+            required
+            disabled={isPending}
+            hideEmptyOption
+            className="!h-11 !min-h-[44px] !rounded-lg !px-3 !py-0 !text-[13px]"
+          >
+            <option value="">Select Source</option>
+            {SOURCE_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </Input>
 
           {/* Salesman */}
-          <div>
-            <label
-              htmlFor="job-salesman"
-              className="mb-2 block text-[12px] font-bold uppercase tracking-wide text-[#404040]"
-            >
-              Salesman
-            </label>
-
-            <select
-              id="job-salesman"
-              value={salesmanId}
-              onChange={(event) => setSalesmanId(event.target.value)}
-              disabled={isPending}
-              className="h-11 w-full rounded-lg border border-[#d5d5d5] bg-white px-3 text-[13px] text-[#171717] outline-none transition focus:border-[#171717]"
-            >
-              <option value="">Unassigned</option>
-
-              {salesmen.map((salesman) => (
-                <option key={salesman.id} value={salesman.id}>
-                  {salesman.name}
-                </option>
-              ))}
-            </select>
-          </div>
+          <Input
+            as="select"
+            variant="plain"
+            id="job-salesman"
+            name="salesmanId"
+            label="Salesman"
+            value={salesmanId}
+            onChange={(event) => setSalesmanId(event.target.value)}
+            disabled={isPending}
+            hideEmptyOption
+            className="!h-11 !min-h-[44px] !rounded-lg !px-3 !py-0 !text-[13px]"
+          >
+            <option value="">Unassigned</option>
+            {salesmen.map((salesman) => (
+              <option key={salesman.id} value={salesman.id}>
+                {salesman.name}
+              </option>
+            ))}
+          </Input>
 
           {/* Commission Estimate */}
           <div>
@@ -221,7 +206,8 @@ export default function JobAssignmentModal({
               Commission Estimate ($)
             </label>
 
-            <input
+            <Input
+              variant="plain"
               id="job-commission"
               type="number"
               min="0"
@@ -230,7 +216,7 @@ export default function JobAssignmentModal({
               onChange={(event) => setCommissionEstimate(event.target.value)}
               disabled={isPending}
               placeholder="0.00"
-              className="h-11 w-full rounded-lg border border-[#d5d5d5] bg-white px-3 text-[13px] text-[#171717] outline-none transition focus:border-[#171717]"
+              className="!h-11 !min-h-[44px] !rounded-lg !px-3 !py-0 !text-[13px] !text-[#171717] focus:!border-[#171717]"
             />
           </div>
 

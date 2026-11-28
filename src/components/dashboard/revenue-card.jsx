@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 
 import MetricSkeleton from "@/components/ui/skeleton/metric-skeleton";
+import { formatCurrency } from "@/lib/format/currency";
 import {
   getRevenueSummaryCache,
   refreshRevenueSummary,
@@ -108,15 +109,6 @@ export default function RevenueCard({
     };
   }, [year]);
 
-  const formatAmount = (amount) => {
-    const value = Number(amount) || 0;
-
-    return `${currency}${new Intl.NumberFormat("en-US", {
-      notation: "compact",
-      maximumFractionDigits: 1,
-    }).format(value)}`;
-  };
-
   const metricItems = [
     { label: "Today", value: revenueValues.today },
     { label: "MTD", value: revenueValues.mtd },
@@ -163,7 +155,11 @@ export default function RevenueCard({
               <MetricSkeleton width="48px" />
             ) : (
               <strong className="text-sm font-extrabold text-black sm:text-[15px]">
-                {formatAmount(metric.value)}
+                {formatCurrency(metric.value, {
+                  currencySymbol: currency,
+                  notation: "compact",
+                  maximumFractionDigits: 1,
+                })}
               </strong>
             )}
 

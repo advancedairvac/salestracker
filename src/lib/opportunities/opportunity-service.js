@@ -16,7 +16,11 @@ import {
   getManualFollowUp,
 } from "@/lib/opportunities/follow-up-schedule";
 
-import { findOrCreateOpportunityCustomer } from "@/lib/opportunities/customer-helpers";
+import {
+  findOrCreateOpportunityCustomer,
+  resolveServiceTitanOpportunityCustomer,
+  toOpportunityCustomerSnapshot,
+} from "@/lib/opportunities/customer-helpers";
 
 // ============================================
 // CUSTOMER SEARCH
@@ -236,20 +240,39 @@ export async function createOpportunityService({ user, formData }) {
 
   const activeScheduleMode = hasManualFollowUp ? "MANUAL" : "STANDARD";
 
+  let titanCustomer;
+  try {
+    titanCustomer = await resolveServiceTitanOpportunityCustomer(values);
+  } catch (error) {
+    console.error("ServiceTitan customer validation failed:", error);
+    return getErrorState("customerLookup", values);
+  }
+
+  if (titanCustomer && !values.stCustomerId) {
+    return getErrorState("duplicateCustomer", values);
+  }
+
   // ============================================
   // DATABASE TRANSACTION
   // ============================================
 
   try {
+    let createdOpportunityId = null;
+
     await prisma.$transaction(async (tx) => {
       // ----------------------------------------
       // FIND OR CREATE CUSTOMER
       // ----------------------------------------
 
-      const customer = await findOrCreateOpportunityCustomer(tx, values, {
-        matchNames: false,
-        updateMode: "preserve",
-      });
+      const localCustomer = titanCustomer
+        ? null
+        : await findOrCreateOpportunityCustomer(tx, values, {
+            matchNames: false,
+            updateMode: "preserve",
+          });
+      const customerSnapshot = titanCustomer
+        ? toOpportunityCustomerSnapshot(titanCustomer, values)
+        : null;
 
       // ----------------------------------------
       // CREATE OPPORTUNITY
@@ -257,7 +280,12 @@ export async function createOpportunityService({ user, formData }) {
 
       const opportunity = await tx.opportunity.create({
         data: {
-          customerId: customer.id,
+          customerId: titanCustomer
+            ? customerSnapshot.stCustomerId
+            : localCustomer.id,
+          customerSource: titanCustomer ? "SERVICETITAN" : "POSTGRES",
+          localCustomerId: localCustomer?.id || null,
+          ...(customerSnapshot ? { customerSnapshot } : {}),
           opportunityDate,
           jobType: jobType || null,
           textMessage: textMessage || null,
@@ -268,6 +296,7 @@ export async function createOpportunityService({ user, formData }) {
           createdById: user.id,
         },
       });
+      createdOpportunityId = opportunity.id;
 
       // ----------------------------------------
       // CREATE FOLLOW-UP SCHEDULE
@@ -283,65 +312,51 @@ export async function createOpportunityService({ user, formData }) {
         },
       });
 
-      // ----------------------------------------
-      // GENERATE STANDARD FOLLOW-UPS
-      // ----------------------------------------
+      // Create only the selected schedule mode. Inactive alternative rows
+      // caused duplicate follow-up records to accumulate for every opportunity.
+      let followUpRecords;
 
-      const standardFollowUps = getStandardFollowUps(opportunityDate);
-
-      const followUpRecords = standardFollowUps.map((item) => ({
-        opportunityId: opportunity.id,
-        scheduleId: schedule.id,
-        assignedToId,
-
-        eventType: item.eventType,
-        type: item.type,
-        sequence: item.sequence,
-        dueAt: item.dueAt,
-
-        status: "PENDING",
-        scheduleType: "STANDARD",
-        isActive: !hasManualFollowUp,
-
-        notes: "Automatically scheduled standard follow-up.",
-      }));
-
-      // ----------------------------------------
-      // GENERATE MANUAL FOLLOW-UP
-      // ----------------------------------------
-
-      const manualFollowUp = getManualFollowUp(manualFollowUpDate);
-
-      followUpRecords.push({
-        opportunityId: opportunity.id,
-        scheduleId: schedule.id,
-        assignedToId,
-
-        eventType: manualFollowUp.eventType,
-        type: manualFollowUp.type,
-        sequence: manualFollowUp.sequence,
-        dueAt: manualFollowUp.dueAt,
-
-        status: "PENDING",
-        scheduleType: "MANUAL",
-        isActive: hasManualFollowUp,
-
-        notes: hasManualFollowUp
-          ? "Manually scheduled CALL follow-up."
-          : "Manual follow-up not scheduled.",
-      });
+      if (hasManualFollowUp) {
+        const manualFollowUp = getManualFollowUp(manualFollowUpDate);
+        followUpRecords = [{
+              opportunityId: opportunity.id,
+              scheduleId: schedule.id,
+              assignedToId,
+              eventType: manualFollowUp.eventType,
+              type: manualFollowUp.type,
+              sequence: manualFollowUp.sequence,
+              dueAt: manualFollowUp.dueAt,
+              status: "PENDING",
+              scheduleType: "MANUAL",
+              isActive: true,
+              notes: "Manually scheduled CALL follow-up.",
+            }];
+      } else {
+        followUpRecords = getStandardFollowUps(opportunityDate).map((item) => ({
+            opportunityId: opportunity.id,
+            scheduleId: schedule.id,
+            assignedToId,
+            eventType: item.eventType,
+            type: item.type,
+            sequence: item.sequence,
+            dueAt: item.dueAt,
+            status: "PENDING",
+            scheduleType: "STANDARD",
+            isActive: true,
+            notes: "Automatically scheduled standard follow-up.",
+          }));
+      }
 
       // ----------------------------------------
-      // SAVE ALL FOLLOW-UPS
+      // SAVE FOLLOW-UPS FOR THE ACTIVE MODE
       // ----------------------------------------
 
-      await tx.followUp.createMany({
-        data: followUpRecords,
-      });
-    });
+      await tx.followUp.createMany({ data: followUpRecords });
+    }, { maxWait: 10000, timeout: 30000 });
 
     return {
       success: true,
+      opportunityId: createdOpportunityId,
     };
   } catch (error) {
     console.error("Create opportunity failed:", error);
@@ -473,6 +488,18 @@ export async function updateOpportunityService({ user, formData }) {
     return getErrorState("permission", errorValues);
   }
 
+  let titanCustomer;
+  try {
+    titanCustomer = await resolveServiceTitanOpportunityCustomer(values);
+  } catch (error) {
+    console.error("ServiceTitan customer validation failed:", error);
+    return getErrorState("customerLookup", errorValues);
+  }
+
+  if (titanCustomer && !values.stCustomerId) {
+    return getErrorState("duplicateCustomer", errorValues);
+  }
+
   // ============================================
   // ASSIGNMENT VALIDATION
   // ============================================
@@ -513,6 +540,7 @@ export async function updateOpportunityService({ user, formData }) {
         select: {
           id: true,
           customerId: true,
+          localCustomerId: true,
           assignedToId: true,
           status: true,
         },
@@ -542,17 +570,19 @@ export async function updateOpportunityService({ user, formData }) {
       // FIND OR UPDATE CUSTOMER
       // ----------------------------------------
 
-      const customer = await findOrCreateOpportunityCustomer(
-        tx,
-        {
-          ...values,
-          customerId: opportunity.customerId,
-        },
-        {
-          nameMatch: "both",
-          updateMode: "replace",
-        },
-      );
+      const localCustomer = titanCustomer
+        ? null
+        : await findOrCreateOpportunityCustomer(
+            tx,
+            {
+              ...values,
+              customerId: opportunity.localCustomerId,
+            },
+            { nameMatch: "both", updateMode: "replace" },
+          );
+      const customerSnapshot = titanCustomer
+        ? toOpportunityCustomerSnapshot(titanCustomer, values)
+        : null;
 
       // ----------------------------------------
       // UPDATE OPPORTUNITY
@@ -566,7 +596,12 @@ export async function updateOpportunityService({ user, formData }) {
         },
 
         data: {
-          customerId: customer.id,
+          customerId: titanCustomer
+            ? customerSnapshot.stCustomerId
+            : localCustomer.id,
+          customerSource: titanCustomer ? "SERVICETITAN" : "POSTGRES",
+          localCustomerId: localCustomer?.id || null,
+          ...(customerSnapshot ? { customerSnapshot } : {}),
           opportunityDate,
           jobType: jobType || null,
           textMessage: textMessage || null,

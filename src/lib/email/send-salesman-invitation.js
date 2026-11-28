@@ -1,13 +1,5 @@
 import { resend } from "@/lib/email/resend";
-
-function escapeHtml(value = "") {
-  return String(value)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
+import { escapeHtml } from "@/lib/email/html-escape";
 
 export async function sendSalesmanInvitation({
   name,

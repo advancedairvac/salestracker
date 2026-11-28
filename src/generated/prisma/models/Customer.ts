@@ -400,9 +400,9 @@ export type CustomerMinOrderByAggregateInput = {
   updatedAt?: Prisma.SortOrder
 }
 
-export type CustomerScalarRelationFilter = {
-  is?: Prisma.CustomerWhereInput
-  isNot?: Prisma.CustomerWhereInput
+export type CustomerNullableScalarRelationFilter = {
+  is?: Prisma.CustomerWhereInput | null
+  isNot?: Prisma.CustomerWhereInput | null
 }
 
 export type CustomerCreateNestedOneWithoutOpportunitiesInput = {
@@ -411,10 +411,12 @@ export type CustomerCreateNestedOneWithoutOpportunitiesInput = {
   connect?: Prisma.CustomerWhereUniqueInput
 }
 
-export type CustomerUpdateOneRequiredWithoutOpportunitiesNestedInput = {
+export type CustomerUpdateOneWithoutOpportunitiesNestedInput = {
   create?: Prisma.XOR<Prisma.CustomerCreateWithoutOpportunitiesInput, Prisma.CustomerUncheckedCreateWithoutOpportunitiesInput>
   connectOrCreate?: Prisma.CustomerCreateOrConnectWithoutOpportunitiesInput
   upsert?: Prisma.CustomerUpsertWithoutOpportunitiesInput
+  disconnect?: Prisma.CustomerWhereInput | boolean
+  delete?: Prisma.CustomerWhereInput | boolean
   connect?: Prisma.CustomerWhereUniqueInput
   update?: Prisma.XOR<Prisma.XOR<Prisma.CustomerUpdateToOneWithWhereWithoutOpportunitiesInput, Prisma.CustomerUpdateWithoutOpportunitiesInput>, Prisma.CustomerUncheckedUpdateWithoutOpportunitiesInput>
 }

@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { getOpportunityCustomer } from "@/lib/opportunities/opportunity-customer";
 
 import { getEstimates } from "@/lib/integrations/servicetitan";
 
@@ -23,13 +24,14 @@ const PAGE_SIZES = [10, 20, 50, 100];
 // ============================================
 
 
-async function getPipelineUsers() {
+async function getPipelineUsers(salesmanId = null) {
   return prisma.user.findMany({
     where: {
       role: {
         in: ["ADMIN", "SALESPERSON"],
       },
       status: "ACTIVE",
+      ...(salesmanId ? { id: salesmanId } : {}),
     },
     select: {
       id: true,
@@ -167,6 +169,7 @@ async function getPipelineFollowUps(selectedFilter, salesmanId = null) {
       opportunity: followUp.opportunity
         ? {
             ...followUp.opportunity,
+            customer: getOpportunityCustomer(followUp.opportunity),
 
             value:
               followUp.opportunity.value !== null &&
@@ -212,8 +215,13 @@ function formatPipelineEstimates(
 
     const customerName = getCustomerName(customer);
 
+    const subtotal = Number(estimate.subtotal);
+    const tax = Number(estimate.tax);
     const estimateValue =
-      estimate.total ?? estimate.subtotal ?? estimate.amount ?? 0;
+      estimate.total ??
+      (Number.isFinite(subtotal)
+        ? subtotal + (Number.isFinite(tax) ? tax : 0)
+        : estimate.amount ?? 0);
 
     return {
       id: estimateId,
@@ -298,8 +306,11 @@ async function getPaginatedPipelineEstimates({ page, pageSize }) {
 // Users + Selected Filter
 // ============================================
 
-export async function getPipelinePageData({ requestedFilter = "ALL" } = {}) {
-  const users = await getPipelineUsers();
+export async function getPipelinePageData({
+  requestedFilter = "ALL",
+  salesmanId = null,
+} = {}) {
+  const users = await getPipelineUsers(salesmanId);
 
   const selectedFilter = getSelectedFilter(requestedFilter, users);
 

@@ -4,6 +4,8 @@ import Link from "next/link";
 
 import OpportunityActions from "@/components/dashboard/opportunity-actions";
 import MobileEditAction from "@/components/layout/mobile-edit-action";
+import { formatCurrency } from "@/lib/format/currency";
+import { getOpportunityCustomer } from "@/lib/opportunities/opportunity-customer";
 
 import {
   updateFollowUpMode as updateAdminFollowUpMode,
@@ -40,14 +42,6 @@ function formatTime(date) {
   });
 }
 
-function formatCurrency(value) {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  }).format(Number(value || 0));
-}
-
 function getNextFollowUp(followUps = []) {
   return (
     [...followUps]
@@ -71,6 +65,7 @@ export default function OpportunityDetails({
   canManage: canManageProp,
 }) {
   const isSalesperson = role === "SALESPERSON";
+  const customer = getOpportunityCustomer(opportunity);
 
   // Admin can manage every opportunity.
   // Salesperson can manage only their assigned opportunity.
@@ -104,7 +99,7 @@ export default function OpportunityDetails({
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="space-y-1">
           <h1 className="text-lg font-bold uppercase leading-tight tracking-tight sm:text-xl">
-            {opportunity.customer?.businessName || "Business Name"}
+            {customer?.businessName || "Business Name"}
           </h1>
 
           <p className="text-sm font-medium uppercase leading-5 text-neutral-600">
@@ -126,26 +121,26 @@ export default function OpportunityDetails({
       {/* OPPORTUNITY VALUE */}
       <div className="mt-5">
         <span className="inline-flex items-center bg-black px-2.5 py-1 text-sm font-semibold leading-5 text-white">
-          {formatCurrency(opportunity.value)}
+          {formatCurrency(opportunity.value, { maximumFractionDigits: 0 })}
         </span>
       </div>
 
       {/* CUSTOMER INFORMATION */}
       <div className="mt-6 space-y-1 text-sm leading-5 text-neutral-700">
-        {opportunity.customer?.pocName && (
+        {customer?.pocName && (
           <p className="font-medium uppercase text-neutral-900">
-            {opportunity.customer.pocName}
+            {customer.pocName}
           </p>
         )}
 
-        {opportunity.customer?.phone && <p>{opportunity.customer.phone}</p>}
+        {customer?.phone && <p>{customer.phone}</p>}
 
-        {opportunity.customer?.email && (
-          <p className="break-all">{opportunity.customer.email}</p>
+        {customer?.email && (
+          <p className="break-all">{customer.email}</p>
         )}
 
-        {opportunity.customer?.location && (
-          <p>{opportunity.customer.location}</p>
+        {customer?.location && (
+          <p>{customer.location}</p>
         )}
       </div>
 

@@ -4,16 +4,11 @@ import { useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import TablePagination from "@/components/dashboard/table-pagination";
+import { formatCurrency } from "@/lib/format/currency";
 
 // ============================================
 // HELPERS
 // ============================================
-
-function formatCurrency(amount, currency = "$") {
-  return `${currency}${new Intl.NumberFormat("en-US", {
-    maximumFractionDigits: 0,
-  }).format(Number(amount) || 0)}`;
-}
 
 function formatSource(source) {
   if (source === "SELF_GENERATED") {
@@ -184,7 +179,7 @@ export default function EstimatesTable({
                   </td>
 
                   <td className="whitespace-nowrap px-4 py-2 text-xs text-black lg:text-sm">
-                    {formatCurrency(estimate.value, currency)}
+                    {formatCurrency(estimate.value, { currencySymbol: currency, maximumFractionDigits: 0 })}
                   </td>
 
                   <td className="whitespace-nowrap px-4 py-2 text-xs text-black lg:text-sm">
@@ -196,7 +191,7 @@ export default function EstimatesTable({
                   </td>
 
                   <td className="whitespace-nowrap px-4 py-2 text-xs text-black lg:text-sm">
-                    {formatCurrency(estimate.commissionEstimate || 0, currency)}
+                    {formatCurrency(estimate.commissionEstimate || 0, { currencySymbol: currency, maximumFractionDigits: 0 })}
                   </td>
                 </tr>
               ))

@@ -1,5 +1,7 @@
 "use client";
 
+import Input from "@/components/ui/input";
+
 // ============================================
 // PAGE NUMBERS
 // ============================================
@@ -71,18 +73,22 @@ export default function TablePagination({
           Items per page:
         </label>
 
-        <select
+        <Input
+          as="select"
+          variant="plain"
           id="table-page-size"
+          name="table-page-size"
           value={pageSize}
           onChange={(event) => onPageSizeChange(Number(event.target.value))}
-          className="h-9 border border-neutral-300 bg-white px-2 text-sm text-neutral-900 outline-none transition-colors focus:border-black"
+          wrapperClassName="!w-auto"
+          className="!h-9 !min-h-[36px] !w-[76px] !min-w-[76px] !px-2 !py-0 !pr-8 !text-sm !text-neutral-900 focus:!border-black"
         >
           {[10, 20, 50, 100].map((size) => (
             <option key={size} value={size}>
               {size}
             </option>
           ))}
-        </select>
+        </Input>
       </div>
 
       {/* PAGE INFORMATION AND NAVIGATION */}

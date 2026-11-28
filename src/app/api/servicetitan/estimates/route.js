@@ -1,7 +1,11 @@
 import { getAuthenticatedUser } from "@/lib/auth";
-import { getEstimates } from "@/lib/integrations/servicetitan";
+import {
+  getAllEstimates,
+  getEstimates,
+} from "@/lib/integrations/servicetitan";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 export async function GET(request) {
   // 1. Authentication
@@ -17,8 +21,51 @@ export async function GET(request) {
     );
   }
 
+  if (!["ADMIN", "SALESPERSON"].includes(user.role)) {
+    return Response.json(
+      { success: false, message: "You do not have permission." },
+      { status: 403, headers: { "Cache-Control": "private, no-store" } },
+    );
+  }
+
   // 2. Query parameters
   const searchParams = new URL(request.url).searchParams;
+
+  if (searchParams.get("sync") === "all") {
+    try {
+      const estimates = await getAllEstimates({
+        pageSize: 500,
+        maxPages: 1000,
+      });
+
+      return Response.json(
+        {
+          success: true,
+          message: "Estimate cache synchronized.",
+          totalCount: estimates.length,
+          estimates,
+          syncedAt: Date.now(),
+        },
+        { headers: { "Cache-Control": "private, no-store" } },
+      );
+    } catch (error) {
+      console.error("ServiceTitan estimate sync failed:", error);
+
+      return Response.json(
+        {
+          success: false,
+          message:
+            error instanceof Error
+              ? error.message
+              : "Unable to synchronize estimates.",
+        },
+        {
+          status: 502,
+          headers: { "Cache-Control": "private, no-store" },
+        },
+      );
+    }
+  }
 
   const requestedPage = Number(searchParams.get("page"));
   const requestedPageSize = Number(searchParams.get("pageSize"));

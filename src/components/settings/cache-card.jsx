@@ -39,6 +39,7 @@ export default function CacheCard({
   storage = "IndexedDB",
   onRefresh,
   placeholder = false,
+  actionLabel = "Reset & Refresh Cache",
 }) {
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -143,7 +144,7 @@ export default function CacheCard({
             ? "Refreshing Cache..."
             : placeholder
               ? "Coming Soon"
-              : "Reset & Refresh Cache"}
+              : actionLabel}
         </button>
       </div>
 
