@@ -83,6 +83,7 @@ export async function saveJobAssignment({
         source,
         salesmanId: salesmanId || null,
         commissionEstimate: parsedCommission,
+        autoAssigned: false,
       },
 
       create: {
@@ -90,6 +91,7 @@ export async function saveJobAssignment({
         source,
         salesmanId: salesmanId || null,
         commissionEstimate: parsedCommission,
+        autoAssigned: false,
       },
 
       select: {

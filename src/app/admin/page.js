@@ -69,7 +69,7 @@ async function AdminTeamSection({
   selectedStartDate,
   selectedEndDate,
 }) {
-  const { teamMembers, revenueSales, opportunities } =
+  const { teamMembers, revenueSales, opportunities, closeRateByMember } =
     await getAdminTeamSectionData({
       start,
       endExclusive,
@@ -86,6 +86,7 @@ async function AdminTeamSection({
     goalType: goalConfiguration.goalType,
     revenueSales,
     opportunities,
+    closeRateByMember,
   });
 
   const sortedTeamData = [...teamData].sort((a, b) =>

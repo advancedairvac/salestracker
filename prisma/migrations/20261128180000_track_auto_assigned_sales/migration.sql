@@ -1,0 +1,2 @@
+ALTER TABLE "Sale"
+ADD COLUMN "autoAssigned" BOOLEAN NOT NULL DEFAULT false;

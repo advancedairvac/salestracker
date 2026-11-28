@@ -1,4 +1,7 @@
-const CACHE_TTL_MS = 30 * 1000;
+// Date-filtered dashboard reads are reused across requests. Writes still clear
+// this cache, so a short one-minute TTL reduces repeat reads without delaying
+// updates made inside the application.
+const CACHE_TTL_MS = 60 * 1000;
 const MAX_CACHE_ENTRIES = 1200;
 const GLOBAL_KEY = "__ADVANCED_SALES_TRACKER_DATABASE_CACHE__";
 

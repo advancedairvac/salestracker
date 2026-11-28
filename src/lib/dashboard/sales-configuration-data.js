@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 
-import { getAllJobs, getJobType } from "@/lib/integrations/servicetitan";
+import { getAllJobs } from "@/lib/integrations/servicetitan";
+import { getServiceTitanJobTypesByIds } from "@/lib/dashboard/servicetitan-lookups";
 
 import {
   getServiceTitanCustomersByIds,
@@ -72,10 +73,6 @@ function getTimestamp(value) {
   return Number.isFinite(timestamp) ? timestamp : 0;
 }
 
-function getJobTypeName(result) {
-  return result?.name || result?.jobType?.name || result?.data?.name || "";
-}
-
 function getJobCity(job, customer) {
   return (
     job.location?.city ||
@@ -138,6 +135,19 @@ function formatJob(job, customerMap, jobTypeMap, saleMap) {
 
 export async function getSalesConfigurationData(searchParams = {}) {
   const { requestedPage, pageSize } = getPaginationParams(searchParams);
+  const requestedTab = Array.isArray(searchParams.tab)
+    ? searchParams.tab[0]
+    : searchParams.tab;
+  const allowedTabs = [
+    "auto-assigned",
+    "source-assigned",
+    "salesman-assigned",
+    "unassigned",
+    "all",
+  ];
+  const activeTab = allowedTabs.includes(requestedTab)
+    ? requestedTab
+    : "all";
 
   // ------------------------------------------
   // REVENUE API DATE FILTERS
@@ -189,19 +199,78 @@ export async function getSalesConfigurationData(searchParams = {}) {
     (a, b) => getTimestamp(b.modifiedOn) - getTimestamp(a.modifiedOn),
   );
 
+  const allServiceTitanJobIds = sortedJobs.map((job) => String(job.id));
+  const savedSales = allServiceTitanJobIds.length
+    ? await prisma.sale.findMany({
+        where: {
+          serviceTitanJobId: { in: allServiceTitanJobIds },
+        },
+        select: {
+          serviceTitanJobId: true,
+          source: true,
+          salesmanId: true,
+          autoAssigned: true,
+          commissionEstimate: true,
+          salesman: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+      })
+    : [];
+
+  const saleMap = new Map(
+    savedSales.map((sale) => [String(sale.serviceTitanJobId), sale]),
+  );
+
+  const tabCounts = {
+    "auto-assigned": 0,
+    "source-assigned": 0,
+    "salesman-assigned": 0,
+    unassigned: 0,
+    all: sortedJobs.length,
+  };
+
+  for (const job of sortedJobs) {
+    const sale = saleMap.get(String(job.id));
+    if (sale?.autoAssigned) tabCounts["auto-assigned"] += 1;
+    if (sale?.source) tabCounts["source-assigned"] += 1;
+    if (sale?.salesmanId) tabCounts["salesman-assigned"] += 1;
+    if (!sale?.salesmanId) tabCounts.unassigned += 1;
+  }
+
+  const filteredJobs = sortedJobs.filter((job) => {
+    const sale = saleMap.get(String(job.id));
+
+    switch (activeTab) {
+      case "auto-assigned":
+        return Boolean(sale?.autoAssigned);
+      case "source-assigned":
+        return Boolean(sale?.source);
+      case "salesman-assigned":
+        return Boolean(sale?.salesmanId);
+      case "unassigned":
+        return !sale?.salesmanId;
+      default:
+        return true;
+    }
+  });
+
   // ------------------------------------------
-  // SERVER-SIDE PAGINATION
+  // SERVER-SIDE PAGINATION AFTER FILTERING
   // ------------------------------------------
 
   const pagination = buildPagination(
     requestedPage,
     pageSize,
-    sortedJobs.length,
+    filteredJobs.length,
   );
 
   const startIndex = (pagination.currentPage - 1) * pagination.pageSize;
 
-  const currentPageJobs = sortedJobs.slice(
+  const currentPageJobs = filteredJobs.slice(
     startIndex,
     startIndex + pagination.pageSize,
   );
@@ -228,55 +297,15 @@ export async function getSalesConfigurationData(searchParams = {}) {
     ),
   ];
 
-  const serviceTitanJobIds = currentPageJobs.map((job) => String(job.id));
 
   // ------------------------------------------
   // FETCH CURRENT PAGE RELATED DATA
   // ------------------------------------------
 
-  const [customerMap, jobTypeResults, savedSales] = await Promise.all([
+  const [customerMap, jobTypeMap] = await Promise.all([
     getServiceTitanCustomersByIds(customerIds),
-
-    Promise.all(
-      jobTypeIds.map(async (jobTypeId) => {
-        const result = await getJobType(jobTypeId);
-
-        return [jobTypeId, getJobTypeName(result)];
-      }),
-    ),
-
-    serviceTitanJobIds.length
-      ? prisma.sale.findMany({
-          where: {
-            serviceTitanJobId: {
-              in: serviceTitanJobIds,
-            },
-          },
-          select: {
-            serviceTitanJobId: true,
-            source: true,
-            salesmanId: true,
-            commissionEstimate: true,
-            salesman: {
-              select: {
-                id: true,
-                name: true,
-              },
-            },
-          },
-        })
-      : Promise.resolve([]),
+    getServiceTitanJobTypesByIds(jobTypeIds),
   ]);
-
-  // ------------------------------------------
-  // BUILD LOOKUP MAPS
-  // ------------------------------------------
-
-  const jobTypeMap = new Map(jobTypeResults);
-
-  const saleMap = new Map(
-    savedSales.map((sale) => [String(sale.serviceTitanJobId), sale]),
-  );
 
   // ------------------------------------------
   // FORMAT CURRENT PAGE JOBS
@@ -289,6 +318,8 @@ export async function getSalesConfigurationData(searchParams = {}) {
   return {
     jobs,
     salesmen,
+    activeTab,
+    tabCounts,
     pagination,
   };
 }

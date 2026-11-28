@@ -438,6 +438,7 @@ model Sale {
   salesman   User?   @relation("SaleAssignedTo", fields: [salesmanId], references: [id], onDelete: SetNull)
 
   source LeadSource?
+  autoAssigned Boolean @default(false)
 
   // Commission estimate
   commissionEstimate Decimal @default(0) @db.Decimal(12, 2)

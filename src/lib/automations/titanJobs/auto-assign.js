@@ -91,6 +91,7 @@ export async function autoAssignServiceTitanJob(jobId) {
         source: opportunity.source,
         salesmanId: opportunity.assignedToId,
         commissionEstimate: 0,
+        autoAssigned: true,
       },
       select: {
         id: true,

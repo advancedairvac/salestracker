@@ -11,6 +11,7 @@ import {
 } from "@/lib/dashboard/revenue-data";
 
 import { getPipelineFollowUpsData } from "@/lib/dashboard/pipeline-data";
+import { getOpportunityCloseRateStats } from "@/lib/dashboard/opportunity-close-rate";
 
 import RevenueDateFilter from "@/components/dashboard/revenue-date-filter";
 import RevenueSummary from "@/components/dashboard/revenue-summary";
@@ -225,11 +226,17 @@ export default async function MySalesOverviewPage({ params, searchParams }) {
   }
 
   // ============================================
-  // CLOSE RATE
-  // ============================================
-
-  // Existing placeholder.
-  const closeRate = 0;
+  // CLOSE RATE: created opportunities closed as WON or LOST.
+  const closeRateStatsByMember = await getOpportunityCloseRateStats({
+    memberIds: [salesman.id],
+    start: dateRange.start,
+    endExclusive: dateRange.endExclusive,
+  });
+  const closeRateStats = closeRateStatsByMember.get(salesman.id) || {
+    createdCount: 0,
+    closedCount: 0,
+    closeRate: 0,
+  };
 
   // ============================================
   // SUSPENSE KEYS
@@ -306,9 +313,14 @@ export default async function MySalesOverviewPage({ params, searchParams }) {
             </div>
 
             <div className="shrink-0 text-right">
-              <p className="text-lg font-bold text-black">{closeRate}%</p>
+              <p className="text-lg font-bold text-black">
+                {closeRateStats.closeRate}%
+              </p>
 
               <p className="text-[10px] uppercase text-[#777]">Close Rate</p>
+              <p className="mt-1 text-[10px] text-[#777]">
+                {closeRateStats.closedCount} closed / {closeRateStats.createdCount} created
+              </p>
             </div>
           </div>
         </section>

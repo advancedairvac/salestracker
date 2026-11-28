@@ -2,13 +2,21 @@ import { getEstimates } from "@/lib/integrations/servicetitan";
 
 const PAGE_SIZE = 500;
 const PAGE_CONCURRENCY = 4;
-const CACHE_TTL_MS = 60 * 1000;
-const summaryCache = new Map();
+const CACHE_TTL_MS = 5 * 60 * 1000;
+const MAX_STALE_MS = 30 * 60 * 1000;
+const MAX_CACHE_ENTRIES = 8;
+const estimatesCache = new Map();
 
-function measureTime(label, startTime) {
-  const durationSeconds = ((performance.now() - startTime) / 1000).toFixed(2);
-
-  console.log(`[Dashboard Estimates] ${label}: ${durationSeconds}s`);
+function validateDateRange({ start, endExclusive }) {
+  if (
+    !(start instanceof Date) ||
+    !(endExclusive instanceof Date) ||
+    Number.isNaN(start.getTime()) ||
+    Number.isNaN(endExclusive.getTime()) ||
+    start >= endExclusive
+  ) {
+    throw new Error("Invalid Dashboard Estimate date range.");
+  }
 }
 
 function validateEstimateResponse(response, page) {
@@ -19,25 +27,8 @@ function validateEstimateResponse(response, page) {
   return response.data;
 }
 
-/**
- * Fetches only the summary required by the Dashboard.
- *
- * Only Open estimates are included. Value = subtotal + tax.
- * Date field = createdOn
- */
-async function fetchDashboardEstimateSummary({ start, endExclusive }) {
-  if (
-    !(start instanceof Date) ||
-    !(endExclusive instanceof Date) ||
-    Number.isNaN(start.getTime()) ||
-    Number.isNaN(endExclusive.getTime()) ||
-    start >= endExclusive
-  ) {
-    throw new Error("Invalid Dashboard Estimate date range.");
-  }
-
+async function fetchEstimatesInRange({ start, endExclusive }) {
   const startedAt = performance.now();
-
   const filters = {
     createdOnOrAfter: start.toISOString(),
     createdBefore: endExclusive.toISOString(),
@@ -49,46 +40,14 @@ async function fetchDashboardEstimateSummary({ start, endExclusive }) {
     includeTotal: true,
     ...filters,
   });
-
   const firstPageData = validateEstimateResponse(firstResponse, 1);
-
   const totalCount = Number(firstResponse.totalCount);
 
-  if (!Number.isFinite(totalCount) || totalCount < 0) {
+  if (!Number.isFinite(totalCount) || totalCount < firstPageData.length) {
     throw new Error("Invalid Estimates totalCount from ServiceTitan.");
   }
 
-  if (firstPageData.length > totalCount) {
-    throw new Error("Estimates response count exceeds totalCount.");
-  }
-
-  // Store currency as integer cents to avoid floating-point errors.
-  let totalValueInCents = 0;
-  let fetchedCount = 0;
-  let openEstimateCount = 0;
-
-  function addPageToSummary(estimates) {
-    for (const estimate of estimates) {
-      fetchedCount += 1;
-
-      if (String(estimate.status?.name || "").toLowerCase() !== "open") {
-        continue;
-      }
-
-      const subtotal = Number(estimate.subtotal ?? 0);
-      const tax = Number(estimate.tax ?? 0);
-
-      if (!Number.isFinite(subtotal) || !Number.isFinite(tax)) {
-        throw new Error(`Invalid Estimate amount. Estimate ID: ${estimate.id}`);
-      }
-
-      totalValueInCents += Math.round((subtotal + tax) * 100);
-      openEstimateCount += 1;
-    }
-  }
-
-  addPageToSummary(firstPageData);
-
+  const estimates = [...firstPageData];
   const totalPages = Math.ceil(totalCount / PAGE_SIZE);
 
   for (
@@ -97,12 +56,10 @@ async function fetchDashboardEstimateSummary({ start, endExclusive }) {
     batchStart += PAGE_CONCURRENCY
   ) {
     const batchEnd = Math.min(batchStart + PAGE_CONCURRENCY - 1, totalPages);
-
     const pageNumbers = Array.from(
       { length: batchEnd - batchStart + 1 },
       (_, index) => batchStart + index,
     );
-
     const responses = await Promise.all(
       pageNumbers.map((page) =>
         getEstimates({
@@ -115,59 +72,52 @@ async function fetchDashboardEstimateSummary({ start, endExclusive }) {
     );
 
     responses.forEach((response, index) => {
-      const page = pageNumbers[index];
-      const estimates = validateEstimateResponse(response, page);
-
-      addPageToSummary(estimates);
+      estimates.push(...validateEstimateResponse(response, pageNumbers[index]));
     });
   }
 
-  if (fetchedCount !== totalCount) {
+  if (estimates.length !== totalCount) {
     throw new Error(
-      `Estimates count mismatch. Expected ${totalCount}, fetched ${fetchedCount}.`,
+      `Estimates count mismatch. Expected ${totalCount}, fetched ${estimates.length}.`,
     );
   }
 
-  measureTime("Summary fetched", startedAt);
-
-  return {
-    totalCount: openEstimateCount,
-    totalValue: totalValueInCents / 100,
-  };
-}
-
-export function clearDashboardEstimateSummaryCache() {
-  const removedCount = summaryCache.size;
-  summaryCache.clear();
-  return { removedCount };
-}
-
-export function getDashboardEstimateSummary({ start, endExclusive }) {
-  const key = `${start?.toISOString()}|${endExclusive?.toISOString()}`;
-  const now = Date.now();
-  const cached = summaryCache.get(key);
-
-  if (cached && cached.expiresAt > now) {
-    return cached.promise || Promise.resolve(cached.value);
+  const uniqueEstimates = new Map();
+  for (const estimate of estimates) {
+    if (estimate?.id !== undefined && estimate?.id !== null) {
+      uniqueEstimates.set(String(estimate.id), estimate);
+    }
   }
 
-  const entry = cached || {
-    value: undefined,
-    expiresAt: Number.POSITIVE_INFINITY,
-    promise: null,
-  };
+  if (uniqueEstimates.size !== totalCount) {
+    throw new Error(
+      `Duplicate or missing ServiceTitan estimates detected. Expected ${totalCount}, received ${uniqueEstimates.size}.`,
+    );
+  }
+
+  console.log(
+    `[ServiceTitan Estimates] API data fetched: ${((performance.now() - startedAt) / 1000).toFixed(2)} sec`,
+  );
+
+  return [...uniqueEstimates.values()];
+}
+
+function startEstimatesRefresh(key, entry, dateRange) {
+  if (entry.promise) return entry.promise;
 
   entry.expiresAt = Number.POSITIVE_INFINITY;
-  entry.promise = fetchDashboardEstimateSummary({ start, endExclusive })
-    .then((value) => {
-      entry.value = value;
-      entry.expiresAt = Date.now() + CACHE_TTL_MS;
+  entry.promise = fetchEstimatesInRange(dateRange)
+    .then((estimates) => {
+      entry.value = estimates;
+      entry.rowCount = estimates.length;
+      entry.updatedAt = Date.now();
+      entry.expiresAt = entry.updatedAt + CACHE_TTL_MS;
       entry.promise = null;
-      return value;
+      return estimates;
     })
     .catch((error) => {
       if (entry.value === undefined) {
-        if (summaryCache.get(key) === entry) summaryCache.delete(key);
+        if (estimatesCache.get(key) === entry) estimatesCache.delete(key);
       } else {
         entry.expiresAt = Date.now() + 5000;
         entry.promise = null;
@@ -175,14 +125,84 @@ export function getDashboardEstimateSummary({ start, endExclusive }) {
       throw error;
     });
 
-  summaryCache.set(key, entry);
-
-  if (cached?.value !== undefined) {
-    entry.promise.catch((error) => {
-      console.error("Background dashboard estimate refresh failed:", error);
-    });
-    return Promise.resolve(cached.value);
+  estimatesCache.set(key, entry);
+  while (estimatesCache.size > MAX_CACHE_ENTRIES) {
+    const oldestKey = estimatesCache.keys().next().value;
+    if (oldestKey === key) break;
+    estimatesCache.delete(oldestKey);
   }
 
   return entry.promise;
+}
+
+export async function getDashboardEstimatesForRange({ start, endExclusive }) {
+  validateDateRange({ start, endExclusive });
+
+  const key = `${start.toISOString()}|${endExclusive.toISOString()}`;
+  const now = Date.now();
+
+  for (const [cachedKey, entry] of estimatesCache) {
+    if (
+      !entry.promise &&
+      entry.updatedAt &&
+      entry.updatedAt + MAX_STALE_MS <= now
+    ) {
+      estimatesCache.delete(cachedKey);
+    }
+  }
+
+  const cached = estimatesCache.get(key);
+
+  if (cached?.value !== undefined) {
+    if (cached.expiresAt > now) return cached.value;
+
+    if (!cached.promise) {
+      startEstimatesRefresh(key, cached, { start, endExclusive }).catch(
+        (error) => {
+          console.error("Background ServiceTitan estimates refresh failed:", error);
+        },
+      );
+    }
+
+    return cached.value;
+  }
+
+  if (cached?.promise) return cached.promise;
+
+  return startEstimatesRefresh(
+    key,
+    { value: undefined, promise: null, expiresAt: Number.POSITIVE_INFINITY },
+    { start, endExclusive },
+  );
+}
+
+export function clearDashboardEstimateSummaryCache() {
+  const removedCount = estimatesCache.size;
+  estimatesCache.clear();
+  return { removedCount };
+}
+
+export async function getDashboardEstimateSummary({ start, endExclusive }) {
+  const estimates = await getDashboardEstimatesForRange({ start, endExclusive });
+  let totalValueInCents = 0;
+  let totalCount = 0;
+
+  for (const estimate of estimates) {
+    if (String(estimate.status?.name || "").toLowerCase() !== "open") continue;
+
+    const subtotal = Number(estimate.subtotal ?? 0);
+    const tax = Number(estimate.tax ?? 0);
+
+    if (!Number.isFinite(subtotal) || !Number.isFinite(tax)) {
+      throw new Error(`Invalid Estimate amount. Estimate ID: ${estimate.id}`);
+    }
+
+    totalValueInCents += Math.round((subtotal + tax) * 100);
+    totalCount += 1;
+  }
+
+  return {
+    totalCount,
+    totalValue: totalValueInCents / 100,
+  };
 }

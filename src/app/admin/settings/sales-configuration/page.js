@@ -84,7 +84,7 @@ function JobCardsSkeleton() {
 
 async function SalesConfigurationSection({ searchParams }) {
   try {
-    const { jobs, salesmen, pagination } =
+    const { jobs, salesmen, activeTab, tabCounts, pagination } =
       await getSalesConfigurationData(searchParams);
 
     return (
@@ -94,6 +94,8 @@ async function SalesConfigurationSection({ searchParams }) {
           <JobCardsList
             jobs={jobs}
             salesmen={salesmen}
+            activeTab={activeTab}
+            tabCounts={tabCounts}
             currentPage={pagination.currentPage}
             pageSize={pagination.pageSize}
             totalItems={pagination.totalItems}
@@ -130,6 +132,7 @@ export default async function SalesConfigurationPage({ searchParams }) {
   const params = await searchParams;
 
   const tableKey = [
+    params.tab || "all",
     params.page || "1",
     params.pageSize || "9",
   ].join("-");

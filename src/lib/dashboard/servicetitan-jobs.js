@@ -7,8 +7,11 @@ import { getRevenueDateRanges } from "@/lib/date/date-utils";
 
 const PAGE_SIZE = 500;
 const PAGE_CONCURRENCY = 4;
-const CACHE_TTL_MS = 60 * 1000;
-const MAX_STALE_MS = 5 * 60 * 1000;
+// Reusing a previously selected range avoids another multi-page Titan fetch.
+// Once fresh, return the cached snapshot for five minutes; after that, serve
+// it immediately while a background refresh runs for up to thirty minutes.
+const CACHE_TTL_MS = 5 * 60 * 1000;
+const MAX_STALE_MS = 30 * 60 * 1000;
 const revenueJobsCache = new Map();
 
 export function clearRevenueJobsCache() {

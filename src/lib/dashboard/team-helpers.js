@@ -55,6 +55,7 @@ export function buildTeamPerformanceData({
   goalType,
   revenueByMember = new Map(),
   opportunityCountByMember = new Map(),
+  closeRateByMember = new Map(),
 } = {}) {
   const sortedTeamMembers = sortTeamMembers(teamMembers);
 
@@ -75,7 +76,7 @@ export function buildTeamPerformanceData({
 
       opportunities: opportunityCountByMember.get(member.id) || 0,
 
-      closeRate: 0,
+      closeRate: closeRateByMember.get(member.id)?.closeRate || 0,
     };
   });
 }

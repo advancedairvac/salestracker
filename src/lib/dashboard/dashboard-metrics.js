@@ -110,6 +110,7 @@ export function getTeamMetrics({
   goalType,
   revenueSales = [],
   opportunities = [],
+  closeRateByMember = new Map(),
 } = {}) {
   const revenueByMember = getRevenueByMember(revenueSales);
 
@@ -120,6 +121,7 @@ export function getTeamMetrics({
     goalType,
     revenueByMember,
     opportunityCountByMember,
+    closeRateByMember,
   });
 }
 
@@ -133,6 +135,7 @@ export function getSalespersonMetrics({
   revenueSales = [],
   opportunities = [],
   goalType,
+  closeRateStats = { closeRate: 0 },
 } = {}) {
   if (!user) {
     return null;
@@ -156,6 +159,6 @@ export function getSalespersonMetrics({
     commission: 0,
     monthlyGoal,
     opportunities: ownOpportunities.length,
-    closeRate: 0,
+    closeRate: closeRateStats.closeRate || 0,
   };
 }

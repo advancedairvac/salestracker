@@ -10,6 +10,8 @@ import Tabs from "@/components/ui/tabs";
 export default function JobCardsList({
   jobs = [],
   salesmen = [],
+  activeTab = "all",
+  tabCounts = {},
   currentPage = 1,
   pageSize = 10,
   totalItems = 0,
@@ -27,6 +29,13 @@ export default function JobCardsList({
     router.push(`${pathname}?${params.toString()}`, {
       scroll: false,
     });
+  }
+
+  function handleTabChange(tab) {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("tab", tab);
+    params.set("page", "1");
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
   }
 
   function handlePageChange(page) {
@@ -52,11 +61,27 @@ export default function JobCardsList({
 
   // Configuration Tabs
   const tabs = [
-    { id: "auto-assigned", label: "Auto Assigned", count: jobs.length },
-    { id: "source-assigned", label: "Source Assigned", count: jobs.length },
-    { id: "salesman-assigned", label: "Salesman Assigned", count: jobs.length },
-    { id: "unassigned", label: "Unassigned", count: jobs.length },
-    { id: "all", label: "All", count: jobs.length },
+    {
+      id: "auto-assigned",
+      label: "Auto Assigned",
+      count: tabCounts["auto-assigned"] ?? 0,
+    },
+    {
+      id: "source-assigned",
+      label: "Source Assigned",
+      count: tabCounts["source-assigned"] ?? 0,
+    },
+    {
+      id: "salesman-assigned",
+      label: "Salesman Assigned",
+      count: tabCounts["salesman-assigned"] ?? 0,
+    },
+    {
+      id: "unassigned",
+      label: "Unassigned",
+      count: tabCounts.unassigned ?? 0,
+    },
+    { id: "all", label: "All", count: tabCounts.all ?? 0 },
   ];
 
   const panels = {
@@ -73,6 +98,8 @@ export default function JobCardsList({
       <Tabs
         tabs={tabs}
         defaultTab="all"
+        selectedTab={activeTab}
+        onTabChange={handleTabChange}
         countLabel="Jobs"
         panels={panels}
       />

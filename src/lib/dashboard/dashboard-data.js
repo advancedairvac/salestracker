@@ -2,6 +2,7 @@ import { cache } from "react";
 import { prisma } from "@/lib/prisma";
 import { getRevenueJobsForRange } from "@/lib/dashboard/servicetitan-jobs";
 import { getDashboardEstimateSummary } from "@/lib/dashboard/servicetitan-estimates";
+import { getOpportunityCloseRateStats } from "@/lib/dashboard/opportunity-close-rate";
 
 // ============================================
 // PERFORMANCE MEASUREMENT
@@ -348,6 +349,12 @@ export async function getAdminTeamSectionData({ start, endExclusive }) {
     getDashboardTeamMembers(),
   ]);
 
+  const closeRateByMember = await getOpportunityCloseRateStats({
+    memberIds: teamMembers.map((member) => member.id),
+    start,
+    endExclusive,
+  });
+
   const revenueSales = await buildDashboardRevenueSales({
     jobs,
     start,
@@ -358,6 +365,7 @@ export async function getAdminTeamSectionData({ start, endExclusive }) {
     teamMembers,
     revenueSales,
     opportunities,
+    closeRateByMember,
   };
 }
 

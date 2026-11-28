@@ -17,6 +17,7 @@ import {
   getPipelineMetrics,
   getSalespersonMetrics,
 } from "@/lib/dashboard/dashboard-metrics";
+import { getOpportunityCloseRateStats } from "@/lib/dashboard/opportunity-close-rate";
 
 import RevenueDateFilter from "@/components/dashboard/revenue-date-filter";
 import Breadcrumbs from "@/components/ui/breadcrumbs";
@@ -81,7 +82,7 @@ async function SalespersonPerformanceSection({
   endExclusive,
   goalType,
 }) {
-  const [revenueSales, opportunities] = await Promise.all([
+  const [revenueSales, opportunities, closeRateByMember] = await Promise.all([
     getDashboardRevenueSales({
       start,
       endExclusive,
@@ -93,6 +94,12 @@ async function SalespersonPerformanceSection({
       endExclusive,
       salesmanId: user.id,
     }),
+
+    getOpportunityCloseRateStats({
+      memberIds: [user.id],
+      start,
+      endExclusive,
+    }),
   ]);
 
   const salespersonData = getSalespersonMetrics({
@@ -100,6 +107,7 @@ async function SalespersonPerformanceSection({
     revenueSales,
     opportunities,
     goalType,
+    closeRateStats: closeRateByMember.get(user.id),
   });
 
   return (

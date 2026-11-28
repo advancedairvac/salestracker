@@ -1140,8 +1140,8 @@ export default function GenerateReportForm({
         <div className="mt-8 w-full">
           {/* Report Header */}
 
-          <div className="flex flex-col gap-4 border-b border-[#dedede] pb-5 sm:flex-row sm:items-end sm:justify-between">
-            <div>
+          <div className="flex flex-col gap-4 border-b border-[#dedede] pb-5 xl:flex-row xl:items-center xl:justify-between">
+            <div className="shrink-0">
               <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#777777]">
                 Generated Report
               </p>
@@ -1156,38 +1156,91 @@ export default function GenerateReportForm({
               </p>
             </div>
 
-            {/* Download Buttons */}
-
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => handleDownload("PDF")}
-                disabled={Boolean(downloading)}
-                className="flex h-10 items-center gap-2 border border-[#111111] bg-white px-4 text-[10px] font-semibold uppercase tracking-[0.03em] text-[#111111] transition-colors hover:bg-[#f5f5f5] disabled:opacity-50"
+            <div className="flex w-full flex-col gap-2 xl:flex-1 xl:items-end">
+              <form
+                onSubmit={handleSendReportEmail}
+                className="flex w-full flex-wrap items-center justify-end gap-2 xl:flex-nowrap"
               >
-                <SvgIcon
-                  name="download"
-                  className="h-4 w-4"
+                <label className="sr-only" htmlFor="reportRecipientEmail">
+                  Recipient Email
+                </label>
+                <Input
+                  variant="plain"
+                  id="reportRecipientEmail"
+                  type="email"
+                  value={recipientEmail}
+                  onChange={(event) => {
+                    setRecipientEmail(event.target.value);
+                    setEmailMessage("");
+                  }}
+                  placeholder="Recipient email"
+                  aria-label="Recipient email"
+                  required
+                  className="!h-10 !min-h-10 !w-full !min-w-[150px] !rounded-none !border-[#d9d9d9] !px-3 !py-0 !text-xs !text-[#111111] focus:!border-[#111111] sm:!w-[170px]"
                 />
 
-                {downloading === "PDF" ? "Preparing..." : "PDF"}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleDownload("EXCEL")}
-                disabled={Boolean(downloading)}
-                className="flex h-10 items-center gap-2 border border-[#111111] bg-[#111111] px-4 text-[10px] font-semibold uppercase tracking-[0.03em] text-white transition-colors hover:bg-[#333333] disabled:opacity-50"
-              >
-                <SvgIcon
-                  name="download"
-                  className="h-4 w-4"
+                <label className="sr-only" htmlFor="reportEmailSubject">
+                  Email Subject (Optional)
+                </label>
+                <Input
+                  variant="plain"
+                  id="reportEmailSubject"
+                  type="text"
+                  value={emailSubject}
+                  onChange={(event) => setEmailSubject(event.target.value)}
+                  placeholder="Email subject (optional)"
+                  aria-label="Email subject (optional)"
+                  maxLength={150}
+                  className="!h-10 !min-h-10 !w-full !min-w-[150px] !rounded-none !border-[#d9d9d9] !px-3 !py-0 !text-xs !text-[#111111] focus:!border-[#111111] sm:!w-[190px]"
                 />
 
-                {downloading === "EXCEL"
-                  ? "Preparing..."
-                  : "Excel"}
-              </button>
+                <button
+                  type="submit"
+                  disabled={emailSending}
+                  className="flex h-10 shrink-0 items-center justify-center gap-2 border border-[#111111] bg-white px-4 text-[10px] font-semibold uppercase tracking-[0.03em] text-[#111111] transition-colors hover:bg-[#f5f5f5] disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {emailSending ? (
+                    <>
+                      <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-[#111111]/30 border-t-[#111111]" />
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <SvgIcon name="mail" className="h-4 w-4" />
+                      Share by Email
+                    </>
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleDownload("EXCEL")}
+                  disabled={Boolean(downloading)}
+                  className="flex h-10 shrink-0 items-center gap-2 border border-[#111111] bg-[#111111] px-4 text-[10px] font-semibold uppercase tracking-[0.03em] text-white transition-colors hover:bg-[#333333] disabled:opacity-50"
+                >
+                  <SvgIcon name="download" className="h-4 w-4" />
+                  {downloading === "EXCEL" ? "Preparing..." : "Excel"}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleDownload("PDF")}
+                  disabled={Boolean(downloading)}
+                  className="flex h-10 shrink-0 items-center gap-2 border border-[#111111] bg-white px-4 text-[10px] font-semibold uppercase tracking-[0.03em] text-[#111111] transition-colors hover:bg-[#f5f5f5] disabled:opacity-50"
+                >
+                  <SvgIcon name="download" className="h-4 w-4" />
+                  {downloading === "PDF" ? "Preparing..." : "PDF"}
+                </button>
+              </form>
+
+              {emailMessage && (
+                <p
+                  role="status"
+                  className="border border-[#e2e2e2] bg-[#fafafa] px-3 py-2 text-xs leading-5 text-[#555555]"
+                >
+                  {emailMessage}
+                </p>
+              )}
             </div>
           </div>
 
@@ -1221,120 +1274,6 @@ export default function GenerateReportForm({
                 </p>
               </div>
             )}
-          </div>
-
-          {/* ========================================
-              EMAIL REPORT
-          ======================================== */}
-
-          <div className="mt-6 border border-[#e2e2e2] bg-white p-5">
-            <div className="mb-4">
-              <h3 className="text-sm font-semibold uppercase tracking-[0.03em] text-[#111111]">
-                Share Report via Email
-              </h3>
-
-              <p className="mt-1 text-xs leading-5 text-[#777777]">
-                Send this report directly to an email address.
-              </p>
-            </div>
-
-            <form
-              onSubmit={handleSendReportEmail}
-              className="flex flex-col gap-3"
-            >
-              {/* Recipient Email */}
-
-              <div>
-                <label
-                  htmlFor="reportRecipientEmail"
-                  className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.04em] text-[#555555]"
-                >
-                  Recipient Email
-                </label>
-
-                <Input
-                  variant="plain"
-                  id="reportRecipientEmail"
-                  type="email"
-                  value={recipientEmail}
-                  onChange={(event) => {
-                    setRecipientEmail(event.target.value);
-                    setEmailMessage("");
-                  }}
-                  placeholder="Enter recipient email address"
-                  required
-                  className="!h-[46px] !min-h-[46px] !rounded-none !border-[#d9d9d9] !px-3 !py-0 !text-xs !text-[#111111] focus:!border-[#111111]"
-                />
-              </div>
-
-              {/* Email Subject */}
-
-              <div>
-                <label
-                  htmlFor="reportEmailSubject"
-                  className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.04em] text-[#555555]"
-                >
-                  Email Subject
-
-                  <span className="ml-1 font-normal normal-case text-[#999999]">
-                    (Optional)
-                  </span>
-                </label>
-
-                <Input
-                  variant="plain"
-                  id="reportEmailSubject"
-                  type="text"
-                  value={emailSubject}
-                  onChange={(event) =>
-                    setEmailSubject(event.target.value)
-                  }
-                  placeholder="Sales Tracker Report"
-                  maxLength={150}
-                  className="!h-[46px] !min-h-[46px] !rounded-none !border-[#d9d9d9] !px-3 !py-0 !text-xs !text-[#111111] focus:!border-[#111111]"
-                />
-              </div>
-
-              {/* Send Email Button */}
-
-              <button
-                type="submit"
-                disabled={emailSending}
-                className={[
-                  "flex h-[46px] w-full items-center justify-center gap-2",
-                  "border border-[#111111] bg-[#111111] px-4",
-                  "text-xs font-semibold uppercase tracking-[0.03em] text-white",
-                  "transition-colors hover:bg-[#333333]",
-                  "disabled:cursor-not-allowed disabled:opacity-60",
-                ].join(" ")}
-              >
-                {emailSending ? (
-                  <>
-                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                    Sending...
-                  </>
-                ) : (
-                  <>
-                    <SvgIcon
-                      name="mail"
-                      className="h-4 w-4"
-                    />
-                    Send Report
-                  </>
-                )}
-              </button>
-
-              {/* Email Feedback */}
-
-              {emailMessage && (
-                <p
-                  role="status"
-                  className="border border-[#e2e2e2] bg-[#fafafa] px-3 py-3 text-xs leading-5 text-[#555555]"
-                >
-                  {emailMessage}
-                </p>
-              )}
-            </form>
           </div>
 
           {/* Report Footer */}

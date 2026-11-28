@@ -412,7 +412,7 @@ export async function getJobs({
 
 // ============================================
 // REVENUE JOB FIELDS
-// Only 6 required fields.
+// Only the fields used by revenue and report views.
 // ============================================
 
 function optimizeRevenueJob(job) {
@@ -420,6 +420,7 @@ function optimizeRevenueJob(job) {
     id: job.id,
     jobNumber: job.jobNumber,
     customerId: job.customerId,
+    jobTypeId: job.jobTypeId,
     jobStatus: job.jobStatus,
     completedOn: job.completedOn,
     total: Number(job.total) || 0,

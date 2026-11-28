@@ -2,18 +2,16 @@
 import { prisma } from "@/lib/prisma";
 import { getOpportunityCustomer } from "@/lib/opportunities/opportunity-customer";
 import { getDateBounds, isWithinRange } from "@/lib/date/date-utils";
+import { getRevenueJobsForRange } from "@/lib/dashboard/servicetitan-jobs";
+import { getCustomerName } from "@/lib/dashboard/customer-sync";
+import { getServiceTitanJobTypesByIds } from "@/lib/dashboard/servicetitan-lookups";
+import { getDashboardEstimatesForRange } from "@/lib/dashboard/servicetitan-estimates";
 
-import {
-  getAllJobs,
-  getAllEstimates,
-} from "@/lib/integrations/servicetitan";
+import { getAllServiceTitanCustomers } from "@/lib/integrations/servicetitan";
 
 // ============================================
 // CONFIGURATION
 // ============================================
-
-const PAGE_SIZE = 500;
-const MAX_PAGES = 1000;
 
 const REPORT_TYPES = [
   "ALL",
@@ -114,12 +112,9 @@ function validateReportType(reportType) {
 // ============================================
 
 async function fetchAllJobs(dateRange) {
-  const allJobs = await getAllJobs({
-    pageSize: PAGE_SIZE,
-    maxPages: MAX_PAGES,
-    jobStatus: "Completed",
-    completedOnOrAfter: dateRange.startISO,
-    completedBefore: dateRange.endExclusiveISO,
+  const allJobs = await getRevenueJobsForRange({
+    start: dateRange.start,
+    endExclusive: dateRange.endExclusive,
   });
 
   const uniqueJobs = new Map();
@@ -142,11 +137,9 @@ async function fetchAllJobs(dateRange) {
 }
 
 async function fetchAllEstimates(dateRange) {
-  const allEstimates = await getAllEstimates({
-    pageSize: PAGE_SIZE,
-    maxPages: MAX_PAGES,
-    createdOnOrAfter: dateRange.startISO,
-    createdBefore: dateRange.endExclusiveISO,
+  const allEstimates = await getDashboardEstimatesForRange({
+    start: dateRange.start,
+    endExclusive: dateRange.endExclusive,
   });
 
   const uniqueEstimates = new Map();
@@ -256,35 +249,22 @@ async function fetchOpportunities(dateRange, salesmanId) {
   });
 }
 
-async function fetchCustomersForJobs(jobs) {
-  const customerIds = unique(
-    jobs.map((job) => job.customerId),
-  );
+async function fetchCustomersByIds(customerIds) {
+  const wantedIds = new Set(unique(customerIds));
+  if (!wantedIds.size) return new Map();
 
-  if (!customerIds.length) return new Map();
-
-  const customers = await prisma.customer.findMany({
-    where: {
-      stCustomerId: {
-        in: customerIds,
-      },
-    },
-    select: {
-      id: true,
-      stCustomerId: true,
-      businessName: true,
-      pocName: true,
-      phone: true,
-      email: true,
-      location: true,
-    },
+  const allCustomers = await getAllServiceTitanCustomers({
+    pageSize: 100,
+    maxPages: 1000,
   });
 
   return new Map(
-    customers.map((customer) => [
-      String(customer.stCustomerId),
-      customer,
-    ]),
+    allCustomers
+      .map((customer) => [
+        String(customer.stCustomerId ?? customer.id),
+        customer,
+      ])
+      .filter(([id]) => wantedIds.has(id)),
   );
 }
 
@@ -321,7 +301,7 @@ function matchEstimateOpportunity(estimate, opportunities) {
 // SALES REPORT
 // ============================================
 
-function buildSalesReport(jobs, sales, customers) {
+function buildSalesReport(jobs, sales, customers, jobTypes) {
   const salesMap = new Map(
     sales.map((sale) => [
       String(sale.serviceTitanJobId),
@@ -340,9 +320,14 @@ function buildSalesReport(jobs, sales, customers) {
       customerId: normalizeId(job.customerId),
       customerName:
         customer?.businessName ||
-        customer?.pocName ||
+        (customer ? getCustomerName(customer) : null) ||
+        job.customerName ||
         `Customer #${job.customerId}`,
       jobTypeId: job.jobTypeId || null,
+      jobTypeName:
+        jobTypes.get(String(job.jobTypeId)) ||
+        job.jobTypeName ||
+        "—",
       businessUnitId: job.businessUnitId || null,
       revenue: toNumber(job.total),
 
@@ -391,12 +376,13 @@ function buildOpportunityReport(opportunities) {
 // ESTIMATE REPORT
 // ============================================
 
-function buildEstimateReport(estimates, opportunities) {
+function buildEstimateReport(estimates, opportunities, customers) {
   return estimates.map((estimate) => {
     const opportunity = matchEstimateOpportunity(
       estimate,
       opportunities,
     );
+    const customer = customers.get(String(estimate.customerId));
 
     const subtotal = toNumber(estimate.subtotal);
     const tax = toNumber(estimate.tax);
@@ -406,6 +392,11 @@ function buildEstimateReport(estimates, opportunities) {
       jobId: normalizeId(estimate.jobId),
       jobNumber: estimate.jobNumber || null,
       customerId: normalizeId(estimate.customerId),
+      customerName:
+        customer?.businessName ||
+        (customer ? getCustomerName(customer) : null) ||
+        estimate.customerName ||
+        `Customer #${estimate.customerId}`,
 
       name: estimate.name || "Untitled Estimate",
       createdOn: formatDate(estimate.createdOn),
@@ -571,13 +562,22 @@ export async function getReportData({
     : [];
 
   // Customer information for ServiceTitan jobs.
-  const customers = needsSales
-    ? await fetchCustomersForJobs(jobs)
+  const customers = needsSales || needsEstimates
+    ? await fetchCustomersByIds(
+        unique([
+          ...jobs.map((job) => job.customerId),
+          ...estimates.map((estimate) => estimate.customerId),
+        ]),
+      )
+    : new Map();
+
+  const jobTypes = needsSales
+    ? await getServiceTitanJobTypesByIds(jobs.map((job) => job.jobTypeId))
     : new Map();
 
   // Build report datasets.
   const salesReport = needsSales
-    ? buildSalesReport(jobs, sales, customers)
+    ? buildSalesReport(jobs, sales, customers, jobTypes)
     : [];
 
   const opportunityReport = needsOpportunities
@@ -654,6 +654,7 @@ export async function getReportData({
     ? buildEstimateReport(
         estimates,
         estimateAttributionOpportunities,
+      customers,
       )
     : [];
 

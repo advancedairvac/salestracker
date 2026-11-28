@@ -14,6 +14,7 @@ import {
 } from "@/lib/dashboard/dashboard-data";
 
 import { getTeamMetrics } from "@/lib/dashboard/dashboard-metrics";
+import { getOpportunityCloseRateStats } from "@/lib/dashboard/opportunity-close-rate";
 
 import Tabs from "@/components/ui/tabs";
 import SalesmanCard from "@/components/dashboard/salesman-card";
@@ -80,6 +81,11 @@ async function SalesmenPerformanceSection({
     goalType,
     revenueSales,
     opportunities,
+    closeRateByMember: await getOpportunityCloseRateStats({
+      memberIds: sortedTeamMembers.map((member) => member.id),
+      start,
+      endExclusive,
+    }),
   });
 
   // ============================================
